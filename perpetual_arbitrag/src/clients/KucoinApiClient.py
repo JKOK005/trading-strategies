@@ -1,35 +1,90 @@
-from kucoin.client import Client
-from kucoin_futures.client import Market
+from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
+from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
+from clients.Clients import ExchangeClients
 
-class KucoinApiClient(object):
-	spot_client 		= None
-	futures_client 		= None
-	is_sandbox 			= False
-	kucoin_futures_url 	= "https://api-futures.kucoin.com"
+class KucoinApiClient(ExchangeClients):
+	spot_client 				= None
+	futures_client 				= None
+	futures_trade 				= None
+	futures_user 				= None
+	kucoin_spot_url 			= "https://api.kucoin.com"
+	kucoin_spot_sandbox_url 	= "https://openapi-sandbox.kucoin.com"
+	kucoin_futures_url 			= "https://api-futures.kucoin.com"
+	kucoin_futures_sandbox_url 	= "https://api-sandbox-futures.kucoin.com"
 
-	def __init__(self, 	client_api_key: str, 
-						client_api_secret_key: str, 
-						client_pass_phrase: str,
-						sandbox: bool = False):
+	def __init__(self, 	spot_client_api_key: str, 
+						spot_client_api_secret_key: str, 
+						spot_client_pass_phrase: str,
+						futures_client_api_key: str, 
+						futures_client_api_secret_key: str, 
+						futures_client_pass_phrase: str,
+						sandbox: bool
+				):
 
-		self.spot_client 	= Client(
-								api_key 	= client_api_key,
-								api_secret 	= client_api_secret_key,
-								passphrase 	= client_pass_phrase,
-								sandbox 	= False
-							)
+		super(KucoinApiClient, self).__init__()
 
-		self.futures_client = Market(url = self.kucoin_futures_url)
-		self.is_sandbox 	= sandbox
+		self.spot_client 	= 	Market_C(url = self.kucoin_spot_sandbox_url if sandbox else self.kucoin_spot_url)
 
-	def get_spot_trading_price(self, trading_symbol: str):
+		self.spot_trade 	= 	Trade_C(key 		= spot_client_api_key, 
+										secret 		= spot_client_api_secret_key, 
+										passphrase 	= spot_client_pass_phrase, 
+										url 		= self.kucoin_spot_sandbox_url if sandbox else self.kucoin_spot_url
+									)
+
+		self.spot_user 		= 	User_C( key 		= spot_client_api_key, 
+										secret 		= spot_client_api_secret_key, 
+										passphrase 	= spot_client_pass_phrase, 
+										url 		= self.kucoin_spot_sandbox_url if sandbox else self.kucoin_spot_url
+									)
+
+
+		self.futures_client = 	Market_F(url = self.kucoin_futures_sandbox_url if sandbox else self.kucoin_futures_url)
+		
+		self.futures_trade 	= 	Trade_F(key 		= futures_client_api_key, 
+										secret 		= futures_client_api_secret_key, 
+										passphrase 	= futures_client_pass_phrase, 
+										url 		= self.kucoin_futures_sandbox_url if sandbox else self.kucoin_futures_url
+									)
+
+		self.futures_user 	= 	User_F( key 		= futures_client_api_key, 
+										secret 		= futures_client_api_secret_key, 
+										passphrase 	= futures_client_pass_phrase, 
+										url 		= self.kucoin_futures_sandbox_url if sandbox else self.kucoin_futures_url
+									)
+
+	def get_spot_trading_price(self, symbol: str):
 		"""
 		Retrieves current spot pricing for trading symbol
 		"""
-		return self.spot_client.get_ticker(symbol = trading_symbol)["price"]
+		return float(self.spot_client.get_ticker(symbol)["price"])
 
 	def get_futures_trading_price(self, symbol: str):
 		"""
 		Retrieves current futures price for trading symbol
 		"""
-		return self.futures_client.get_ticker("XBTUSDM")["price"]
+		return float(self.futures_client.get_ticker(symbol)["price"])
+
+	def get_spot_position(self, symbol: str):
+		"""
+		Gets the amount of assets position by the user
+		"""
+		pass
+
+	def get_futures_position(self, symbol: str):
+		"""
+		Gets the amount of futures position by the user
+		"""
+		pass
+
+	def place_spot_order(self):
+		pass
+
+	def place_futures_order(self):
+		pass
+
+
+	def delete_spot_order(self, order_id: str):
+		pass
+
+	def delete_futures_order(self, order_id: str):
+		pass
