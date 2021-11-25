@@ -76,12 +76,11 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		pass
 
-	def place_spot_order(self):
+	def place_spot_order(self, symbol: str, type: str):
 		pass
 
-	def place_futures_order(self):
+	def place_futures_order(self, symbol: str, type: str):
 		pass
-
 
 	def delete_spot_order(self, order_id: str):
 		pass
