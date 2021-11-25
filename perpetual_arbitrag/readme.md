@@ -1,16 +1,16 @@
 ## Perpetual - Spot arbitrag bot
 
 ### Transfer of main account funds to trade account
-
 In order to ensure that trades are executed properly, we need 
 
 1) Sufficient balance of the fiat currency in our trading account.
 
-2) 	
+2) Sufficient balance of the fiat currency in our futures account.
+
+3) API keys, API secret keys, Pass phrase for futures & spot account separately.
 
 
 ### Useful spot order apis
-
 1) Creating a spot market order - `client.spot_trade.create_market_order(symbol = "BTC-USDT", side = "buy", price = 1, size = 10, type = "market")`
 
 2) Creating a spot limit order - `client.spot_trade.create_market_order(symbol = "BTC-USDT", side = "buy", price = 1, size = 10, type = "limit")`
@@ -31,7 +31,6 @@ In order to ensure that trades are executed properly, we need
 
 
 ### Useful futures order apis
-
 1) To get all active orders placed - `client.future_trade.get_order_list(status = "active")`
 	- Active trades are placed under the "items"
 
@@ -40,4 +39,8 @@ In order to ensure that trades are executed properly, we need
 	- `currentQty` field indicates the lot size of the position taken
 	- `avgEntryPrice` field indicates the average price entered into the position
 
-3) To place an order for a position ... 
+3) To place an limit order - `client.futures_trade.create_limit_order(symbol = "XBTUSDM", type = "limit", side = "buy", lever = 1, size = 1, price = 58000)`
+
+4) To find a currently active (unfulfilled) order - `client.futures_trade.get_order_list(status = "active")`
+
+5) To cancel all limit orders - `client.futures_trade.cancel_all_limit_order(symbol = "XBTUSDM")`

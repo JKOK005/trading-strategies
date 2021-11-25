@@ -76,11 +76,48 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		pass
 
-	def place_spot_order(self, symbol: str, type: str):
-		pass
+	def place_spot_order(self, 	symbol: str, 
+								order_type: str, 
+								order_side: str, 
+								price: int,
+								size: int,
+								*args, **kwargs):
+		"""
+		order_type 	- Either limit or market
+		order_side 	- Either buy or sell
+		size 		- VOLUME of asset to purchase
 
-	def place_futures_order(self, symbol: str, type: str):
-		pass
+		Ref: https://docs.kucoin.com/#place-a-new-order
+		"""
+		return 	self.spot_trade.create_market_order(symbol = symbol,
+													type 	= order_type,
+													side 	= order_side,
+													price 	= price,
+													size 	= size
+												)
+
+	def place_futures_order(self, 	symbol: str, 
+									order_type: str, 
+									order_side: str, 
+									price: int,
+									size: int,
+									lever: int,
+									*args, **kwargs):
+		"""
+		order_type 	- Either limit or market
+		order_side 	- Either buy or sell
+		size 		- LOTS of asset to purchase
+		lever 		- Leverage value
+
+		Ref: https://docs.kucoin.com/futures/#place-an-order
+		"""
+		return 	self.futures_trade.create_limit_order( 	symbol 	= symbol,
+														type 	= order_type,
+														side 	= order_side,
+														price 	= price,
+														size 	= size,
+														lever	= lever
+													)
 
 	def delete_spot_order(self, order_id: str):
 		pass

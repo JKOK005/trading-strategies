@@ -31,11 +31,11 @@ class ExchangeClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod 
-	def place_spot_order(self, symbol: str, type: str):
+	def place_spot_order(self, *args, **kwargs):
 		pass
 
 	@abstractmethod
-	def place_futures_order(self, symbol: str, type: str):
+	def place_futures_order(self, *args, **kwargs):
 		pass
 
 	@abstractmethod
