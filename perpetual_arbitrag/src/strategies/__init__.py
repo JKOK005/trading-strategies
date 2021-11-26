@@ -1,0 +1,1 @@
+from strategies.SingleTradeArbitrag import SingleTradeArbitrag

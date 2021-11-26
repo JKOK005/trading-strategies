@@ -31,7 +31,7 @@ In order to ensure that trades are executed properly, we need
 
 
 ### Useful futures order apis
-1) To get all active orders placed - `client.future_trade.get_order_list(status = "active")`
+1) To get all active orders placed - `client.futures_trade.get_order_list(status = "active")`
 	- Active trades are placed under the "items"
 
 2) To get all positions currently being taken - `client.futures_trade.get_all_position()`

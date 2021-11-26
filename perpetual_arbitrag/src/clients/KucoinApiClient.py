@@ -3,6 +3,7 @@ from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as 
 from clients.Clients import ExchangeClients
 
 class KucoinApiClient(ExchangeClients):
+	default_page_size 			= 50
 	spot_client 				= None
 	futures_client 				= None
 	futures_trade 				= None
@@ -64,17 +65,65 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		return float(self.futures_client.get_ticker(symbol)["price"])
 
-	def get_spot_position(self, symbol: str):
+	def get_spot_open_orders(self, symbol: str):
 		"""
-		Gets the amount of assets position by the user
-		"""
-		pass
+		Gets information of all open spot orders by the user
 
-	def get_futures_position(self, symbol: str):
+		symbol 	- Filter out all orders with matching symbol
+		"""		
+		resp 			= self.spot_trade.get_order_list(status = "active")
+		pages 			= resp["totalPage"]
+		active_orders 	= resp["items"]
+
+		if pages > 1:
+			for each_page_num in range(1, pages +1):
+				resp 	= self.spot_trade.get_order_list(status = "active", currentPage = each_page_num, pageSize = self.default_page_size)
+				active_orders += resp["items"]
+		return list(filter(lambda x: x["symbol"] == symbol, active_orders))
+
+	def get_futures_open_orders(self, symbol: str):
 		"""
-		Gets the amount of futures position by the user
+		Gets information of all open future orders by the user
+
+		symbol 	- Filter out all orders with matching symbol
 		"""
-		pass
+		resp 			= self.futures_trade.get_order_list(status = "active")
+		pages 			= resp["totalPage"]
+		active_orders 	= resp["items"]
+
+		if pages > 1:
+			for each_page_num in range(1, pages +1):
+				resp 	= self.futures_trade.get_order_list(status = "active", currentPage = each_page_num, pageSize = self.default_page_size)
+				active_orders += resp["items"]
+		return list(filter(lambda x: x["symbol"] == symbol, active_orders))
+
+	def get_spot_most_recent_open_order(self, symbol: str):
+		"""
+		Gets the most recent open orders for spot
+		"""
+		all_open_orders = self.get_spot_open_orders(symbol = symbol)
+		return sorted(all_open_orders, key = lambda x: x["createdAt"], reverse = True)
+
+	def get_futures_most_recent_open_order(self, symbol: str):
+		"""
+		Gets the most recent open orders for futures
+		"""
+		all_open_orders = self.get_futures_open_orders(symbol = symbol)
+		return sorted(all_open_orders, key = lambda x: x["createdAt"], reverse = True)
+
+	def get_spot_most_recent_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of the most recent spot trades that have been fulfilled
+		"""
+		recent_trades 	= self.spot_trade.get_recent_orders()
+		return recent_trades
+
+	def get_futures_most_recent_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of the most recent futures trades that have been fulfilled
+		"""
+		recent_fills 	= self.futures_trade.get_recent_fills()
+		return recent_fills
 
 	def place_spot_order(self, 	symbol: str, 
 								order_type: str, 
@@ -89,7 +138,7 @@ class KucoinApiClient(ExchangeClients):
 
 		Ref: https://docs.kucoin.com/#place-a-new-order
 		"""
-		return 	self.spot_trade.create_market_order(symbol = symbol,
+		return 	self.spot_trade.create_market_order(symbol 	= symbol,
 													type 	= order_type,
 													side 	= order_side,
 													price 	= price,
@@ -119,8 +168,8 @@ class KucoinApiClient(ExchangeClients):
 														lever	= lever
 													)
 
-	def delete_spot_order(self, order_id: str):
+	def cancel_spot_order(self, order_id: str):
 		pass
 
-	def delete_futures_order(self, order_id: str):
+	def cancel_futures_order(self, order_id: str):
 		pass

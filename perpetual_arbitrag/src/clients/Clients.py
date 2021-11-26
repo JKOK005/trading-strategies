@@ -17,16 +17,30 @@ class ExchangeClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def get_spot_position(self, symbol: str):
+	def get_spot_open_orders(self, symbol: str):
 		"""
-		Gets the amount of assets position by the user
+		Gets information of all open spot orders by the user
 		"""
 		pass
 
 	@abstractmethod
-	def get_futures_position(self, symbol: str):
+	def get_futures_open_orders(self, symbol: str):
 		"""
-		Gets the amount of futures position by the user
+		Gets information of all open future orders by the user
+		"""
+		pass
+
+	@abstractmethod
+	def get_spot_most_recent_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of the most recent spot trades that have been fulfilled
+		"""
+		pass
+
+	@abstractmethod
+	def get_futures_most_recent_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of the most recent futures trades that have been fulfilled
 		"""
 		pass
 
@@ -39,9 +53,9 @@ class ExchangeClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def delete_spot_order(self, order_id: str):
+	def cancel_spot_order(self, order_id: str):
 		pass
 
 	@abstractmethod
-	def delete_futures_order(self, order_id: str):
+	def cancel_futures_order(self, order_id: str):
 		pass
