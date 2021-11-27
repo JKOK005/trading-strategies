@@ -33,8 +33,36 @@ class SingleTradeArbitrag(Strategies):
 		self.lot_size_entry 	= lot_size_entry
 		self.entry_percent_gap 	= entry_percent_gap
 		self.api_client 		= api_client
-		self.check_position_taken()
+		# self.check_position_taken()
 		return
+
+	def check_open_order_position_taken(self):
+		"""
+		Estalishes position taken for all open orders
+		"""
+		most_recent_open_spot_order 	= self.api_client.get_spot_most_recent_open_order(symbol = self.spot_symbol)
+		most_recent_open_futures_order 	= self.api_client.get_futures_most_recent_open_order(symbol = self.futures_symbol)
+
+		if most_recent_open_spot_order is not None and most_recent_open_futures_order is not None:
+			if most_recent_open_spot_order["side"] == "buy" and most_recent_open_futures_order["side"] == "sell":
+				return TradePosition.LONG_SPOT_SHORT_FUTURE
+			elif most_recent_open_spot_order["side"] == "sell" and most_recent_open_futures_order["side"] == "buy":
+				return TradePosition.LONG_FUTURE_SHORT_SPOT	
+		return TradePosition.NO_POSITION_TAKEN
+
+	def check_fulfilled_order_position_taken(self):
+		"""
+		Establishes position taken for recently fulfilled orders
+		"""
+		most_recent_fulfilled_spot_order 	= self.api_client.get_spot_most_recent_fulfilled_order(symbol = self.spot_symbol)
+		most_recent_fulfilled_futures_order = self.api_client.get_futures_most_recent_fulfilled_order(symbol = self.futures_symbol)
+
+		if most_recent_fulfilled_spot_order is not None and most_recent_fulfilled_futures_order is not None:
+			if most_recent_fulfilled_spot_order["side"] == "buy" and most_recent_fulfilled_futures_order["side"] == "sell":
+				return TradePosition.LONG_SPOT_SHORT_FUTURE
+			elif most_recent_fulfilled_spot_order["side"] == "sell" and most_recent_fulfilled_futures_order["side"] == "buy":
+				return TradePosition.LONG_FUTURE_SHORT_SPOT
+		return TradePosition.NO_POSITION_TAKEN
 
 	def check_position_taken(self):
 		"""
@@ -42,6 +70,8 @@ class SingleTradeArbitrag(Strategies):
 
 		1) 	We will check if there are any open orders in place.
 			- Only the latest spot / futures orders are considered
+			- If we have open positions, then we maintain the state of that position
+			- If we are unable to determine the position taken, then we clear all active orders of that position
 
 		2) 	If no active orders, we will check the order entries for spot & futures position within the last 24 hours.
 			Of these, we will retrieve the latest entries for spot & future positions and determine the following:
@@ -50,11 +80,14 @@ class SingleTradeArbitrag(Strategies):
 		"""
 		
 		# Part 1
-		most_recent_open_spot_order 	= self.api_client.get_spot_most_recent_open_order(symbol = self.spot_symbol)
-		most_recent_open_futures_order 	= self.api_client.get_futures_most_recent_open_order(symbol = self.futures_symbol)
-
-		# TODO: Complete implementation of check position taken function
-
+		open_order_position 	= self.check_open_order_position_taken()
+		current_position 		= open_order_position
+		
+		if current_position == TradePosition.NO_POSITION_TAKEN:
+			# TODO: Wipe out all open positions for futures & spot pairs			
+			# Part 2
+			fulfilled_order_position = self.check_fulfilled_order_position_taken()
+		return current_position
 
 	def trade_decision(self, spot_price: float, futures_price: float):
 		"""

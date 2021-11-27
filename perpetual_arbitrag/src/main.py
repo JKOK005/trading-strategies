@@ -3,6 +3,7 @@ import os
 import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
+from strategies.SingleTradeArbitrag import SingleTradeArbitrag
 
 """
 python3 main.py \
@@ -24,7 +25,9 @@ if __name__ == "__main__":
 	parser.add_argument('--futures_trading_pair', type=str, nargs='?', default="XBTUSDM", help='Futures trading pair symbol as defined by exchange')
 	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env.')
 	parser.add_argument('--trade_threshold', type=float, nargs='?', default=0.1, help='% threshold beyond which we consider it an arbitrag opportunity')
-	parser.add_argument('--poll_interval_s', type=int, nargs='?', default = 60, help='Poll interval in seconds')
+	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=60, help='Poll interval in seconds')
+	parser.add_argument('--trading_lot_size', type=int, nargs='?', default=100, help='Lot size for each transaction')
+	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=0.1, help='Fraction of price difference which we can consider making an entry')
 	parser.add_argument('--spot_api_key', type=str, nargs='?', help='Spot exchange api key')
 	parser.add_argument('--spot_api_secret_key', type=str, nargs='?', default="????", help='Spot exchange secret api key')
 	parser.add_argument('--spot_api_passphrase', type=str, nargs='?', default="????", help='Spot exchange api passphrase')
@@ -43,6 +46,13 @@ if __name__ == "__main__":
 								futures_client_pass_phrase 		= args.futures_api_passphrase,
 								sandbox 						= args.use_sandbox
 							)
+
+	trade_strategy 		= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
+												futures_symbol 		= args.futures_trading_pair,
+												lot_size_entry 		= args.trading_lot_size,
+												entry_percent_gap 	= args.entry_gap_frac * 100,
+												api_client 			= client
+											)
 
 	import IPython
 	IPython.embed()

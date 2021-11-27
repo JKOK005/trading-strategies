@@ -31,16 +31,16 @@ class ExchangeClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def get_spot_most_recent_fulfilled_orders(self, symbol: str):
+	def get_spot_most_recent_fulfilled_order(self, symbol: str):
 		"""
-		Gets information of the most recent spot trades that have been fulfilled
+		Gets information of the most recent spot trade that have been fulfilled
 		"""
 		pass
 
 	@abstractmethod
-	def get_futures_most_recent_fulfilled_orders(self, symbol: str):
+	def get_futures_most_recent_fulfilled_order(self, symbol: str):
 		"""
-		Gets information of the most recent futures trades that have been fulfilled
+		Gets information of the most recent futures trade that have been fulfilled
 		"""
 		pass
 
