@@ -44,3 +44,11 @@ In order to ensure that trades are executed properly, we need
 4) To find a currently active (unfulfilled) order - `client.futures_trade.get_order_list(status = "active")`
 
 5) To cancel all limit orders - `client.futures_trade.cancel_all_limit_order(symbol = "XBTUSDM")`
+
+
+### Bot flow chart
+Overall execution flow of the program:
+![bot-overview](img/spot-futures-arbitrag-bot-overview.png)
+
+Trade execution logic:
+![trade-logic](img/trading-execution.png)
