@@ -47,18 +47,18 @@ if __name__ == "__main__":
 								sandbox 						= args.use_sandbox
 							)
 
-	trade_strategy 		= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
-												futures_symbol 		= args.futures_trading_pair,
-												lot_size_entry 		= args.trading_lot_size,
-												entry_percent_gap 	= args.entry_gap_frac * 100,
-												api_client 			= client
-											)
-
-	import IPython
-	IPython.embed()
+	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
+											futures_symbol 		= args.futures_trading_pair,
+											lot_size_entry 		= args.trading_lot_size,
+											entry_percent_gap 	= args.entry_gap_frac * 100,
+											api_client 			= client
+										)
 
 	while True:
 		spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
 		futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
 		logging.info(f"Spot price: {spot_price}, Futures price: {futures_price}, Ratio: {spot_price / futures_price * 100}%")
+		
+		decision 		= trade_strategy.trade_decision(spot_price = spot_price, futures_price = futures_price, threshold = args.entry_gap_frac)
+		logging.info(f"Executing trade decision: {decision}")
 		sleep(args.poll_interval_s)

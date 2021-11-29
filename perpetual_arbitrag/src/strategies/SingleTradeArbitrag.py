@@ -1,10 +1,18 @@
+import logging
 from enum import Enum
 from strategies.Strategies import Strategies
 
 class TradePosition(Enum):
+	# Current position that the bot has taken up
 	NO_POSITION_TAKEN 		= 1
 	LONG_SPOT_SHORT_FUTURE 	= 2
 	LONG_FUTURE_SHORT_SPOT 	= 3
+
+class ExecutionDecision(Enum):
+	# What should the bot do given the information
+	NO_DECISION 				= 1
+	GO_LONG_SPOT_SHORT_FUTURE 	= 2
+	GO_LONG_FUTURE_SHORT_SPOT 	= 3
 
 class SingleTradeArbitrag(Strategies):
 	spot_symbol 		= None
@@ -12,6 +20,7 @@ class SingleTradeArbitrag(Strategies):
 	lot_size_entry 		= None
 	entry_percent_gap	= None
 	api_client 			= None
+	logger 				= logging.getLogger('SingleTradeArbitrag')
 	current_position 	= TradePosition.NO_POSITION_TAKEN
 
 	def __init__(self,	spot_symbol: str,
@@ -33,7 +42,7 @@ class SingleTradeArbitrag(Strategies):
 		self.lot_size_entry 	= lot_size_entry
 		self.entry_percent_gap 	= entry_percent_gap
 		self.api_client 		= api_client
-		# self.check_position_taken()
+		self.current_position 	= self.check_position_taken()
 		return
 
 	def check_open_order_position_taken(self):
@@ -42,13 +51,16 @@ class SingleTradeArbitrag(Strategies):
 		"""
 		most_recent_open_spot_order 	= self.api_client.get_spot_most_recent_open_order(symbol = self.spot_symbol)
 		most_recent_open_futures_order 	= self.api_client.get_futures_most_recent_open_order(symbol = self.futures_symbol)
+		position 						= TradePosition.NO_POSITION_TAKEN
 
 		if most_recent_open_spot_order is not None and most_recent_open_futures_order is not None:
 			if most_recent_open_spot_order["side"] == "buy" and most_recent_open_futures_order["side"] == "sell":
-				return TradePosition.LONG_SPOT_SHORT_FUTURE
+				position = TradePosition.LONG_SPOT_SHORT_FUTURE
 			elif most_recent_open_spot_order["side"] == "sell" and most_recent_open_futures_order["side"] == "buy":
-				return TradePosition.LONG_FUTURE_SHORT_SPOT	
-		return TradePosition.NO_POSITION_TAKEN
+				position = TradePosition.LONG_FUTURE_SHORT_SPOT				
+
+		self.logger.debug(f"Current open order position is {position}")
+		return position
 
 	def check_fulfilled_order_position_taken(self):
 		"""
@@ -56,13 +68,16 @@ class SingleTradeArbitrag(Strategies):
 		"""
 		most_recent_fulfilled_spot_order 	= self.api_client.get_spot_most_recent_fulfilled_order(symbol = self.spot_symbol)
 		most_recent_fulfilled_futures_order = self.api_client.get_futures_most_recent_fulfilled_order(symbol = self.futures_symbol)
+		position 							= TradePosition.NO_POSITION_TAKEN
 
 		if most_recent_fulfilled_spot_order is not None and most_recent_fulfilled_futures_order is not None:
 			if most_recent_fulfilled_spot_order["side"] == "buy" and most_recent_fulfilled_futures_order["side"] == "sell":
-				return TradePosition.LONG_SPOT_SHORT_FUTURE
+				position = TradePosition.LONG_SPOT_SHORT_FUTURE
 			elif most_recent_fulfilled_spot_order["side"] == "sell" and most_recent_fulfilled_futures_order["side"] == "buy":
-				return TradePosition.LONG_FUTURE_SHORT_SPOT
-		return TradePosition.NO_POSITION_TAKEN
+				position = TradePosition.LONG_FUTURE_SHORT_SPOT
+
+		self.logger.debug(f"Current fulfilled order position is {position}")
+		return position
 
 	def check_position_taken(self):
 		"""
@@ -84,13 +99,23 @@ class SingleTradeArbitrag(Strategies):
 		current_position 		= open_order_position
 		
 		if current_position == TradePosition.NO_POSITION_TAKEN:
-			# TODO: Wipe out all open positions for futures & spot pairs			
 			# Part 2
-			fulfilled_order_position = self.check_fulfilled_order_position_taken()
+			current_position 	= self.check_fulfilled_order_position_taken()
+
+		self.logger.info(f"Current position is {current_position}")
 		return current_position
 
-	def trade_decision(self, spot_price: float, futures_price: float):
+	def trade_decision(self, 	spot_price: float, 
+								futures_price: float, 
+								threshold: float,
+								*args,
+								**kwargs):
 		"""
 		Returns a decision on which asset to buy / sell or do nothing
 		"""
-		pass
+		decision = ExecutionDecision.NO_DECISION
+		if (spot_price > futures_price) and (spot_price / futures_price > threshold) and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
+			decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
+		elif (futures_price > spot_price) and (futures_price / spot_price > threshold) and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
+			decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
+		return decision
