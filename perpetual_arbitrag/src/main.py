@@ -3,19 +3,20 @@ import os
 import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
-from strategies.SingleTradeArbitrag import SingleTradeArbitrag
+from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
 python3 main.py \
 --spot_trading_pair BTC-USDT \
---futures_trading_pair XBTUSDM \
---poll_interval_s 60 \
+--futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
 --spot_api_secret_key xxx \
---spot_api_passphrase xxx
+--spot_api_passphrase xxx \
 --futures_api_key xxx \
 --futures_api_secret_key xxx \
 --futures_api_passphrase xxx \
+--spot_entry_vol 0.01 \
+--futures_entry_lot_size 10 \
 --use_sandbox
 """
 
@@ -26,7 +27,8 @@ if __name__ == "__main__":
 	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env.')
 	parser.add_argument('--trade_threshold', type=float, nargs='?', default=0.1, help='% threshold beyond which we consider it an arbitrag opportunity')
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=60, help='Poll interval in seconds')
-	parser.add_argument('--trading_lot_size', type=int, nargs='?', default=100, help='Lot size for each transaction')
+	parser.add_argument('--spot_entry_vol', type=float, nargs='?', default=0.001, help='Volume of spot assets for each entry')
+	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=100, help='Lot size for each entry for futures')
 	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=0.1, help='Fraction of price difference which we can consider making an entry')
 	parser.add_argument('--spot_api_key', type=str, nargs='?', help='Spot exchange api key')
 	parser.add_argument('--spot_api_secret_key', type=str, nargs='?', default="????", help='Spot exchange secret api key')
@@ -49,7 +51,6 @@ if __name__ == "__main__":
 
 	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
 											futures_symbol 		= args.futures_trading_pair,
-											lot_size_entry 		= args.trading_lot_size,
 											entry_percent_gap 	= args.entry_gap_frac * 100,
 											api_client 			= client
 										)
@@ -61,4 +62,39 @@ if __name__ == "__main__":
 		
 		decision 		= trade_strategy.trade_decision(spot_price = spot_price, futures_price = futures_price, threshold = args.entry_gap_frac)
 		logging.info(f"Executing trade decision: {decision}")
+
+		# Execute orders
+		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
+			client.place_spot_order(symbol 		= args.spot_trading_pair,
+									order_type 	= "buy",
+									order_side 	= "limit",
+									price 		= spot_price,
+									size 		= args.spot_entry_vol
+								)
+
+			client.place_futures_order(	symbol 		= args.futures_trading_pair,
+										order_type 	= "sell",
+										order_side 	= "limit",
+										price 		= futures_price,
+										size 		= args.futures_entry_lot_size,
+										lever 		= 1
+									)
+
+		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
+			client.place_spot_order(symbol 		= args.spot_trading_pair,
+									order_type 	= "sell",
+									order_side 	= "limit",
+									price 		= spot_price,
+									size 		= args.spot_entry_vol
+								)
+
+			client.place_futures_order(	symbol 		= args.futures_trading_pair,
+										order_type 	= "buy",
+										order_side 	= "limit",
+										price 		= futures_price,
+										size 		= args.futures_entry_lot_size,
+										lever 		= 1
+									)
+
+
 		sleep(args.poll_interval_s)

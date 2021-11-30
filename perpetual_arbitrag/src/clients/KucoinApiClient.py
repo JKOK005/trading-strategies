@@ -1,3 +1,4 @@
+import logging
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
 from clients.Clients import ExchangeClients
@@ -12,6 +13,7 @@ class KucoinApiClient(ExchangeClients):
 	kucoin_spot_sandbox_url 	= "https://openapi-sandbox.kucoin.com"
 	kucoin_futures_url 			= "https://api-futures.kucoin.com"
 	kucoin_futures_sandbox_url 	= "https://api-sandbox-futures.kucoin.com"
+	logger 						= logging.getLogger('KucoinApiClient')
 
 	def __init__(self, 	spot_client_api_key: str, 
 						spot_client_api_secret_key: str, 
@@ -156,12 +158,14 @@ class KucoinApiClient(ExchangeClients):
 
 		Ref: https://docs.kucoin.com/#place-a-new-order
 		"""
-		return 	self.spot_trade.create_market_order(symbol 	= symbol,
-													type 	= order_type,
-													side 	= order_side,
-													price 	= price,
-													size 	= size
-												)
+		self.logger.info(f"Sport order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
+		# return 	self.spot_trade.create_market_order(symbol 	= symbol,
+		# 											type 	= order_type,
+		# 											side 	= order_side,
+		# 											price 	= price,
+		# 											size 	= size
+		# 										)
+		return None
 
 	def place_futures_order(self, 	symbol: str, 
 									order_type: str, 
@@ -178,13 +182,15 @@ class KucoinApiClient(ExchangeClients):
 
 		Ref: https://docs.kucoin.com/futures/#place-an-order
 		"""
-		return 	self.futures_trade.create_limit_order( 	symbol 	= symbol,
-														type 	= order_type,
-														side 	= order_side,
-														price 	= price,
-														size 	= size,
-														lever	= lever
-													)
+		self.logger.info(f"Futures order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}, leverage: {lever}")
+		# return 	self.futures_trade.create_limit_order( 	symbol 	= symbol,
+		# 												type 	= order_type,
+		# 												side 	= order_side,
+		# 												price 	= price,
+		# 												size 	= size,
+		# 												lever	= lever
+		# 											)
+		return None
 
 	def cancel_spot_order(self, order_id: str):
 		pass

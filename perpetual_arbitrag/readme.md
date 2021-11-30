@@ -1,5 +1,22 @@
 ## Perpetual - Spot arbitrag bot
 
+### Example of execution
+
+```python
+python3 main.py \
+--spot_trading_pair BTC-USDT \
+--futures_trading_pair XBTUSDTM \
+--spot_api_key xxx \
+--spot_api_secret_key xxx \
+--spot_api_passphrase xxx \
+--futures_api_key xxx \
+--futures_api_secret_key xxx \
+--futures_api_passphrase xxx \
+--spot_entry_vol 0.01 \
+--futures_entry_lot_size 10 \
+--use_sandbox
+```
+
 ### Transfer of main account funds to trade account
 In order to ensure that trades are executed properly, we need 
 
