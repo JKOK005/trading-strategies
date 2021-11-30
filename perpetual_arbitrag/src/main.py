@@ -17,6 +17,7 @@ python3 main.py \
 --futures_api_passphrase xxx \
 --spot_entry_vol 0.01 \
 --futures_entry_lot_size 10 \
+--futures_entry_leverage 1 \
 --use_sandbox
 """
 
@@ -29,6 +30,7 @@ if __name__ == "__main__":
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=60, help='Poll interval in seconds')
 	parser.add_argument('--spot_entry_vol', type=float, nargs='?', default=0.001, help='Volume of spot assets for each entry')
 	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=100, help='Lot size for each entry for futures')
+	parser.add_argument('--futures_entry_leverage', type=int, nargs='?', default=1, help='Leverage for each entry for futures')
 	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=0.1, help='Fraction of price difference which we can consider making an entry')
 	parser.add_argument('--spot_api_key', type=str, nargs='?', help='Spot exchange api key')
 	parser.add_argument('--spot_api_secret_key', type=str, nargs='?', default="????", help='Spot exchange secret api key')
@@ -66,34 +68,34 @@ if __name__ == "__main__":
 		# Execute orders
 		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
 			client.place_spot_order(symbol 		= args.spot_trading_pair,
-									order_type 	= "buy",
-									order_side 	= "limit",
+									order_type 	= "limit",
+									order_side 	= "buy",
 									price 		= spot_price,
 									size 		= args.spot_entry_vol
 								)
 
 			client.place_futures_order(	symbol 		= args.futures_trading_pair,
-										order_type 	= "sell",
-										order_side 	= "limit",
+										order_type 	= "limit",
+										order_side 	= "sell",
 										price 		= futures_price,
 										size 		= args.futures_entry_lot_size,
-										lever 		= 1
+										lever 		= args.futures_entry_leverage
 									)
 
 		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
 			client.place_spot_order(symbol 		= args.spot_trading_pair,
-									order_type 	= "sell",
-									order_side 	= "limit",
+									order_type 	= "limit",
+									order_side 	= "sell",
 									price 		= spot_price,
 									size 		= args.spot_entry_vol
 								)
 
 			client.place_futures_order(	symbol 		= args.futures_trading_pair,
-										order_type 	= "buy",
-										order_side 	= "limit",
+										order_type 	= "limit",
+										order_side 	= "buy",
 										price 		= futures_price,
 										size 		= args.futures_entry_lot_size,
-										lever 		= 1
+										lever 		= args.futures_entry_leverage
 									)
 
 

@@ -159,13 +159,12 @@ class KucoinApiClient(ExchangeClients):
 		Ref: https://docs.kucoin.com/#place-a-new-order
 		"""
 		self.logger.info(f"Sport order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
-		# return 	self.spot_trade.create_market_order(symbol 	= symbol,
-		# 											type 	= order_type,
-		# 											side 	= order_side,
-		# 											price 	= price,
-		# 											size 	= size
-		# 										)
-		return None
+		return 	self.spot_trade.create_market_order(symbol 	= symbol,
+													type 	= order_type,
+													side 	= order_side,
+													price 	= price,
+													size 	= size
+												)
 
 	def place_futures_order(self, 	symbol: str, 
 									order_type: str, 
@@ -183,14 +182,13 @@ class KucoinApiClient(ExchangeClients):
 		Ref: https://docs.kucoin.com/futures/#place-an-order
 		"""
 		self.logger.info(f"Futures order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}, leverage: {lever}")
-		# return 	self.futures_trade.create_limit_order( 	symbol 	= symbol,
-		# 												type 	= order_type,
-		# 												side 	= order_side,
-		# 												price 	= price,
-		# 												size 	= size,
-		# 												lever	= lever
-		# 											)
-		return None
+		return 	self.futures_trade.create_limit_order( 	symbol 	= symbol,
+														type 	= order_type,
+														side 	= order_side,
+														price 	= price,
+														size 	= size,
+														lever	= lever
+													)
 
 	def cancel_spot_order(self, order_id: str):
 		pass

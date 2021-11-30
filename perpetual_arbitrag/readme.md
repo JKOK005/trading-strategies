@@ -14,6 +14,7 @@ python3 main.py \
 --futures_api_passphrase xxx \
 --spot_entry_vol 0.01 \
 --futures_entry_lot_size 10 \
+--futures_entry_leverage 1 \
 --use_sandbox
 ```
 
