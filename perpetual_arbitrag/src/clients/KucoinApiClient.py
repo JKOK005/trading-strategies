@@ -149,7 +149,7 @@ class KucoinApiClient(ExchangeClients):
 								order_type: str, 
 								order_side: str, 
 								price: int,
-								size: int,
+								size: float,
 								*args, **kwargs):
 		"""
 		order_type 	- Either limit or market
