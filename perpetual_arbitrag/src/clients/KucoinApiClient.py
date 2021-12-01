@@ -191,7 +191,19 @@ class KucoinApiClient(ExchangeClients):
 													)
 
 	def cancel_spot_order(self, order_id: str):
-		pass
+		self.logger.info(f"Cancelling spot order ID {order_id}")
+
+		try:
+			self.spot_trade.cancel_order(orderId = order_id)
+		except Exception as ex:
+			self.logger.error(ex)
+		return
 
 	def cancel_futures_order(self, order_id: str):
-		pass
+		self.logger.info(f"Cancelling futures order ID {order_id}")
+		
+		try:
+			self.futures_trade.cancel_order(orderId = order_id)
+		except Exception as ex:
+			self.logger.error(ex)
+		return

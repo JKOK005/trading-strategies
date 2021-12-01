@@ -3,6 +3,7 @@ import os
 import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
+from execution.BotExecution import BotExecution 
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
@@ -41,21 +42,24 @@ if __name__ == "__main__":
 	args 	= parser.parse_args()
 
 	logging.basicConfig(level = logging.INFO)
+	logging.info(f"Starting Arbitrag bot with the following params: {args}")
 
-	client 	= KucoinApiClient(	spot_client_api_key 			= args.spot_api_key, 
-								spot_client_api_secret_key 		= args.spot_api_secret_key, 
-								spot_client_pass_phrase 		= args.spot_api_passphrase, 
-								futures_client_api_key 			= args.futures_api_key, 
-								futures_client_api_secret_key 	= args.futures_api_secret_key, 
-								futures_client_pass_phrase 		= args.futures_api_passphrase,
-								sandbox 						= args.use_sandbox
-							)
+	client 			= KucoinApiClient(	spot_client_api_key 			= args.spot_api_key, 
+										spot_client_api_secret_key 		= args.spot_api_secret_key, 
+										spot_client_pass_phrase 		= args.spot_api_passphrase, 
+										futures_client_api_key 			= args.futures_api_key, 
+										futures_client_api_secret_key 	= args.futures_api_secret_key, 
+										futures_client_pass_phrase 		= args.futures_api_passphrase,
+										sandbox 						= args.use_sandbox
+									)
 
 	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
 											futures_symbol 		= args.futures_trading_pair,
 											entry_percent_gap 	= args.entry_gap_frac * 100,
 											api_client 			= client
 										)
+
+	bot_executor 	= BotExecution(api_client = client)
 
 	while True:
 		spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
@@ -67,36 +71,28 @@ if __name__ == "__main__":
 
 		# Execute orders
 		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
-			client.place_spot_order(symbol 		= args.spot_trading_pair,
-									order_type 	= "limit",
-									order_side 	= "buy",
-									price 		= spot_price,
-									size 		= args.spot_entry_vol
-								)
-
-			client.place_futures_order(	symbol 		= args.futures_trading_pair,
-										order_type 	= "limit",
-										order_side 	= "sell",
-										price 		= futures_price,
-										size 		= args.futures_entry_lot_size,
-										lever 		= args.futures_entry_leverage
-									)
+			bot_executor.long_spot_short_futures(	spot_symbol 		= args.spot_trading_pair,
+													spot_order_type 	= "limit",
+													spot_price 			= spot_price,
+													spot_size 			= args.spot_entry_vol,
+													futures_symbol 		= args.futures_trading_pair,
+													futures_order_type 	= "limit",
+													futures_price 		= futures_price,
+													futures_size 		= args.futures_entry_lot_size,
+													futures_lever 		= args.futures_entry_leverage
+												)
 
 		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
-			client.place_spot_order(symbol 		= args.spot_trading_pair,
-									order_type 	= "limit",
-									order_side 	= "sell",
-									price 		= spot_price,
-									size 		= args.spot_entry_vol
-								)
-
-			client.place_futures_order(	symbol 		= args.futures_trading_pair,
-										order_type 	= "limit",
-										order_side 	= "buy",
-										price 		= futures_price,
-										size 		= args.futures_entry_lot_size,
-										lever 		= args.futures_entry_leverage
-									)
+			bot_executor.short_spot_long_futures(	spot_symbol 		= args.spot_trading_pair,
+													spot_order_type 	= "limit",
+													spot_price 			= spot_price,
+													spot_size 			= args.spot_entry_vol,
+													futures_symbol 		= args.futures_trading_pair,
+													futures_order_type 	= "limit",
+													futures_price 		= futures_price,
+													futures_size 		= args.futures_entry_lot_size,
+													futures_lever 		= args.futures_entry_leverage
+												)
 
 
 		sleep(args.poll_interval_s)
