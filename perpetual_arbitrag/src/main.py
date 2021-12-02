@@ -53,6 +53,9 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
+	import IPython
+	IPython.embed()
+
 	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
 											futures_symbol 		= args.futures_trading_pair,
 											entry_percent_gap 	= args.entry_gap_frac * 100,
@@ -72,11 +75,11 @@ if __name__ == "__main__":
 		# Execute orders
 		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
 			bot_executor.long_spot_short_futures(	spot_symbol 		= args.spot_trading_pair,
-													spot_order_type 	= "limit",
+													spot_order_type 	= "margin",
 													spot_price 			= spot_price,
 													spot_size 			= args.spot_entry_vol,
 													futures_symbol 		= args.futures_trading_pair,
-													futures_order_type 	= "limit",
+													futures_order_type 	= "margin",
 													futures_price 		= futures_price,
 													futures_size 		= args.futures_entry_lot_size,
 													futures_lever 		= args.futures_entry_leverage
@@ -84,11 +87,11 @@ if __name__ == "__main__":
 
 		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
 			bot_executor.short_spot_long_futures(	spot_symbol 		= args.spot_trading_pair,
-													spot_order_type 	= "limit",
+													spot_order_type 	= "margin",
 													spot_price 			= spot_price,
 													spot_size 			= args.spot_entry_vol,
 													futures_symbol 		= args.futures_trading_pair,
-													futures_order_type 	= "limit",
+													futures_order_type 	= "margin",
 													futures_price 		= futures_price,
 													futures_size 		= args.futures_entry_lot_size,
 													futures_lever 		= args.futures_entry_leverage

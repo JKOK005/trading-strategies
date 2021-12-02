@@ -1,3 +1,4 @@
+import deprecation
 import logging
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
@@ -55,17 +56,76 @@ class KucoinApiClient(ExchangeClients):
 										url 		= self.kucoin_futures_sandbox_url if sandbox else self.kucoin_futures_url
 									)
 
+	def get_spot_trading_account_details(self, currency: str):
+		"""
+		Retrieves spot trading details
+		"""
+		spot_accounts 	= client.spot_user.get_account_list()
+		return list(filter(lambda x: x["type"] == "trade" and x["currency"] == currency, spot_accounts))[0]
+
+	def get_futures_trading_account_details(self, currency: str):
+		"""
+		Retrieves futures trading account details
+		"""
+		futures_account = client.futures_user.get_account_overview(currency = currency)
+		return futures_account
+
+	@deprecation.deprecated(deprecated_in = "1.0",
+                        	details = "Use Bid / Ask pricing instead")
 	def get_spot_trading_price(self, symbol: str):
 		"""
 		Retrieves current spot pricing for trading symbol
 		"""
 		return float(self.spot_client.get_ticker(symbol)["price"])
 
+	@deprecation.deprecated(deprecated_in = "1.0",
+                        	details = "Use Bid / Ask pricing instead")
 	def get_futures_trading_price(self, symbol: str):
 		"""
 		Retrieves current futures price for trading symbol
 		"""
 		return float(self.futures_client.get_ticker(symbol)["price"])
+
+	def _compute_average_trade_price(self, price_qty_pairs_ordered: [int, float], size: float):
+		"""
+		We will read pricing - qty data from the first entry of the list. 
+
+		This logic will differ, depending on whether we want to go long / short on the asset. 
+		As such, the ordering of the price-qty pairs in the list has to be handled properly by the user. 
+		"""
+		all_trade_qty 		= size
+		trade_amt 			= 0
+		executed_trade_qty 	= 0 
+		for each_price_qty_pairs in price_qty_pairs_ordered:
+			if all_trade_qty < 0:
+				break
+			else:
+				[price, qty] 	=  each_price_qty_pairs
+				trade_qty 		=  min(all_trade_qty, qty)
+				trade_amt 	 	+= price * trade_qty
+				all_trade_qty 	-= trade_qty
+				executed_trade_qty += trade_qty
+		return trade_amt / executed_trade_qty
+
+	def _compute_average_bid_ask_price(self, price_qty_pairs: [int, float], size: float):
+		pass
+
+	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
+		"""
+		Returns the average bid / ask price of the spot asset.
+		Assuming that we buy / sell all the asset at the given volume. 
+		"""
+		bid_ask_orders 	= self.spot_client.get_part_order(pieces = 100, symbol = symbol)
+		bids 			= bid_ask_orders["bids"]
+		asks 			= bid_ask_orders["asks"]
+		pass
+
+	def get_futures_average_bid_ask_price(self, symbol: str, size: float):
+		"""
+		Returns the average bid / ask price of the futures asset.
+		Assuming that we buy / sell all the asset at the given lot size. 
+		"""
+		pass
 
 	def get_spot_open_orders(self, symbol: str):
 		"""
