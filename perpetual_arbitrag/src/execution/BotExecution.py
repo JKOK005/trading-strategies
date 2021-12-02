@@ -49,20 +49,20 @@ class BotExecution(object):
 		futures_order		= None
 
 		try:
+			futures_order 	= self._place_futures_order(symbol 		= futures_symbol,
+											order_type 	= futures_order_type,
+											order_side 	= "sell",
+											price 		= futures_price,
+											size 		= futures_size,
+											lever 		= futures_lever
+										)
+			
 			spot_order  	= self._place_spot_order(symbol 	= spot_symbol,
 													 order_type = spot_order_type,
 													 order_side = "buy",
 													 price 		= spot_price,
 													 size 		= spot_size
 												)
-
-			futures_order 	= self._place_futures_order(symbol 		= futures_symbol,
-														order_type 	= futures_order_type,
-														order_side 	= "sell",
-														price 		= futures_price,
-														size 		= futures_size,
-														lever 		= futures_lever
-													)
 		except Exception as ex:
 			self.logger.error(ex)
 			
