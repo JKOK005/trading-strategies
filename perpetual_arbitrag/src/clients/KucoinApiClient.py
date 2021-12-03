@@ -86,7 +86,7 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		return float(self.futures_client.get_ticker(symbol)["price"])
 
-	def _compute_average_trade_price(self, price_qty_pairs_ordered: [int, float], size: float):
+	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
 		"""
 		We will read pricing - qty data from the first entry of the list. 
 
@@ -107,18 +107,28 @@ class KucoinApiClient(ExchangeClients):
 				executed_trade_qty += trade_qty
 		return trade_amt / executed_trade_qty
 
-	def _compute_average_bid_ask_price(self, price_qty_pairs: [int, float], size: float):
-		pass
+	def _compute_average_bid_price(self, bids: [[float, float]], size: float):
+		_bids 	= sorted(bids, key = lambda x: x[0], reverse = True)
+		return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
+
+	def _compute_average_ask_price(self, asks: [[float, float]], size: float):
+		_asks 	= sorted(asks, key = lambda x: x[0], reverse = False)
+		return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
 
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the spot asset.
 		Assuming that we buy / sell all the asset at the given volume. 
 		"""
-		bid_ask_orders 	= self.spot_client.get_part_order(pieces = 100, symbol = symbol)
-		bids 			= bid_ask_orders["bids"]
-		asks 			= bid_ask_orders["asks"]
-		pass
+		bid_ask_orders 		= self.spot_client.get_part_order(pieces = 100, symbol = symbol)
+		bids 				= bid_ask_orders["bids"]
+		bids 				= list(map(lambda x: [float(x[0]), float(x[1])], bids))
+		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
+
+		asks 				= bid_ask_orders["asks"]
+		asks 				= list(map(lambda x: [float(x[0]), float(x[1])], asks))
+		average_sell_price 	= self._compute_average_ask_price(bids = asks, size = size)
+		return (average_bid_price, average_sell_price)
 
 	def get_futures_average_bid_ask_price(self, symbol: str, size: float):
 		"""
