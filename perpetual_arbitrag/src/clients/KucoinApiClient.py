@@ -1,5 +1,6 @@
 import deprecation
 import logging
+import sys
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
 from clients.Clients import ExchangeClients
@@ -95,7 +96,7 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		all_trade_qty 		= size
 		trade_amt 			= 0
-		executed_trade_qty 	= 0 
+		executed_trade_qty 	= 0
 		for each_price_qty_pairs in price_qty_pairs_ordered:
 			if all_trade_qty < 0:
 				break
@@ -108,26 +109,32 @@ class KucoinApiClient(ExchangeClients):
 		return trade_amt / executed_trade_qty
 
 	def _compute_average_bid_price(self, bids: [[float, float]], size: float):
+		# Sell into bids starting from the highest to the lowest.
 		_bids 	= sorted(bids, key = lambda x: x[0], reverse = True)
-		return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
+		if len(_bids) > 0:
+			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
+		return 0
 
 	def _compute_average_ask_price(self, asks: [[float, float]], size: float):
+		# Buy into asks starting from the lowest to the highest.
 		_asks 	= sorted(asks, key = lambda x: x[0], reverse = False)
-		return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
+		if len(_asks) > 0:
+			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
+		return sys.maxsize
 
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the spot asset.
 		Assuming that we buy / sell all the asset at the given volume. 
 		"""
-		bid_ask_orders 		= self.spot_client.get_part_order(pieces = 100, symbol = symbol)
+		bid_ask_orders 		= self.spot_client.get_part_order(symbol = symbol, pieces = 100)
 		bids 				= bid_ask_orders["bids"]
 		bids 				= list(map(lambda x: [float(x[0]), float(x[1])], bids))
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
 
 		asks 				= bid_ask_orders["asks"]
 		asks 				= list(map(lambda x: [float(x[0]), float(x[1])], asks))
-		average_sell_price 	= self._compute_average_ask_price(bids = asks, size = size)
+		average_sell_price 	= self._compute_average_ask_price(asks = asks, size = size)
 		return (average_bid_price, average_sell_price)
 
 	def get_futures_average_bid_ask_price(self, symbol: str, size: float):
@@ -135,7 +142,16 @@ class KucoinApiClient(ExchangeClients):
 		Returns the average bid / ask price of the futures asset.
 		Assuming that we buy / sell all the asset at the given lot size. 
 		"""
-		pass
+		# bid_ask_orders 		= self.futures_client.l2_part_order_book(symbol = "XBTUSDTM", depth = 100)
+		bid_ask_orders 		= self.futures_client.l2_order_book(symbol = "XBTUSDTM")
+		bids 				= bid_ask_orders["bids"]
+		bids 				= list(map(lambda x: [float(x[0]), float(x[1])], bids))
+		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
+
+		asks 				= bid_ask_orders["asks"]
+		asks 				= list(map(lambda x: [float(x[0]), float(x[1])], asks))
+		average_sell_price 	= self._compute_average_ask_price(asks = asks, size = size)
+		return (average_bid_price, average_sell_price)
 
 	def get_spot_open_orders(self, symbol: str):
 		"""

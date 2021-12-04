@@ -1,3 +1,4 @@
+import deprecation
 import logging
 from enum import Enum
 from strategies.Strategies import Strategies
@@ -101,6 +102,8 @@ class SingleTradeArbitrag(Strategies):
 		self.logger.info(f"Current position is {current_position}")
 		return current_position
 
+	@deprecation.deprecated(deprecated_in = "1.0",
+                        	details = "Use Bid / Ask pricing instead")
 	def trade_decision(self, 	spot_price: float, 
 								futures_price: float, 
 								threshold: float,
@@ -114,4 +117,32 @@ class SingleTradeArbitrag(Strategies):
 			decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
 		elif (futures_price > spot_price) and (futures_price / spot_price > threshold) and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
 			decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
+		return decision
+
+	def bid_ask_trade_decision(self, 	spot_bid_price: float,
+										spot_ask_price: float,
+										futures_bid_price: float,
+										futures_ask_price: float,
+										threshold: float,
+										*args,
+										**kwargs
+							):
+		"""
+		Returns a decision on which asset to buy / sell or do nothing
+		"""
+		decision = ExecutionDecision.NO_DECISION
+
+		profit_from_long_spot_short_futures = futures_bid_price - spot_ask_price
+		profit_from_short_spot_long_futures = spot_bid_price - futures_ask_price
+
+		if 		(profit_from_long_spot_short_futures > profit_from_short_spot_long_futures) \
+				and (futures_bid_price / spot_ask_price - 1 > threshold) \
+				and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
+				decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
+
+		elif 	(profit_from_short_spot_long_futures > profit_from_long_spot_short_futures) \
+				and (spot_bid_price / futures_ask_price -1 > threshold) \
+				and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
+				decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
+
 		return decision

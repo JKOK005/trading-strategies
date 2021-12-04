@@ -53,9 +53,6 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
-	import IPython
-	IPython.embed()
-
 	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
 											futures_symbol 		= args.futures_trading_pair,
 											entry_percent_gap 	= args.entry_gap_frac * 100,
@@ -65,37 +62,48 @@ if __name__ == "__main__":
 	bot_executor 	= BotExecution(api_client = client)
 
 	while True:
-		spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
-		futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
-		logging.info(f"Spot price: {spot_price}, Futures price: {futures_price}, Ratio: {spot_price / futures_price * 100}%")
+		# spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
+		# futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
+		# logging.info(f"Spot price: {spot_price}, Futures price: {futures_price}, Ratio: {spot_price / futures_price * 100}%")
 		
-		decision 		= trade_strategy.trade_decision(spot_price = spot_price, futures_price = futures_price, threshold = args.entry_gap_frac)
-		logging.info(f"Executing trade decision: {decision}")
+		# decision = trade_strategy.trade_decision(spot_price = spot_price, futures_price = futures_price, threshold = args.entry_gap_frac)
+		# logging.info(f"Executing trade decision: {decision}")		
 
-		# Execute orders
-		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
-			bot_executor.long_spot_short_futures(	spot_symbol 		= args.spot_trading_pair,
-													spot_order_type 	= "margin",
-													spot_price 			= spot_price,
-													spot_size 			= args.spot_entry_vol,
-													futures_symbol 		= args.futures_trading_pair,
-													futures_order_type 	= "margin",
-													futures_price 		= futures_price,
-													futures_size 		= args.futures_entry_lot_size,
-													futures_lever 		= args.futures_entry_leverage
-												)
+		(avg_spot_bid, avg_spot_ask) 		= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
+		(avg_futures_bid, avg_futures_ask) 	= client.get_futures_average_bid_ask_price(symbol = args.futures_trading_pair, size = args.futures_entry_lot_size)
+		logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Avg futures bid: {avg_futures_bid}, asks: {avg_futures_ask}")
 
-		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
-			bot_executor.short_spot_long_futures(	spot_symbol 		= args.spot_trading_pair,
-													spot_order_type 	= "margin",
-													spot_price 			= spot_price,
-													spot_size 			= args.spot_entry_vol,
-													futures_symbol 		= args.futures_trading_pair,
-													futures_order_type 	= "margin",
-													futures_price 		= futures_price,
-													futures_size 		= args.futures_entry_lot_size,
-													futures_lever 		= args.futures_entry_leverage
-												)
+		decision 	= trade_strategy.bid_ask_trade_decision(spot_bid_price 		= avg_spot_bid,
+															spot_ask_price 		= avg_spot_ask,
+															futures_bid_price 	= avg_futures_bid,
+															futures_ask_price 	= avg_futures_ask,
+															threshold 			= args.entry_gap_frac)
+		logging.info(f"Executing trade decision: {decision}")		
+
+		# # Execute orders
+		# if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
+		# 	bot_executor.long_spot_short_futures(	spot_symbol 		= args.spot_trading_pair,
+		# 											spot_order_type 	= "margin",
+		# 											spot_price 			= spot_price,
+		# 											spot_size 			= args.spot_entry_vol,
+		# 											futures_symbol 		= args.futures_trading_pair,
+		# 											futures_order_type 	= "margin",
+		# 											futures_price 		= futures_price,
+		# 											futures_size 		= args.futures_entry_lot_size,
+		# 											futures_lever 		= args.futures_entry_leverage
+		# 										)
+
+		# elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
+		# 	bot_executor.short_spot_long_futures(	spot_symbol 		= args.spot_trading_pair,
+		# 											spot_order_type 	= "margin",
+		# 											spot_price 			= spot_price,
+		# 											spot_size 			= args.spot_entry_vol,
+		# 											futures_symbol 		= args.futures_trading_pair,
+		# 											futures_order_type 	= "margin",
+		# 											futures_price 		= futures_price,
+		# 											futures_size 		= args.futures_entry_lot_size,
+		# 											futures_lever 		= args.futures_entry_leverage
+		# 										)
 
 
 		sleep(args.poll_interval_s)
