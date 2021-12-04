@@ -18,7 +18,7 @@ class BotExecution(object):
 												 order_side = order_side,
 												 price 		= price,
 												 size 		= size
-												)
+											)
 
 	def _place_futures_order(self, 	symbol: str,
 									order_type: str,
