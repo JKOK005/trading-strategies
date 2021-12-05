@@ -142,8 +142,8 @@ class KucoinApiClient(ExchangeClients):
 		Returns the average bid / ask price of the futures asset.
 		Assuming that we buy / sell all the asset at the given lot size. 
 		"""
-		# bid_ask_orders 		= self.futures_client.l2_part_order_book(symbol = "XBTUSDTM", depth = 100)
-		bid_ask_orders 		= self.futures_client.l2_order_book(symbol = "XBTUSDTM")
+		# bid_ask_orders 		= self.futures_client.l2_order_book(symbol = symbol)
+		bid_ask_orders 		= self.futures_client.l2_part_order_book(symbol = symbol, depth = 100)
 		bids 				= bid_ask_orders["bids"]
 		bids 				= list(map(lambda x: [float(x[0]), float(x[1])], bids))
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
