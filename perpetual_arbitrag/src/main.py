@@ -87,11 +87,11 @@ if __name__ == "__main__":
 		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
 			bot_executor.long_spot_short_futures(	spot_symbol 		= args.spot_trading_pair,
 													spot_order_type 	= args.order_type,
-													spot_price 			= spot_price if args.order_type == "limit" else -1,
+													spot_price 			= spot_price if args.order_type == "limit" else 1,
 													spot_size 			= args.spot_entry_vol,
 													futures_symbol 		= args.futures_trading_pair,
 													futures_order_type 	= args.order_type,
-													futures_price 		= futures_price if args.order_type == "limit" else -1,
+													futures_price 		= futures_price if args.order_type == "limit" else 1,
 													futures_size 		= args.futures_entry_lot_size,
 													futures_lever 		= args.futures_entry_leverage
 												)
@@ -99,11 +99,11 @@ if __name__ == "__main__":
 		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
 			bot_executor.short_spot_long_futures(	spot_symbol 		= args.spot_trading_pair,
 													spot_order_type 	= args.order_type,
-													spot_price 			= spot_price if args.order_type == "limit" else -1,
+													spot_price 			= spot_price if args.order_type == "limit" else 1,
 													spot_size 			= args.spot_entry_vol,
 													futures_symbol 		= args.futures_trading_pair,
 													futures_order_type 	= args.order_type,
-													futures_price 		= futures_price if args.order_type == "limit" else -1,
+													futures_price 		= futures_price if args.order_type == "limit" else 1,
 													futures_size 		= args.futures_entry_lot_size,
 													futures_lever 		= args.futures_entry_leverage
 												)

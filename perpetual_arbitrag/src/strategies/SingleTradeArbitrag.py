@@ -113,9 +113,9 @@ class SingleTradeArbitrag(Strategies):
 		Returns a decision on which asset to buy / sell or do nothing
 		"""
 		decision = ExecutionDecision.NO_DECISION
-		if (spot_price > futures_price) and (spot_price / futures_price > threshold) and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
+		if (spot_price > futures_price) and (spot_price / futures_price - 1 > threshold) and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
 			decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
-		elif (futures_price > spot_price) and (futures_price / spot_price > threshold) and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
+		elif (futures_price > spot_price) and (futures_price / spot_price - 1 > threshold) and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
 			decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
 		return decision
 
