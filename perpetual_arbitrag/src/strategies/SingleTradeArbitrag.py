@@ -141,7 +141,7 @@ class SingleTradeArbitrag(Strategies):
 				decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
 
 		elif 	(profit_from_short_spot_long_futures > profit_from_long_spot_short_futures) \
-				and (spot_bid_price / futures_ask_price -1 > threshold) \
+				and (spot_bid_price / futures_ask_price - 1 > threshold) \
 				and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
 				decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
 
