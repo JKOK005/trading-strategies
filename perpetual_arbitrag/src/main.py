@@ -107,5 +107,4 @@ if __name__ == "__main__":
 													futures_size 		= args.futures_entry_lot_size,
 													futures_lever 		= args.futures_entry_leverage
 												)
-
 		sleep(args.poll_interval_s)
