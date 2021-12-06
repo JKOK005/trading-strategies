@@ -1,3 +1,4 @@
+import deprecation
 import logging
 from enum import Enum
 from strategies.Strategies import Strategies
@@ -38,7 +39,7 @@ class SingleTradeArbitrag(Strategies):
 		self.futures_symbol 	= futures_symbol
 		self.entry_percent_gap 	= entry_percent_gap
 		self.api_client 		= api_client
-		self.current_position 	= self.check_position_taken()
+		# self.current_position 	= self.check_position_taken()
 		return
 
 	def check_open_order_position_taken(self):
@@ -110,8 +111,37 @@ class SingleTradeArbitrag(Strategies):
 		Returns a decision on which asset to buy / sell or do nothing
 		"""
 		decision = ExecutionDecision.NO_DECISION
-		if (spot_price > futures_price) and (spot_price / futures_price > threshold) and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
+		if (spot_price > futures_price) and (spot_price / futures_price - 1 > threshold) and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
 			decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
-		elif (futures_price > spot_price) and (futures_price / spot_price > threshold) and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
+		elif (futures_price > spot_price) and (futures_price / spot_price - 1 > threshold) and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
 			decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
+		return decision
+
+	def bid_ask_trade_decision(self, 	spot_bid_price: float,
+										spot_ask_price: float,
+										futures_bid_price: float,
+										futures_ask_price: float,
+										threshold: float,
+										*args,
+										**kwargs
+							):
+		"""
+		Returns a decision on which asset to buy / sell or do nothing
+		"""
+		decision = ExecutionDecision.NO_DECISION
+
+		profit_from_long_spot_short_futures = futures_bid_price - spot_ask_price
+		profit_from_short_spot_long_futures = spot_bid_price - futures_ask_price
+		self.logger.info(f"Profits from long_spot_short_futures: {profit_from_long_spot_short_futures}, short_spot_long_futures: {profit_from_short_spot_long_futures}")
+
+		if 		(profit_from_long_spot_short_futures > profit_from_short_spot_long_futures) \
+				and (futures_bid_price / spot_ask_price - 1 > threshold) \
+				and (self.current_position is not TradePosition.LONG_SPOT_SHORT_FUTURE):
+				decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
+
+		elif 	(profit_from_short_spot_long_futures > profit_from_long_spot_short_futures) \
+				and (spot_bid_price / futures_ask_price - 1 > threshold) \
+				and (self.current_position is not TradePosition.LONG_FUTURE_SHORT_SPOT):
+				decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
+
 		return decision

@@ -1,7 +1,6 @@
 ## Perpetual - Spot arbitrag bot
 
 ### Example of execution
-
 ```python
 python3 main.py \
 --spot_trading_pair BTC-USDT \
@@ -12,11 +11,35 @@ python3 main.py \
 --futures_api_key xxx \
 --futures_api_secret_key xxx \
 --futures_api_passphrase xxx \
+--order_type market \
 --spot_entry_vol 0.01 \
 --futures_entry_lot_size 10 \
 --futures_entry_leverage 1 \
+--entry_gap_frac 0.1 \
+--poll_interval_s 60 \
 --use_sandbox
 ```
+
+Flag / description pairs are explained below.
+
+| Flag | Description | Example |
+| --- | --- | --- |
+| spot_trading_pair | Spot trading pair symbol on exchange | BTC-USDT |
+| futures_trading_pair | Perpetual trading pair symbol on exchange |XBTUSDTM |
+| spot_api_key | Exchange API key for spot account | 0123456789asdzxc |
+| spot_api_secret_key | Exchange secret API key for spot account  | 0000-aaaa-123123-fsdfsd-123qwesad324 |
+| spot_api_passphrase | Exchange api passphrase for spot account | kucoinpassphrase |
+| futures_api_key | Exchange API key for perpetual account | 0123456789asdzxc |
+| futures_api_secret_key | Exchange secret API key for perpetual account  | 0000-aaaa-123123-fsdfsd-123qwesad324 |
+| futures_api_passphrase | Exchange api passphrase for perpetual account | kucoinpassphrase |
+| order_type | Either limit or market | limit or market |
+| spot_entry_vol | Size of buy / sell for spot asset | 0.01 |
+| futures_entry_lot_size | Lot size for buy / sell of perpetual asset | 10 |
+| futures_entry_leverage | Leverage for perpetual | 1 |
+| entry_gap_frac | Ratio difference between spot / perpetual asset for consideration of entry | 0.001 |
+| poll_interval_s | Frequency (s) of polling API | 60 |
+| use_sandbox | If present, we use sandbox environment. Remove for REAL environment | - |
+
 
 ### Transfer of main account funds to trade account
 In order to ensure that trades are executed properly, we need 
