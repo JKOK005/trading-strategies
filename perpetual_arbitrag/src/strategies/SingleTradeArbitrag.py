@@ -102,8 +102,6 @@ class SingleTradeArbitrag(Strategies):
 		self.logger.info(f"Current position is {current_position}")
 		return current_position
 
-	@deprecation.deprecated(deprecated_in = "1.0",
-                        	details = "Use Bid / Ask pricing instead")
 	def trade_decision(self, 	spot_price: float, 
 								futures_price: float, 
 								threshold: float,
@@ -134,6 +132,7 @@ class SingleTradeArbitrag(Strategies):
 
 		profit_from_long_spot_short_futures = futures_bid_price - spot_ask_price
 		profit_from_short_spot_long_futures = spot_bid_price - futures_ask_price
+		self.logger.info(f"Profits from long_spot_short_futures: {profit_from_long_spot_short_futures}, short_spot_long_futures: {profit_from_short_spot_long_futures}")
 
 		if 		(profit_from_long_spot_short_futures > profit_from_short_spot_long_futures) \
 				and (futures_bid_price / spot_ask_price - 1 > threshold) \

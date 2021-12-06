@@ -79,7 +79,7 @@ if __name__ == "__main__":
 																						futures_bid_price 	= avg_futures_bid,
 																						futures_ask_price 	= avg_futures_ask,
 																						threshold 			= args.entry_gap_frac)
-			logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Avg futures bid: {avg_futures_bid}, asks: {avg_futures_ask}")
+			logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_futures_bid}, asks: {avg_futures_ask}")
 		
 		logging.info(f"Executing trade decision: {decision}")		
 

@@ -71,16 +71,12 @@ class KucoinApiClient(ExchangeClients):
 		futures_account = client.futures_user.get_account_overview(currency = currency)
 		return futures_account
 
-	@deprecation.deprecated(deprecated_in = "1.0",
-                        	details = "Use Bid / Ask pricing instead")
 	def get_spot_trading_price(self, symbol: str):
 		"""
 		Retrieves current spot pricing for trading symbol
 		"""
 		return float(self.spot_client.get_ticker(symbol)["price"])
 
-	@deprecation.deprecated(deprecated_in = "1.0",
-                        	details = "Use Bid / Ask pricing instead")
 	def get_futures_trading_price(self, symbol: str):
 		"""
 		Retrieves current futures price for trading symbol

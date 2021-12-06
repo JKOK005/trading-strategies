@@ -17,8 +17,6 @@ class ExchangeClients(metaclass = ABCMeta):
 		"""
 		pass
 
-	@deprecation.deprecated(deprecated_in = "1.0",
-                        	details = "Use Bid / Ask pricing instead")
 	@abstractmethod
 	def get_spot_trading_price(self, symbol: str):
 		"""
@@ -26,8 +24,6 @@ class ExchangeClients(metaclass = ABCMeta):
 		"""
 		pass
 
-	@deprecation.deprecated(deprecated_in = "1.0",
-                        	details = "Use Bid / Ask pricing instead")
 	@abstractmethod
 	def get_futures_trading_price(self, symbol: str):
 		"""
