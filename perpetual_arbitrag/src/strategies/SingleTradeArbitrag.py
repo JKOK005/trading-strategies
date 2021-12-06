@@ -1,5 +1,6 @@
 import deprecation
 import logging
+import time
 from enum import Enum
 from strategies.Strategies import Strategies
 
@@ -39,7 +40,7 @@ class SingleTradeArbitrag(Strategies):
 		self.futures_symbol 	= futures_symbol
 		self.entry_percent_gap 	= entry_percent_gap
 		self.api_client 		= api_client
-		# self.current_position 	= self.check_position_taken()
+		self.current_position 	= self.check_position_taken()
 		return
 
 	def check_open_order_position_taken(self):
@@ -92,6 +93,7 @@ class SingleTradeArbitrag(Strategies):
 		"""
 		
 		# Part 1
+
 		open_order_position 	= self.check_open_order_position_taken()
 		current_position 		= open_order_position
 		
