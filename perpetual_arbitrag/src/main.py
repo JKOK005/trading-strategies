@@ -62,6 +62,9 @@ if __name__ == "__main__":
 											api_client 			= client
 										)
 
+	import IPython
+	IPython.embed()
+
 	bot_executor 	= BotExecution(api_client = client)
 
 	while True:
