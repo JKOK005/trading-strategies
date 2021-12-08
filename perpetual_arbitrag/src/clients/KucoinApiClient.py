@@ -61,14 +61,14 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		Retrieves spot trading details
 		"""
-		spot_accounts 	= client.spot_user.get_account_list()
+		spot_accounts 	= self.spot_user.get_account_list()
 		return list(filter(lambda x: x["type"] == "trade" and x["currency"] == currency, spot_accounts))[0]
 
 	def get_futures_trading_account_details(self, currency: str):
 		"""
 		Retrieves futures trading account details
 		"""
-		futures_account = client.futures_user.get_account_overview(currency = currency)
+		futures_account = self.futures_user.get_account_overview(currency = currency)
 		return futures_account
 
 	def get_spot_trading_price(self, symbol: str):
