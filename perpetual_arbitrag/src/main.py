@@ -6,6 +6,7 @@ from clients.KucoinApiClient import KucoinApiClient
 from execution.BotExecution import BotExecution 
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
+print("hi")
 """
 python3 main.py \
 --spot_trading_pair BTC-USDT \
