@@ -82,6 +82,7 @@ if __name__ == "__main__":
 			logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_futures_bid}, asks: {avg_futures_ask}")
 		
 		logging.info(f"Executing trade decision: {decision}")		
+		print("hello")
 
 		# Execute orders
 		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
