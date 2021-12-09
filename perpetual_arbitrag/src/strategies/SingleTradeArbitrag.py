@@ -105,6 +105,33 @@ class SingleTradeArbitrag(Strategies):
 		self.logger.info(f"Current position is {current_position}")
 		return current_position
 
+	def transition(self, action: ExecutionDecision):
+		"""
+		Transitions `current_position` to a new state based on the trade action taken
+		"""
+		if 	(self.current_position == TradePosition.NO_POSITION_TAKEN) \
+			and action == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
+			new_position = TradePosition.LONG_SPOT_SHORT_FUTURE
+
+		elif (self.current_position == TradePosition.NO_POSITION_TAKEN) \
+			and action == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
+			new_position = TradePosition.LONG_FUTURE_SHORT_SPOT
+
+		elif (self.current_position == TradePosition.LONG_SPOT_SHORT_FUTURE) \
+			and action == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE:
+			new_position = TradePosition.NO_POSITION_TAKEN
+
+		elif (self.current_position == TradePosition.LONG_FUTURE_SHORT_SPOT) \
+			and action == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT:
+			new_position = TradePosition.NO_POSITION_TAKEN
+
+		else:
+			new_position = self.current_position
+
+		self.logger.info(f"Transiting from {self.current_position} -> {new_position}")
+		self.current_position = new_position
+		return
+
 	def trade_decision(self, 	spot_price: float, 
 								futures_price: float, 
 								entry_threshold: float,
