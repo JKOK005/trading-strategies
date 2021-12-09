@@ -36,6 +36,7 @@ if __name__ == "__main__":
 	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=100, help='Lot size for each entry for futures')
 	parser.add_argument('--futures_entry_leverage', type=int, nargs='?', default=1, help='Leverage for each entry for futures')
 	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=0.1, help='Fraction of price difference which we can consider making an entry')
+	parser.add_argument('--profit_taking_frac', type=float, nargs='?', default=0, help='Fraction of price difference which we can consider taking profit')
 	parser.add_argument('--spot_api_key', type=str, nargs='?', help='Spot exchange api key')
 	parser.add_argument('--spot_api_secret_key', type=str, nargs='?', default="????", help='Spot exchange secret api key')
 	parser.add_argument('--spot_api_passphrase', type=str, nargs='?', default="????", help='Spot exchange api passphrase')
@@ -80,11 +81,11 @@ if __name__ == "__main__":
 																						futures_ask_price 	= avg_futures_ask,
 																						threshold 			= args.entry_gap_frac)
 			logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_futures_bid}, asks: {avg_futures_ask}")
-		
 		logging.info(f"Executing trade decision: {decision}")		
 
 		# Execute orders
-		if decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
+		if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) 
+			or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
 			bot_executor.long_spot_short_futures(	spot_symbol 		= args.spot_trading_pair,
 													spot_order_type 	= args.order_type,
 													spot_price 			= spot_price if args.order_type == "limit" else 1,
@@ -96,7 +97,8 @@ if __name__ == "__main__":
 													futures_lever 		= args.futures_entry_leverage
 												)
 
-		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
+		elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
+			 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
 			bot_executor.short_spot_long_futures(	spot_symbol 		= args.spot_trading_pair,
 													spot_order_type 	= args.order_type,
 													spot_price 			= spot_price if args.order_type == "limit" else 1,
