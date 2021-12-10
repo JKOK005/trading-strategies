@@ -135,7 +135,7 @@ class SingleTradeArbitrag(Strategies):
 	def trade_decision(self, 	spot_price: float, 
 								futures_price: float, 
 								entry_threshold: float,
-								take_profit_threshold:; float,
+								take_profit_threshold: float,
 								*args,
 								**kwargs):
 		"""
@@ -167,7 +167,7 @@ class SingleTradeArbitrag(Strategies):
 										futures_bid_price: float,
 										futures_ask_price: float,
 										entry_threshold: float,
-										take_profit_threshold:; float,
+										take_profit_threshold: float,
 										*args,
 										**kwargs
 							):
@@ -177,7 +177,7 @@ class SingleTradeArbitrag(Strategies):
 		decision = ExecutionDecision.NO_DECISION
 		profit_from_long_spot_short_futures = futures_bid_price - spot_ask_price
 		profit_from_short_spot_long_futures = spot_bid_price - futures_ask_price
-		self.logger.info(f"Profits from long_spot_short_futures: {profit_from_long_spot_short_futures}, short_spot_long_futures: {profit_from_short_spot_long_futures}")
+		self.logger.info(f"""Current position: {self.current_position}. Profits long_spot_short_futures: {profit_from_long_spot_short_futures}, short_spot_long_futures: {profit_from_short_spot_long_futures}""")
 
 		if 	(self.current_position is TradePosition.LONG_SPOT_SHORT_FUTURE) \
 			and (spot_bid_price / futures_ask_price - 1 >= take_profit_threshold):
