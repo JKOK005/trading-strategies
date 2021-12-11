@@ -47,6 +47,7 @@ class BotExecution(object):
 								):
 		spot_order 			= None
 		futures_order		= None
+		is_success 			= True
 
 		try:
 			futures_order 	= self._place_futures_order(symbol 		= futures_symbol,
@@ -65,13 +66,14 @@ class BotExecution(object):
 												)
 		except Exception as ex:
 			self.logger.error(ex)
-			
+			is_success		= False
+
 			if spot_order is not None:
 				self.api_client.cancel_spot_order(order_id = spot_order["orderId"])
 
 			if futures_order is not None:
 				self.api_client.cancel_futures_order(order_id = futures_order["orderId"])
-		return
+		return is_success
 
 	def short_spot_long_futures(self, 	spot_symbol: str,
 										spot_order_type: str,
@@ -85,6 +87,7 @@ class BotExecution(object):
 								):
 		spot_order 			= None
 		futures_order		= None
+		is_success 			= True
 
 		try:
 			spot_order  	= self._place_spot_order(symbol 	= spot_symbol,
@@ -103,10 +106,11 @@ class BotExecution(object):
 													)
 		except Exception as ex:
 			self.logger.error(ex)
+			is_success		= False
 			
 			if spot_order is not None:
 				self.api_client.cancel_spot_order(order_id = spot_order["orderId"])
 
 			if futures_order is not None:
 				self.api_client.cancel_futures_order(order_id = futures_order["orderId"])
-		return
+		return is_success

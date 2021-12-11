@@ -16,6 +16,7 @@ python3 main.py \
 --futures_entry_lot_size 10 \
 --futures_entry_leverage 1 \
 --entry_gap_frac 0.1 \
+--profit_taking_frac 0.05 \
 --poll_interval_s 60 \
 --use_sandbox
 ```
@@ -37,6 +38,7 @@ Flag / description pairs are explained below.
 | futures_entry_lot_size | Lot size for buy / sell of perpetual asset | 10 |
 | futures_entry_leverage | Leverage for perpetual | 1 |
 | entry_gap_frac | Ratio difference between spot / perpetual asset for consideration of entry | 0.001 |
+| profit_taking_frac | Ratio difference for profit taking. For example, if we are short spot long perpetual, then if spot price goes above perpetual by the threshold, we immediately take profit | 0.0005 |
 | poll_interval_s | Frequency (s) of polling API | 60 |
 | use_sandbox | If present, we use sandbox environment. Remove for REAL environment | - |
 
