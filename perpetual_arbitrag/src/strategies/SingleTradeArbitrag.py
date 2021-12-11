@@ -20,26 +20,24 @@ class ExecutionDecision(Enum):
 class SingleTradeArbitrag(Strategies):
 	spot_symbol 		= None
 	futures_symbol 		= None
-	entry_percent_gap	= None
 	api_client 			= None
+	current_spot_vol	= 0
+	current_futures_vol = 0
 	logger 				= logging.getLogger('SingleTradeArbitrag')
 	current_position 	= TradePosition.NO_POSITION_TAKEN
 
 	def __init__(self,	spot_symbol: str,
 						futures_symbol: str,
-						entry_percent_gap: float,
 						api_client,
 				):
 		"""
 		Class only maintains 1 position at a time. 
 
-		entry_percent_gap 	- Gap between assets at which we can consider entry
 		api_client 			- Exchange api client
 		"""
 		super(SingleTradeArbitrag, self).__init__()
 		self.spot_symbol 		= spot_symbol
 		self.futures_symbol 	= futures_symbol
-		self.entry_percent_gap 	= entry_percent_gap
 		self.api_client 		= api_client
 		self.current_position 	= self.check_position_taken()
 		return
@@ -94,7 +92,6 @@ class SingleTradeArbitrag(Strategies):
 		"""
 		
 		# Part 1
-
 		open_order_position 	= self.check_open_order_position_taken()
 		current_position 		= open_order_position
 		

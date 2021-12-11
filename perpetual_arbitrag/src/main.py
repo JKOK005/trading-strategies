@@ -18,7 +18,9 @@ python3 main.py \
 --futures_api_passphrase xxx \
 --order_type market \
 --spot_entry_vol 0.01 \
---futures_entry_lot_size 10 \
+--spot_max_vol 0.01 \
+--futures_entry_lot_size 11 \
+--futures_entry_lot_max 10 \
 --futures_entry_leverage 1 \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
@@ -34,7 +36,9 @@ if __name__ == "__main__":
 	parser.add_argument('--order_type', type=str, nargs='?', default="market", help='Either limit or market orders')
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=60, help='Poll interval in seconds')
 	parser.add_argument('--spot_entry_vol', type=float, nargs='?', default=0.001, help='Volume of spot assets for each entry')
-	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=100, help='Lot size for each entry for futures')
+	parser.add_argument('--spot_max_vol', type=float, nargs='?', default=0.01, help='Max volume of spot assets to long / short')
+	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=1, help='Lot size for each entry for futures')
+	parser.add_argument('--futures_entry_lot_max', type=int, nargs='?', default=10, help='Max lot size to long / short futures')
 	parser.add_argument('--futures_entry_leverage', type=int, nargs='?', default=1, help='Leverage for each entry for futures')
 	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=0.1, help='Fraction of price difference which we can consider making an entry')
 	parser.add_argument('--profit_taking_frac', type=float, nargs='?', default=0, help='Fraction of price difference which we can consider taking profit. Recommended to set this value lower than entry_gap_frac')
@@ -58,9 +62,11 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
+	import IPython
+	IPython.embed()
+
 	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
 											futures_symbol 		= args.futures_trading_pair,
-											entry_percent_gap 	= args.entry_gap_frac * 100,
 											api_client 			= client
 										)
 
