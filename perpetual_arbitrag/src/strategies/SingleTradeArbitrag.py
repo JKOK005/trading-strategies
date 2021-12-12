@@ -94,8 +94,8 @@ class SingleTradeArbitrag(Strategies):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT
 
 		else:
-			if 	(abs(self.current_spot_vol) > self.max_spot_vol) \
-			 	or (abs(self.current_futures_lot_size) > self.max_futures_lot_size):
+			if 	(abs(self.current_spot_vol) >= self.max_spot_vol) \
+			 	or (abs(self.current_futures_lot_size) >= self.max_futures_lot_size):
 			 	decision = ExecutionDecision.NO_DECISION
 
 			elif (spot_price > futures_price) \
@@ -136,8 +136,8 @@ class SingleTradeArbitrag(Strategies):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT
 
 		else:
-			if 	(abs(self.current_spot_vol) > self.max_spot_vol) \
-			 	or (abs(self.current_futures_lot_size) > self.max_futures_lot_size):
+			if 	(abs(self.current_spot_vol) >= self.max_spot_vol) \
+			 	or (abs(self.current_futures_lot_size) >= self.max_futures_lot_size):
 			 	decision = ExecutionDecision.NO_DECISION
 
 			elif (profit_from_long_spot_short_futures > profit_from_short_spot_long_futures) \
