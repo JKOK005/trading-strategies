@@ -62,9 +62,6 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
-	import IPython
-	IPython.embed()
-
 	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
 											futures_symbol 		= args.futures_trading_pair,
 											api_client 			= client
@@ -111,6 +108,8 @@ if __name__ == "__main__":
 																		futures_size 		= args.futures_entry_lot_size,
 																		futures_lever 		= args.futures_entry_leverage
 																	)
+			if new_order_execution:
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size)
 
 		elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
 			 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
@@ -125,5 +124,7 @@ if __name__ == "__main__":
 																		futures_lever 		= args.futures_entry_leverage
 																	)
 
-		trade_strategy.transition(action = decision) if new_order_execution else None 	# Register state of execution
+			if new_order_execution:
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size)
+
 		sleep(args.poll_interval_s)
