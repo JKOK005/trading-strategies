@@ -201,9 +201,34 @@ class KucoinApiClient(ExchangeClients):
 		else:
 			return None
 
+	def get_spot_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information for all fulfilled spot orders by the user
+
+		symbol 	- Filter out all orders with matching symbol
+
+		TODO:
+		- Complete implementation
+		"""
+		pass
+
+	def get_futures_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of all fulfilled future orders by the user
+
+		symbol 	- Filter out all orders with matching symbol
+
+		TODO:
+		- Complete implementation
+		"""
+		pass
+
 	def get_spot_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent spot trades that have been fulfilled
+
+		TODO:
+		- Make call to get_spot_fulfilled_orders before filtering
 		"""
 		recent_trades 	= self.spot_trade.get_recent_orders()
 		if type(recent_trades) == dict:
@@ -217,6 +242,9 @@ class KucoinApiClient(ExchangeClients):
 	def get_futures_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent futures trades that have been fulfilled
+
+		TODO:
+		- Make call to get_futures_fulfilled_orders before filtering
 		"""
 		recent_fills 	= self.futures_trade.get_recent_fills()
 		if type(recent_fills) == dict:
