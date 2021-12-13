@@ -1,5 +1,8 @@
 import copy
+<<<<<<< HEAD
 import sys
+=======
+>>>>>>> 58976986ff253af867721515dd66b60705bc2175
 from clients.KucoinApiClient import KucoinApiClient
 from unittest import TestCase
 from unittest.mock import patch
@@ -16,6 +19,7 @@ class TestKucoinApiClient(TestCase):
 												)
 
 	@patch("kucoin.client.User")
+<<<<<<< HEAD
 	def test_spot_trading_account_details_filters_correct_symbol(self, patch_user):
 		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)
 		_kucoin_api_client.spot_user 	= patch_user
@@ -150,3 +154,16 @@ class TestKucoinApiClient(TestCase):
 
 			assert(_kucoin_api_client.get_spot_most_recent_open_order(symbol = "XBTUSDTM")["createdAt"] == 3)
 	
+=======
+	def test_trading_account_details_filters_correct_symbol(self, patch_user):
+		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_user 	= patch_user
+		patch_user.get_account_list.return_value 	= [ {"type" : "trade", "currency" : "BTC"},
+														{"type" : "trade", "currency" : "USDT"},
+														{"type" : "trade", "currency" : "XRP"},
+														{"type" : "trade", "currency" : "ETH"},
+														{"type" : "main", "currency" : "ETH"}]
+
+		account_details 	= _kucoin_api_client.get_spot_trading_account_details(currency = "ETH")
+		assert(account_details["type"] == "trade" and account_details["currency"] == "ETH")
+>>>>>>> 58976986ff253af867721515dd66b60705bc2175
