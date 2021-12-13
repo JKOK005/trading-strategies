@@ -20,7 +20,8 @@ python3 main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
---use_sandbox
+--use_sandbox \
+--fake_orders
 ```
 
 Flag / description pairs are explained below.
@@ -45,6 +46,7 @@ Flag / description pairs are explained below.
 | profit_taking_frac | Ratio difference for profit taking. For example, if we are short spot long perpetual, then if spot price goes above perpetual by the threshold, we immediately take profit | 0.0005 |
 | poll_interval_s | Frequency (s) of polling API | 60 |
 | use_sandbox | If present, we use sandbox environment. Remove for REAL environment | - |
+| fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
 
 
 ### Transfer of main account funds to trade account

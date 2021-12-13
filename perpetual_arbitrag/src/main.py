@@ -3,7 +3,8 @@ import os
 import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
-from execution.BotExecution import BotExecution 
+from execution.BotExecution import BotExecution
+from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
@@ -25,7 +26,8 @@ python3 main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
---use_sandbox
+--use_sandbox \
+--fake_orders
 """
 
 if __name__ == "__main__":
@@ -33,6 +35,7 @@ if __name__ == "__main__":
 	parser.add_argument('--spot_trading_pair', type=str, nargs='?', default="BTC-USDT", help='Spot trading pair symbol as defined by exchange')
 	parser.add_argument('--futures_trading_pair', type=str, nargs='?', default="XBTUSDM", help='Futures trading pair symbol as defined by exchange')
 	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env.')
+	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only.')
 	parser.add_argument('--order_type', type=str, nargs='?', default="market", help='Either limit or market orders')
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=60, help='Poll interval in seconds')
 	parser.add_argument('--spot_entry_vol', type=float, nargs='?', default=0.001, help='Volume of spot assets for each entry')
@@ -69,7 +72,7 @@ if __name__ == "__main__":
 											api_client 				= client
 										)
 
-	bot_executor 	= BotExecution(api_client = client)
+	bot_executor 	= BotSimulatedExecution(api_client = client) if args.fake_orders else BotExecution(api_client = client)
 
 	while True:
 		if 	args.order_type == "limit":
