@@ -120,7 +120,7 @@ class TestKucoinApiClient(TestCase):
 		assert(len(_kucoin_api_client.get_futures_open_orders(symbol = "XBTUSDTM")) == 2)
 
 	@patch("kucoin_futures.client.Trade")
-	def test_no_open_spot_orders(self, patch_trade):
+	def test_no_open_futures_orders(self, patch_trade):
 		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
 		_kucoin_api_client.futures_trade 	= patch_trade
 
@@ -130,7 +130,7 @@ class TestKucoinApiClient(TestCase):
 													}
 		assert(len(_kucoin_api_client.get_futures_open_orders(symbol = "XBTUSDTM")) == 0)
 
-	def test_most_recent_spot_orders_with_correct_symbol_retrieved(self):
+	def test_most_recent_open_spot_orders_with_correct_symbol_retrieved(self):
 		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
 
 		with patch.object(_kucoin_api_client, "get_spot_open_orders") as mock_get_spot_open_orders:
@@ -140,7 +140,7 @@ class TestKucoinApiClient(TestCase):
 
 			assert(_kucoin_api_client.get_spot_most_recent_open_order(symbol = "ETH")["createdAt"] == 4)
 
-	def test_most_recent_futures_orders_with_correct_symbol_retrieved(self):
+	def test_most_recent_open_futures_orders_with_correct_symbol_retrieved(self):
 		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
 
 		with patch.object(_kucoin_api_client, "get_spot_open_orders") as mock_get_spot_open_orders:
@@ -150,3 +150,150 @@ class TestKucoinApiClient(TestCase):
 
 			assert(_kucoin_api_client.get_spot_most_recent_open_order(symbol = "XBTUSDTM")["createdAt"] == 3)
 	
+	@patch("kucoin.client.Trade")
+	def test_fulfilled_spot_orders_with_correct_symbol_retrieved(self, patch_trade):
+		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_trade 	= patch_trade
+
+		patch_trade.get_recent_orders.return_value = {
+													 	"status" : 200,
+													 	"data" 	: [ {"symbol" : "ETH", "createdAt" : 1},
+																	{"symbol" : "ETH", "createdAt" : 2},
+																	{"symbol" : "BTC", "createdAt" : 3},
+																	{"symbol" : "ETH", "createdAt" : 4},
+																	{"symbol" : "XRP", "createdAt" : 5}]
+													}
+		assert(len(_kucoin_api_client.get_spot_fulfilled_orders(symbol = "ETH")) == 3)
+
+	@patch("kucoin.client.Trade")
+	def test_no_open_spot_orders(self, patch_trade):
+		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_trade 	= patch_trade
+
+		patch_trade.get_recent_orders.return_value = {
+													 	"status" : 200,
+													 	"data" 	: []
+													}
+		assert(len(_kucoin_api_client.get_spot_fulfilled_orders(symbol = "BTC")) == 0)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_fulfilled_futures_orders_with_correct_symbol_retrieved(self, patch_trade):
+		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_trade 	= patch_trade
+
+		patch_trade.get_recent_fills.return_value = {
+													 	"status" : 200,
+													 	"data" 	: [ {"symbol" : "XBTUSDTM", "createdAt" : 1},
+																	{"symbol" : "ETHUSDT", 	"createdAt" : 2},
+																	{"symbol" : "XBTUSDTM", "createdAt" : 3},
+																	{"symbol" : "ETHUSDT", 	"createdAt" : 4},
+																	{"symbol" : "XRPUSDT", 	"createdAt" : 5}]
+													}
+		assert(len(_kucoin_api_client.get_futures_fulfilled_orders(symbol = "XBTUSDTM")) == 2)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_no_open_futures_orders(self, patch_trade):
+		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_trade 	= patch_trade
+
+		patch_trade.get_recent_fills.return_value = {
+													 	"status" : 200,
+													 	"data" 	: []
+													}
+		assert(len(_kucoin_api_client.get_futures_fulfilled_orders(symbol = "XBTUSDTM")) == 0)
+
+	def test_most_recent_fulfilled_spot_orders_with_correct_symbol_retrieved(self):
+		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
+
+		with patch.object(_kucoin_api_client, "get_spot_fulfilled_orders") as mock_get_spot_fulfilled_orders:
+			mock_get_spot_fulfilled_orders.return_value = [{"symbol" : "ETH", "createdAt" : 1},
+														   {"symbol" : "ETH", "createdAt" : 2},
+														   {"symbol" : "ETH", "createdAt" : 4}]
+
+			assert(_kucoin_api_client.get_spot_most_recent_fulfilled_order(symbol = "ETH")["createdAt"] == 4)
+
+	def test_most_recent_fulfilled_futures_orders_with_correct_symbol_retrieved(self):
+		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
+
+		with patch.object(_kucoin_api_client, "get_futures_fulfilled_orders") as mock_get_futures_fulfilled_orders:
+			mock_get_futures_fulfilled_orders.return_value 	= [ {"symbol" : "XBTUSDTM", "createdAt" : 1},
+																{"symbol" : "XBTUSDTM", "createdAt" : 3}
+															]
+
+			assert(_kucoin_api_client.get_futures_most_recent_fulfilled_order(symbol = "XBTUSDTM")["createdAt"] == 3)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_spot_order_call_invoked(self, patch_trade):
+		_kucoin_api_client 								= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_trade 					= patch_trade
+		patch_trade.create_market_order.return_value 	= {"orderId" : "0001"}
+
+		_kucoin_api_client.place_spot_order(symbol 		= "BTC-USDT", 
+											order_type 	= "market", 
+											order_side 	= "sell", 
+											price 		= 1,
+											size 		= 1
+										)
+
+		assert(patch_trade.create_market_order.called)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_futures_order_call_invoked(self, patch_trade):
+		_kucoin_api_client 								= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_trade 				= patch_trade
+		patch_trade.create_limit_order.return_value 	= {"orderId" : "0001"}
+
+		_kucoin_api_client.place_futures_order(	symbol 		= "XBTUSDTM", 
+												order_type 	= "market", 
+												order_side 	= "buy", 
+												price 		= 1,
+												size 		= 1,
+												lever		= 1
+											)
+		assert(patch_trade.create_limit_order.called)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_spot_order_cancellation_without_error(self, patch_trade):
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_trade 			= patch_trade
+		patch_trade.cancel_order.return_value 	= True
+
+		_kucoin_api_client.cancel_spot_order(order_id = "0001")
+		assert(patch_trade.cancel_order.called)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_spot_order_cancellation_with_error_handelled_internally(self, patch_trade):
+		# Main program should not crash
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_trade 			= patch_trade
+		patch_trade.cancel_order.return_value 	= True
+		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
+
+		try:
+			_kucoin_api_client.cancel_spot_order(order_id = "0001")
+		except Exception as ex:
+			assert(False)
+		return
+
+	@patch("kucoin_futures.client.Trade")
+	def test_futures_order_cancellation_without_error(self, patch_trade):
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_trade 		= patch_trade
+		patch_trade.cancel_order.return_value 	= True
+
+		_kucoin_api_client.cancel_futures_order(order_id = "0001")
+		assert(patch_trade.cancel_order.called)
+
+	@patch("kucoin_futures.client.Trade")
+	def test_futures_order_cancellation_with_error_handelled_internally(self, patch_trade):
+		# Main program should not crash
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_trade 		= patch_trade
+		patch_trade.cancel_order.return_value 	= True
+		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
+
+		try:
+			_kucoin_api_client.cancel_futures_order(order_id = "0001")
+		except Exception as ex:
+			assert(False)
+		return
