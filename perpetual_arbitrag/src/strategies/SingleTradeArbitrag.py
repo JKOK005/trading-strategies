@@ -60,7 +60,7 @@ class SingleTradeArbitrag(Strategies):
 		pass
 
 	def change_asset_holdings(self, delta_spot, delta_futures):
-		self.current_spot_vol 		+= delta_spot
+		self.current_spot_vol 			+= delta_spot
 		self.current_futures_lot_size 	+= delta_futures
 		self.logger.info(f"Spot vol: {self.current_spot_vol}, Futures lot size: {self.current_futures_lot_size}")
 		return
