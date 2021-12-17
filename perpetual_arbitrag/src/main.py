@@ -3,7 +3,8 @@ import os
 import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
-from execution.BotExecution import BotExecution 
+from execution.BotExecution import BotExecution
+from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
@@ -18,12 +19,15 @@ python3 main.py \
 --futures_api_passphrase xxx \
 --order_type market \
 --spot_entry_vol 0.01 \
+--max_spot_vol 0.1 \
 --futures_entry_lot_size 10 \
+--max_futures_lot_size 100 \
 --futures_entry_leverage 1 \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
---use_sandbox
+--use_sandbox \
+--fake_orders
 """
 
 if __name__ == "__main__":
@@ -31,10 +35,13 @@ if __name__ == "__main__":
 	parser.add_argument('--spot_trading_pair', type=str, nargs='?', default="BTC-USDT", help='Spot trading pair symbol as defined by exchange')
 	parser.add_argument('--futures_trading_pair', type=str, nargs='?', default="XBTUSDM", help='Futures trading pair symbol as defined by exchange')
 	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env.')
+	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only.')
 	parser.add_argument('--order_type', type=str, nargs='?', default="market", help='Either limit or market orders')
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=60, help='Poll interval in seconds')
 	parser.add_argument('--spot_entry_vol', type=float, nargs='?', default=0.001, help='Volume of spot assets for each entry')
-	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=100, help='Lot size for each entry for futures')
+	parser.add_argument('--max_spot_vol', type=float, nargs='?', default=0.01, help='Max volume of spot assets to long / short')
+	parser.add_argument('--futures_entry_lot_size', type=int, nargs='?', default=1, help='Lot size for each entry for futures')
+	parser.add_argument('--max_futures_lot_size', type=int, nargs='?', default=10, help='Max lot size to long / short futures')
 	parser.add_argument('--futures_entry_leverage', type=int, nargs='?', default=1, help='Leverage for each entry for futures')
 	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=0.1, help='Fraction of price difference which we can consider making an entry')
 	parser.add_argument('--profit_taking_frac', type=float, nargs='?', default=0, help='Fraction of price difference which we can consider taking profit. Recommended to set this value lower than entry_gap_frac')
@@ -58,13 +65,14 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
-	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 		= args.spot_trading_pair,
-											futures_symbol 		= args.futures_trading_pair,
-											entry_percent_gap 	= args.entry_gap_frac * 100,
-											api_client 			= client
+	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 			= args.spot_trading_pair,
+											max_spot_vol 			= args.max_spot_vol,
+											futures_symbol 			= args.futures_trading_pair,
+											max_futures_lot_size	= args.max_futures_lot_size,
+											api_client 				= client
 										)
 
-	bot_executor 	= BotExecution(api_client = client)
+	bot_executor 	= BotSimulatedExecution(api_client = client) if args.fake_orders else BotExecution(api_client = client)
 
 	while True:
 		if 	args.order_type == "limit":
@@ -105,6 +113,8 @@ if __name__ == "__main__":
 																		futures_size 		= args.futures_entry_lot_size,
 																		futures_lever 		= args.futures_entry_leverage
 																	)
+			if new_order_execution:
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size)
 
 		elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
 			 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
@@ -119,5 +129,7 @@ if __name__ == "__main__":
 																		futures_lever 		= args.futures_entry_leverage
 																	)
 
-		trade_strategy.transition(action = decision) if new_order_execution else None 	# Register state of execution
+			if new_order_execution:
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size)
+
 		sleep(args.poll_interval_s)

@@ -60,6 +60,34 @@ class ExchangeClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
+	def get_spot_most_recent_open_order(self, symbol: str):
+		"""
+		Gets the most recent open orders for spot
+		"""
+		pass
+
+	@abstractmethod
+	def get_futures_most_recent_open_order(self, symbol: str):
+		"""
+		Gets the most recent open orders for futures
+		"""
+		pass
+
+	@abstractmethod
+	def get_spot_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information for all fulfilled spot orders by the user
+		"""
+		pass
+
+	@abstractmethod
+	def get_futures_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of all fulfilled future orders by the user
+		"""
+		pass
+
+	@abstractmethod
 	def get_spot_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent spot trade that have been fulfilled

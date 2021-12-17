@@ -13,12 +13,15 @@ python3 main.py \
 --futures_api_passphrase xxx \
 --order_type market \
 --spot_entry_vol 0.01 \
+--max_spot_vol 0.1 \
 --futures_entry_lot_size 10 \
+--max_futures_lot_size 100 \
 --futures_entry_leverage 1 \
---entry_gap_frac 0.1 \
---profit_taking_frac 0.05 \
+--entry_gap_frac 0.01 \
+--profit_taking_frac 0.005 \
 --poll_interval_s 60 \
---use_sandbox
+--use_sandbox \
+--fake_orders
 ```
 
 Flag / description pairs are explained below.
@@ -35,12 +38,15 @@ Flag / description pairs are explained below.
 | futures_api_passphrase | Exchange api passphrase for perpetual account | kucoinpassphrase |
 | order_type | Either limit or market | limit or market |
 | spot_entry_vol | Size of buy / sell for spot asset | 0.01 |
+| max_spot_vol | Max Size of buy / sell for spot asset | 0.1 |
 | futures_entry_lot_size | Lot size for buy / sell of perpetual asset | 10 |
+| max_futures_lot_size | Max lot size for buy / sell of perpetual asset | 100 |
 | futures_entry_leverage | Leverage for perpetual | 1 |
 | entry_gap_frac | Ratio difference between spot / perpetual asset for consideration of entry | 0.001 |
 | profit_taking_frac | Ratio difference for profit taking. For example, if we are short spot long perpetual, then if spot price goes above perpetual by the threshold, we immediately take profit | 0.0005 |
 | poll_interval_s | Frequency (s) of polling API | 60 |
 | use_sandbox | If present, we use sandbox environment. Remove for REAL environment | - |
+| fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
 
 
 ### Transfer of main account funds to trade account

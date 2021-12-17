@@ -201,13 +201,40 @@ class KucoinApiClient(ExchangeClients):
 		else:
 			return None
 
+	def get_spot_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information for all fulfilled spot orders by the user
+
+		symbol 	- Filter out all orders with matching symbol
+
+		TODO:
+		- Complete implementation
+		"""
+		resp 			= self.spot_trade.get_recent_orders()
+		recent_trades 	= resp["data"]
+		return list(filter(lambda x: x["symbol"] == symbol, recent_trades))
+
+	def get_futures_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of all fulfilled future orders by the user
+
+		symbol 	- Filter out all orders with matching symbol
+
+		TODO:
+		- Complete implementation
+		"""
+		resp 			= self.futures_trade.get_recent_fills()
+		recent_fills 	= resp["data"]
+		return list(filter(lambda x: x["symbol"] == symbol, recent_fills))
+
 	def get_spot_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent spot trades that have been fulfilled
+
+		TODO:
+		- Make call to get_spot_fulfilled_orders before filtering
 		"""
-		recent_trades 	= self.spot_trade.get_recent_orders()
-		if type(recent_trades) == dict:
-			recent_trades = recent_trades["data"]
+		recent_trades 	= self.get_spot_fulfilled_orders(symbol = symbol)
 
 		if len(recent_trades) > 0:
 			return sorted(recent_trades, key = lambda x: x["createdAt"], reverse = True)[0]
@@ -217,10 +244,11 @@ class KucoinApiClient(ExchangeClients):
 	def get_futures_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent futures trades that have been fulfilled
+
+		TODO:
+		- Make call to get_futures_fulfilled_orders before filtering
 		"""
-		recent_fills 	= self.futures_trade.get_recent_fills()
-		if type(recent_fills) == dict:
-			recent_fills = recent_fills["data"]
+		recent_fills 	= self.get_futures_fulfilled_orders(symbol = symbol)
 
 		if len(recent_fills) > 0:
 			return sorted(recent_fills, key = lambda x: x["createdAt"], reverse = True)[0]
