@@ -101,3 +101,11 @@ Overall execution flow of the program:
 
 Trade execution logic:
 ![trade-logic](img/trading-execution.png)
+
+
+### Unit test framework
+Unit tests can be accessed using `pytest` framework. All tests are stored in the `tests` folder.
+
+```python
+pytest tests/*.py
+```
