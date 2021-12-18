@@ -3,7 +3,7 @@ import logging
 import sys
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
-from clients.Clients import ExchangeClients
+from clients.ExchangeClients import ExchangeClients
 
 class KucoinApiClient(ExchangeClients):
 	default_page_size 			= 50
