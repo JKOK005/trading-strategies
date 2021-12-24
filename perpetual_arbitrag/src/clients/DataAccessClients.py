@@ -5,9 +5,9 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Float, Integer, String
 from sqlalchemy import UniqueConstraint
 
-base = declarative_base()
+BASE = declarative_base()
 
-class AssetInfoTable(base):
+class AssetInfoTable(BASE):
 	__tablename__ 		= "asset_info"
 	__table_args__		= (UniqueConstraint("spot_symbol", "futures_symbol"),)
 
@@ -30,9 +30,25 @@ class DataAccessClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
+	def get_position(self):
+		pass
+
+	@abstractmethod
 	def set_spot_volume(self, volume: float):
 		pass
 
 	@abstractmethod
 	def set_futures_lot_size(self, lot_size: int):
+		pass
+
+	@abstractmethod
+	def set_position(self, spot_volume: float, futures_lot_size: int):
+		pass
+
+	@abstractmethod
+	def create_entry(self):
+		pass
+
+	@abstractmethod
+	def is_exists(self):
 		pass
