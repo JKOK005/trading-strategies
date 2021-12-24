@@ -20,6 +20,7 @@ python3 main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
+--db_url xxx \
 --use_sandbox \
 --fake_orders
 ```
@@ -47,6 +48,8 @@ Flag / description pairs are explained below.
 | poll_interval_s | Frequency (s) of polling API | 60 |
 | use_sandbox | If present, we use sandbox environment. Remove for REAL environment | - |
 | fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
+| db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
+| db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
 
 
 ### Transfer of main account funds to trade account
