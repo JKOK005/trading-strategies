@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 class SqlClient(DataAccessClients):
 	logger 			= logging.getLogger('SqlClient')
+	db_url 			= None
 	session 		= None
 	spot_symbol 	= None
 	futures_symbol 	= None
@@ -14,13 +15,17 @@ class SqlClient(DataAccessClients):
 						spot_symbol: str,
 						futures_symbol: str
 				):
-		engine 				= create_engine(url, echo = False)
-		SESSION 			= sessionmaker()
-		SESSION.configure(bind = engine)
-		self.session 		= SESSION()
+		self.db_url 		= url
 		self.spot_symbol 	= spot_symbol
 		self.futures_symbol = futures_symbol
 		return
+
+	def start_session(self):
+		engine 				= create_engine(self.db_url, echo = False)
+		SESSION 			= sessionmaker()
+		SESSION.configure(bind = engine)
+		self.session 		= SESSION()
+		return self
 
 	def get_entry(self):
 		return self.session.query(AssetInfoTable).filter_by(spot_symbol = self.spot_symbol, futures_symbol = self.futures_symbol).first()

@@ -7,11 +7,13 @@ class TestSingleTradeArbitrag(TestCase):
 	
 	@patch("clients.KucoinApiClient")
 	def setUp(self, api_client):
-		self.strategy 	= SingleTradeArbitrag(	spot_symbol 			= "BTC-USDT",
-												max_spot_vol 			= 10,
-												futures_symbol			= "XBTUSDTM",
-												max_futures_lot_size 	= 10,
-												api_client 				= api_client
+		self.strategy 	= SingleTradeArbitrag(	spot_symbol 				= "BTC-USDT",
+												current_spot_vol	 		= 0,
+												max_spot_vol 				= 10,
+												futures_symbol				= "XBTUSDTM",
+												current_futures_lot_size 	= 0,
+												max_futures_lot_size 		= 10,
+												api_client 					= api_client
 											)
 
 	def test_do_not_enter_when_threshold_not_met_on_limit_case_A(self):

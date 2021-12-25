@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
-		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, futures_symbol = args.futures_trading_pair)
+		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, futures_symbol = args.futures_trading_pair).start_session()
 		db_client.create_entry() if not db_client.is_exists() else None
 		db_client.set_position(spot_volume = 0, futures_lot_size = 0) if args.db_reset else None
 		(current_spot_vol, current_futures_lot_size) = db_client.get_position()
