@@ -2,7 +2,7 @@
 
 ### Example of execution
 ```python
-python3 main.py \
+python3 src/main.py \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
@@ -110,7 +110,7 @@ Trade execution logic:
 Unit tests can be accessed using `pytest` framework. All tests are stored in the `tests` folder.
 
 ```python
-pytest tests/*.py
+pytest src/tests/*.py
 ```
 
 ### Init DB
