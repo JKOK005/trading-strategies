@@ -112,3 +112,12 @@ Unit tests can be accessed using `pytest` framework. All tests are stored in the
 ```python
 pytest tests/*.py
 ```
+
+### Init DB
+If we want state management for the bot, we would have to connect the bot to some persistent storage, such as `PostgreSQL` or `MySQL`.
+
+Use the script below to create the necessary schemas in the database.
+
+```python
+./init_database.py
+```
