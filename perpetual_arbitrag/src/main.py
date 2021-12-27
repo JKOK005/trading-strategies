@@ -69,6 +69,10 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
+	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair) and \
+			args.futures_entry_lot_size >= client.get_futures_min_lot_size(symbol = args.futures_trading_pair), \
+			"Minimum entry size not satisfied."
+
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, futures_symbol = args.futures_trading_pair).start_session()

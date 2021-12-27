@@ -83,6 +83,21 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		return float(self.futures_client.get_ticker(symbol)["price"])
 
+	def get_spot_min_volume(self, symbol: str):
+		"""
+		Retrieves minimum order volume for spot trading symbol
+		"""
+		all_spot_info 	= self.spot_client.get_symbol_list()
+		spot_info 		= next(filter(lambda x: x["symbol"] == symbol, all_spot_info))
+		return float(spot_info["baseMinSize"])
+
+	def get_futures_min_lot_size(self, symbol: str):
+		"""
+		Retrieves minimum order lot size for futures trading symbol
+		"""
+		futures_info = self.futures_client.get_contract_detail(symbol = symbol)
+		return int(futures_info["lotSize"])
+
 	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
 		"""
 		We will read pricing - qty data from the first entry of the list. 
