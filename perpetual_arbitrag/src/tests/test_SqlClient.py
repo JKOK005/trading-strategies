@@ -14,7 +14,7 @@ class TestSqlClient(TestCase):
 		asset_info.spot_symbol 		= "TESTCOIN-USDT"
 		asset_info.futures_symbol 	= "TESTCOINUSDTM"
 		asset_info.spot_volume 		= 10
-		asset_info.futures_lot_size = 10
+		asset_info.futures_lot_size = 50
 
 		self.client 		= SqlClient(url = "test", spot_symbol = "TESTCOIN-USDT", futures_symbol = "TESTCOINUSDTM")
 		self.return_asset 	= asset_info
@@ -40,3 +40,64 @@ class TestSqlClient(TestCase):
 			(_client.session.add.called) 	and 
 			(_client.session.commit.called)
 		)
+
+	@patch("sqlalchemy.orm.Session")
+	def test_set_position(self, mock_session):
+		_client 		= copy.deepcopy(self.client)
+		_client.session = mock_session
+
+		with patch.object(SqlClient, "get_entry") as mock_get_entry:
+			mock_get_entry.return_value = self.return_asset
+			_client.set_position(spot_volume = -100, futures_lot_size = 1000)
+			modified_row = mock_get_entry.return_value
+			
+			assert(	(modified_row.spot_volume == -100) 		and 
+					(modified_row.futures_lot_size == 1000) and
+					(_client.session.commit.called)
+				)
+
+	@patch("sqlalchemy.orm.Session")
+	def test_set_spot_volume(self, mock_session):
+		_client 		= copy.deepcopy(self.client)
+		_client.session = mock_session
+
+		with patch.object(SqlClient, "get_entry") as mock_get_entry:
+			mock_get_entry.return_value = self.return_asset
+			_client.set_spot_volume(volume = -100)
+			modified_row = mock_get_entry.return_value
+			
+			assert(	(modified_row.spot_volume == -100) and 
+					(_client.session.commit.called)
+				)
+
+	@patch("sqlalchemy.orm.Session")
+	def test_set_futures_lot_size(self, mock_session):
+		_client 		= copy.deepcopy(self.client)
+		_client.session = mock_session
+
+		with patch.object(SqlClient, "get_entry") as mock_get_entry:
+			mock_get_entry.return_value = self.return_asset
+			_client.set_futures_lot_size(lot_size = -100)
+			modified_row = mock_get_entry.return_value
+			
+			assert(	(modified_row.futures_lot_size == -100) and 
+					(_client.session.commit.called)
+				)
+
+	def test_get_position(self):
+		with patch.object(SqlClient, "get_entry") as mock_get_entry:
+			mock_get_entry.return_value = self.return_asset
+			(spot_volume, futures_lot_size) = self.client.get_position()
+			assert(spot_volume == 10 and futures_lot_size == 50)
+
+	def test_get_spot_volume(self):
+		with patch.object(SqlClient, "get_entry") as mock_get_entry:
+			mock_get_entry.return_value = self.return_asset
+			spot_volume = self.client.get_spot_volume()
+			assert(spot_volume == 10)
+
+	def test_get_futures_lot_size(self):
+		with patch.object(SqlClient, "get_entry") as mock_get_entry:
+			mock_get_entry.return_value = self.return_asset
+			futures_lot_size = self.client.get_futures_lot_size()
+			assert(futures_lot_size == 50)
