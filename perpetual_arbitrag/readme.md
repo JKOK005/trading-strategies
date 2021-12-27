@@ -119,5 +119,5 @@ If we want state management for the bot, we would have to connect the bot to som
 Use the script below to create the necessary schemas in the database.
 
 ```python
-./init_database.py
+src/init_database.py
 ```
