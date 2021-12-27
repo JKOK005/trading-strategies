@@ -3,6 +3,7 @@ import os
 import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
+from clients.SqlClient import SqlClient
 from execution.BotExecution import BotExecution
 from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
@@ -26,6 +27,7 @@ python3 main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
+--db_url xxx \
 --use_sandbox \
 --fake_orders
 """
@@ -51,6 +53,8 @@ if __name__ == "__main__":
 	parser.add_argument('--futures_api_key', type=str, nargs='?', help='Futures exchange api key')
 	parser.add_argument('--futures_api_secret_key', type=str, nargs='?', default="????", help='Futures exchange secret api key')
 	parser.add_argument('--futures_api_passphrase', type=str, nargs='?', default="????", help='Futures exchange api passphrase')
+	parser.add_argument('--db_url', type=str, nargs='?', default=None, help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed.")
+	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / futures lot sizes are set to 0.')
 	args 	= parser.parse_args()
 
 	logging.basicConfig(level = logging.INFO)
@@ -65,11 +69,23 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
-	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 			= args.spot_trading_pair,
-											max_spot_vol 			= args.max_spot_vol,
-											futures_symbol 			= args.futures_trading_pair,
-											max_futures_lot_size	= args.max_futures_lot_size,
-											api_client 				= client
+	if args.db_url is not None:
+		logging.info(f"State management at {args.db_url}")
+		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, futures_symbol = args.futures_trading_pair).start_session()
+		db_client.create_entry() if not db_client.is_exists() else None
+		db_client.set_position(spot_volume = 0, futures_lot_size = 0) if args.db_reset else None
+		(current_spot_vol, current_futures_lot_size) = db_client.get_position()
+	else:
+		logging.warning(f"Zero state execution as no db_url detected")
+		(current_spot_vol, current_futures_lot_size) = (0, 0)
+
+	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 				= args.spot_trading_pair,
+											current_spot_vol 			= current_spot_vol,
+											max_spot_vol 				= args.max_spot_vol,
+											futures_symbol 				= args.futures_trading_pair,
+											current_futures_lot_size 	= current_futures_lot_size,
+											max_futures_lot_size		= args.max_futures_lot_size,
+											api_client 					= client
 										)
 
 	bot_executor 	= BotSimulatedExecution(api_client = client) if args.fake_orders else BotExecution(api_client = client)
@@ -113,8 +129,7 @@ if __name__ == "__main__":
 																		futures_size 		= args.futures_entry_lot_size,
 																		futures_lever 		= args.futures_entry_leverage
 																	)
-			if new_order_execution:
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size)
+			
 
 		elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
 			 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
@@ -129,7 +144,11 @@ if __name__ == "__main__":
 																		futures_lever 		= args.futures_entry_leverage
 																	)
 
-			if new_order_execution:
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size)
+		if new_order_execution:
+			trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size)
 
+			if args.db_url is not None:
+				(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
+				db_client.set_position(spot_volume = current_spot_vol, futures_lot_size = current_futures_lot_size)
+		
 		sleep(args.poll_interval_s)

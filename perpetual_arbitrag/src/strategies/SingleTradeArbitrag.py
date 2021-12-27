@@ -28,8 +28,10 @@ class SingleTradeArbitrag(Strategies):
 	max_futures_lot_size 		= 0
 
 	def __init__(self,	spot_symbol: str,
+						current_spot_vol: float,
 						max_spot_vol: float,
 						futures_symbol: str,
+						current_futures_lot_size: int,
 						max_futures_lot_size: int,
 						api_client,
 				):
@@ -39,31 +41,25 @@ class SingleTradeArbitrag(Strategies):
 		api_client 			- Exchange api client
 		"""
 		super(SingleTradeArbitrag, self).__init__()
-		self.spot_symbol 			= spot_symbol
-		self.max_spot_vol 			= max_spot_vol
-		self.futures_symbol 		= futures_symbol
-		self.max_futures_lot_size 	= max_futures_lot_size
-		self.api_client 			= api_client
-		self.init_asset_holdings()
-		return
-
-	def init_asset_holdings(self):
-		"""
-		Determines how much of the assets have we gone long / short on.
-
-		Spots are measured using the vol and futures are measured by the lot size.
-
-		TODO: 
-		- Implement API calls to check for positions taken on spot & futures assets on Kucoin
-		"""
+		self.spot_symbol 				= spot_symbol
+		self.current_spot_vol 			= current_spot_vol
+		self.max_spot_vol 				= max_spot_vol
+		self.futures_symbol 			= futures_symbol
+		self.current_futures_lot_size 	= current_futures_lot_size
+		self.max_futures_lot_size 		= max_futures_lot_size
+		self.api_client 				= api_client
+		
 		self.logger.info(f"Spot vol: {self.current_spot_vol}, Futures lot size: {self.current_futures_lot_size}")
-		pass
+		return
 
 	def change_asset_holdings(self, delta_spot, delta_futures):
 		self.current_spot_vol 			+= delta_spot
 		self.current_futures_lot_size 	+= delta_futures
 		self.logger.info(f"Spot vol: {self.current_spot_vol}, Futures lot size: {self.current_futures_lot_size}")
 		return
+
+	def get_asset_holdings(self):
+		return (self.current_spot_vol, self.current_futures_lot_size)
 
 	def current_position(self):
 		_current_position = TradePosition.NO_POSITION_TAKEN
