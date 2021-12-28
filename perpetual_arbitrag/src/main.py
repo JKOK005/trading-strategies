@@ -69,9 +69,6 @@ if __name__ == "__main__":
 										sandbox 						= args.use_sandbox
 									)
 
-	import IPython
-	IPython.embed()
-
 	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair) and \
 			args.futures_entry_lot_size >= client.get_futures_min_lot_size(symbol = args.futures_trading_pair), \
 			"Minimum entry size not satisfied."
