@@ -1,5 +1,6 @@
 import copy
 import sys
+import pytest
 from clients.KucoinApiClient import KucoinApiClient
 from unittest import TestCase
 from unittest.mock import patch
@@ -296,4 +297,29 @@ class TestKucoinApiClient(TestCase):
 			_kucoin_api_client.cancel_futures_order(order_id = "0001")
 		except Exception as ex:
 			assert(False)
+		return
+
+	@patch("kucoin.client.Market")
+	def test_spot_min_volume_throws_error_on_invalid_symbol(self, patch_client):
+		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_client 	= patch_client
+
+		patch_client.get_symbol_list.return_value = [	
+														{"symbol" : "BTC-USDT", "baseMinSize" : 1}, 
+														{"symbol" : "ETH-USDT", "baseMinSize" : 10},
+														{"symbol" : "XRP-USDT", "baseMinSize" : 5}
+													]
+		with pytest.raises(Exception):
+			min_vol = _kucoin_api_client.get_spot_min_volume(symbol = "ADA-USDT")
+		return
+
+	@patch("kucoin_futures.client.Market")
+	def test_futures_min_lot_size_throws_error_on_invalid_symbol(self, patch_client):
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_client 		= patch_client
+
+		patch_client.get_contract_detail.side_effect 	= Exception({"code":"404000","msg":"Symbol not exists"})
+
+		with pytest.raises(Exception):
+			min_vol = _kucoin_api_client.get_futures_min_lot_size(symbol = "BTCUSDTM")
 		return

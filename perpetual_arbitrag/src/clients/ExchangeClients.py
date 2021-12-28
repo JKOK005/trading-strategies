@@ -32,6 +32,20 @@ class ExchangeClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
+	def get_spot_min_volume(self, symbol: str):
+		"""
+		Retrieves minimum order volume for spot trading symbol
+		"""
+		pass
+
+	@abstractmethod
+	def get_futures_min_lot_size(self, symbol: str):
+		"""
+		Retrieves minimum order lot size for futures trading symbol
+		"""
+		pass
+
+	@abstractmethod
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the spot asset, assuming that we intend to trade at a given volume. 
