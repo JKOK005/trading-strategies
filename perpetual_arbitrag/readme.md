@@ -121,3 +121,6 @@ Use the script below to create the necessary schemas in the database.
 ```python
 src/init_database.py
 ```
+
+### Miscellaneous
+1) A short write up on how to determine the threshold for entry / take profit in lieu of trading fees can be found in [trading-threshold-eq](docs/trading-threshold-eq.pdf)
