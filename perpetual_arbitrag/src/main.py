@@ -133,7 +133,8 @@ if __name__ == "__main__":
 																		futures_size 		= args.futures_entry_lot_size,
 																		futures_lever 		= args.futures_entry_leverage
 																	)
-			
+			trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
+			if new_order_execution else None
 
 		elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
 			 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
@@ -147,12 +148,11 @@ if __name__ == "__main__":
 																		futures_size 		= args.futures_entry_lot_size,
 																		futures_lever 		= args.futures_entry_leverage
 																	)
+			trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \
+			if new_order_execution else None
 
-		if new_order_execution:
-			trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size)
-
-			if args.db_url is not None:
-				(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
-				db_client.set_position(spot_volume = current_spot_vol, futures_lot_size = current_futures_lot_size)
+		if new_order_execution and args.db_url is not None:
+			(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
+			db_client.set_position(spot_volume = current_spot_vol, futures_lot_size = current_futures_lot_size)
 		
 		sleep(args.poll_interval_s)
