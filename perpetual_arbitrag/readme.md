@@ -122,5 +122,37 @@ Use the script below to create the necessary schemas in the database.
 src/init_database.py
 ```
 
+
+### Dockerizing application
+Create a docker image for the arbitrag bot using
+
+```bash
+docker build -t arbitrag-bot:<version> -f ./Dockerfile .
+```
+
+Run `docker run` in order to create an executable container running the app
+
+```bash
+docker run \
+--env SPOT_TRADING_PAIR=SAND-USDT \
+--env FUTURES_TRADING_PAIR=SANDUSDTM \
+--env SPOT_API_KEY=xxx \
+--env SPOT_API_SECRET_KEY=xxx \
+--env SPOT_API_PASSPHRASE=xxx \
+--env FUTURES_API_KEY=xxx \
+--env FUTURES_API_SECRET_KEY=xxx \
+--env FUTURES_API_PASSPHRASE=xxx \
+--env ORDER_TYPE=market \
+--env SPOT_ENTRY_VOL=1 \
+--env MAX_SPOT_VOL=3 \
+--env FUTURES_ENTRY_LOT_SIZE=1 \
+--env MAX_FUTURES_LOT_SIZE=3 \
+--env FUTURES_ENTRY_LEVERAGE=1 \
+--env ENTRY_GAP_FRAC=0.002 \
+--env PROFIT_TAKING_FRAC=0.002 \
+--env POLL_INTERVAL_S=10 \
+arbitrag-bot:<label>
+```
+
 ### Miscellaneous
 1) A short write up on how to determine the threshold for entry / take profit in lieu of trading fees can be found in [trading-threshold-eq](docs/trading-threshold-eq.pdf)
