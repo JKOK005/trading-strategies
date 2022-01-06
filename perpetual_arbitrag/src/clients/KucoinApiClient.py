@@ -270,6 +270,22 @@ class KucoinApiClient(ExchangeClients):
 		else:
 			return None
 
+	def get_futures_funding_rate(self, symbol: str):
+		"""
+		Gets the immediate and predicted funding rate for futures contract
+		"""
+		funding_rate_info = self.futures_client.get_current_fund_rate(symbol = f".{symbol}FPI8H")
+		return (funding_rate_info["value"], funding_rate_info["predictedValue"])
+
+	def get_futures_effective_funding_rate(self, symbol: str):
+		"""
+		Effective funding rate takes into account a variety of factors to decide on the funding rate.
+
+		1) If we are not within a valid funding interval, then the rates are 0.
+		2) If funding rate computation has been disabled, then the rates are 0.
+		"""
+		pass
+
 	def place_spot_order(self, 	symbol: str, 
 								order_type: str, 
 								order_side: str, 

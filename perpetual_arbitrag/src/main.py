@@ -51,10 +51,13 @@ if __name__ == "__main__":
 	parser.add_argument('--futures_api_key', type=str, nargs='?', default=os.environ.get("FUTURES_API_KEY"), help='Futures exchange api key')
 	parser.add_argument('--futures_api_secret_key', type=str, nargs='?', default=os.environ.get("FUTURES_API_SECRET_KEY"), help='Futures exchange secret api key')
 	parser.add_argument('--futures_api_passphrase', type=str, nargs='?', default=os.environ.get("FUTURES_API_PASSPHRASE"), help='Futures exchange api passphrase')
-	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed.")
-	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / futures lot sizes are set to 0.')
-	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env.')
-	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only.')
+	parser.add_argument('--funding_snapshot_times', type=str, nargs='+', action='append', default=os.environ.get("FUNDING_SNAPSHOT_TIMES"), help='HH:MM list of UTC timings which the exchange will compute the funding rate P/L')
+	parser.add_argument('--funding_opening_s', type=int, nargs='?', default=os.environ.get("FUNDING_OPENING_S"), help='Seconds before funding snapshot timings which we consider valid to account for funding rate P/L')
+	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
+	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / futures lot sizes are set to 0')
+	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env')
+	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only')
+	parser.add_argument('--funding_rate_disable', action='store_true', help='If present, disable the effects of funding rate in the trade decision')
 	args 	= parser.parse_args()
 
 	logging.basicConfig(level = logging.INFO)
@@ -116,7 +119,7 @@ if __name__ == "__main__":
 																						take_profit_threshold 	= args.profit_taking_frac
 																					)
 			logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_futures_bid}, asks: {avg_futures_ask}")
-		logging.info(f"Executing trade decision: {decision}")		
+		logging.info(f"Executing trade decision: {decision}")
 
 		# Execute orders
 		new_order_execution = False

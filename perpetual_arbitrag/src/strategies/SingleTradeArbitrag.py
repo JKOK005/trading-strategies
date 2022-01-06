@@ -70,7 +70,9 @@ class SingleTradeArbitrag(Strategies):
 		return _current_position
 
 	def trade_decision(self, 	spot_price: float, 
-								futures_price: float, 
+								futures_price: float,
+								futures_latest_funding_rate: float,
+								futures_estimated_funding_rate: float,
 								entry_threshold: float,
 								take_profit_threshold: float,
 								*args,
@@ -108,6 +110,8 @@ class SingleTradeArbitrag(Strategies):
 										spot_ask_price: float,
 										futures_bid_price: float,
 										futures_ask_price: float,
+										futures_latest_funding_rate: float,
+										futures_estimated_funding_rate: float, 
 										entry_threshold: float,
 										take_profit_threshold: float,
 										*args,

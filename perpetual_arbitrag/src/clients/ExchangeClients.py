@@ -115,6 +115,13 @@ class ExchangeClients(metaclass = ABCMeta):
 		"""
 		pass
 
+	@abstractmethod
+	def get_futures_funding_rate(self, symbol: str):
+		"""
+		Gets the immediate and predicted funding rate for futures contract
+		"""
+		pass
+
 	@abstractmethod 
 	def place_spot_order(self, *args, **kwargs):
 		pass
