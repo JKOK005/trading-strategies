@@ -324,3 +324,29 @@ class TestKucoinApiClient(TestCase):
 		with pytest.raises(Exception):
 			min_vol = _kucoin_api_client.get_futures_min_lot_size(symbol = "BTCUSDTM")
 		return
+
+	@patch("kucoin_futures.client.Market")
+	def test_get_futures_funding_rates(self, patch_client):
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_client 		= patch_client
+
+		patch_client.get_current_fund_rate.return_value = {"value" : 0.01, "predictedValue" : -0.01}
+		(funding_rate, estimated_funding_rate) = _kucoin_api_client.get_futures_funding_rate(symbol = "ETHUSDT")
+		assert (funding_rate == 0.01 and estimated_funding_rate == -0.01)
+		return
+
+	def test_funding_rate_is_valid_interval(self):
+		pass
+
+	def test_funding_rate_is_not_valid_interval(self):
+		pass
+
+	def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
+		pass
+
+	def test_effective_funding_rate_is_zero_when_invalid_interval(self):
+		pass
+
+	def test_effective_funding_rate_is_non_zero(self):
+		pass
+
