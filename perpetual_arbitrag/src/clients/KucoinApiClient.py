@@ -1,6 +1,8 @@
+import datetime
 import deprecation
 import logging
 import sys
+from datetime import timedelta
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
 from clients.ExchangeClients import ExchangeClients
@@ -11,19 +13,22 @@ class KucoinApiClient(ExchangeClients):
 	futures_client 				= None
 	futures_trade 				= None
 	futures_user 				= None
+	logger 						= logging.getLogger('KucoinApiClient')
+
 	kucoin_spot_url 			= "https://api.kucoin.com"
 	kucoin_spot_sandbox_url 	= "https://openapi-sandbox.kucoin.com"
 	kucoin_futures_url 			= "https://api-futures.kucoin.com"
 	kucoin_futures_sandbox_url 	= "https://api-sandbox-futures.kucoin.com"
-	logger 						= logging.getLogger('KucoinApiClient')
-
+	kucoin_funding_rate_snapshot_times = ["04:00", "12:00", "20:00"]
+	
 	def __init__(self, 	spot_client_api_key: str, 
 						spot_client_api_secret_key: str, 
 						spot_client_pass_phrase: str,
 						futures_client_api_key: str, 
 						futures_client_api_secret_key: str, 
 						futures_client_pass_phrase: str,
-						sandbox: bool
+						sandbox: bool,
+						funding_rate_enable: bool
 				):
 
 		super(KucoinApiClient, self).__init__()
@@ -56,6 +61,10 @@ class KucoinApiClient(ExchangeClients):
 										passphrase 	= futures_client_pass_phrase, 
 										url 		= self.kucoin_futures_sandbox_url if sandbox else self.kucoin_futures_url
 									)
+
+		self.funding_rate_enable = funding_rate_enable
+		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
+		return
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""
@@ -277,14 +286,28 @@ class KucoinApiClient(ExchangeClients):
 		funding_rate_info = self.futures_client.get_current_fund_rate(symbol = f".{symbol}FPI8H")
 		return (funding_rate_info["value"], funding_rate_info["predictedValue"])
 
-	def get_futures_effective_funding_rate(self, symbol: str):
+	def funding_rate_valid_interval(self, seconds_before: int):
+		current_time = datetime.datetime.now()
+		for each_snaphsot_time in self.kucoin_funding_rate_snapshot_times:
+			ts = datetime.datetime.strptime(each_snaphsot_time, "%H:%M")
+			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute)
+			if snapshot_timestamp - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp:
+				return True
+		return False
+
+	def get_futures_effective_funding_rate(self, symbol: str, seconds_before: int):
 		"""
 		Effective funding rate takes into account a variety of factors to decide on the funding rate.
 
 		1) If we are not within a valid funding interval, then the rates are 0.
 		2) If funding rate computation has been disabled, then the rates are 0.
 		"""
-		pass
+		(funding_rate, estimated_funding_rate) = (0, 0)
+		if self.funding_rate_enable and self.funding_rate_valid_interval(seconds_before = seconds_before):
+			(funding_rate, estimated_funding_rate) = self.get_futures_funding_rate(symbol = symbol)
+
+		self.logger.info(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
+		return (funding_rate, estimated_funding_rate)
 
 	def place_spot_order(self, 	symbol: str, 
 								order_type: str, 
