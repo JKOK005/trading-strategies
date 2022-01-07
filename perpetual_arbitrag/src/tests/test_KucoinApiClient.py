@@ -13,7 +13,8 @@ class TestKucoinApiClient(TestCase):
 													futures_client_api_key 			= "456", 
 													futures_client_api_secret_key 	= "456", 
 													futures_client_pass_phrase 		= "fake_futures_passphrase",
-													sandbox = True
+													sandbox = True, 
+													funding_rate_enable = True,
 												)
 
 	@patch("kucoin.client.User")
