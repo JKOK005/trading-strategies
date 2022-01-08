@@ -287,7 +287,7 @@ class KucoinApiClient(ExchangeClients):
 		return (funding_rate_info["value"], funding_rate_info["predictedValue"])
 
 	def funding_rate_valid_interval(self, seconds_before: int):
-		current_time = datetime.datetime.now()
+		current_time = datetime.datetime.utcnow()
 		for each_snaphsot_time in self.kucoin_funding_rate_snapshot_times:
 			ts = datetime.datetime.strptime(each_snaphsot_time, "%H:%M")
 			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute, second = 0)
