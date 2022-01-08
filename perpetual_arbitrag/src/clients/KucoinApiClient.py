@@ -290,7 +290,7 @@ class KucoinApiClient(ExchangeClients):
 		current_time = datetime.datetime.now()
 		for each_snaphsot_time in self.kucoin_funding_rate_snapshot_times:
 			ts = datetime.datetime.strptime(each_snaphsot_time, "%H:%M")
-			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute)
+			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute, second = 0)
 			if snapshot_timestamp - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp:
 				return True
 		return False
