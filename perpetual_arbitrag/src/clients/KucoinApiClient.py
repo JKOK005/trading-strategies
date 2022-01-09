@@ -299,8 +299,8 @@ class KucoinApiClient(ExchangeClients):
 		"""
 		Effective funding rate takes into account a variety of factors to decide on the funding rate.
 
-		1) If we are not within a valid funding interval, then the rates are 0.
-		2) If funding rate computation has been disabled, then the rates are 0.
+		1) If we are not within a valid funding interval, then the estimated funding rates are 0.
+		2) If funding rate computation has been disabled, then all rates are 0.
 		"""
 		(funding_rate, estimated_funding_rate) = (0, 0)
 		if self.funding_rate_enable: 
