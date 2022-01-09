@@ -70,7 +70,9 @@ class SingleTradeArbitrag(Strategies):
 		return _current_position
 
 	def trade_decision(self, 	spot_price: float, 
-								futures_price: float, 
+								futures_price: float,
+								futures_funding_rate: float,
+								futures_estimated_funding_rate: float,
 								entry_threshold: float,
 								take_profit_threshold: float,
 								*args,
@@ -81,12 +83,15 @@ class SingleTradeArbitrag(Strategies):
 		decision 			= ExecutionDecision.NO_DECISION
 		current_position 	= self.current_position()
 
+		effective_futures_bid_price 	= futures_price * (1 + futures_funding_rate + futures_estimated_funding_rate)
+		effective_futures_ask_price 	= futures_price * (1 - futures_funding_rate - futures_estimated_funding_rate)
+
 		if 	(current_position is TradePosition.LONG_SPOT_SHORT_FUTURE) \
-			and (spot_price / futures_price - 1 >= take_profit_threshold):
+			and (spot_price / effective_futures_ask_price - 1 >= take_profit_threshold):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE
 
 		elif (current_position is TradePosition.LONG_FUTURE_SHORT_SPOT) \
-			 and (futures_price / spot_price - 1 >= take_profit_threshold):
+			 and (effective_futures_bid_price / spot_price - 1 >= take_profit_threshold):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT
 
 		else:
@@ -94,12 +99,12 @@ class SingleTradeArbitrag(Strategies):
 			 	or (abs(self.current_futures_lot_size) >= self.max_futures_lot_size):
 			 	decision = ExecutionDecision.NO_DECISION
 
-			elif (spot_price > futures_price) \
-				 and (spot_price / futures_price - 1 >= entry_threshold):
+			elif (spot_price > effective_futures_ask_price) \
+				 and (spot_price / effective_futures_ask_price - 1 >= entry_threshold):
 				decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
 
-			elif (futures_price > spot_price) \
-				 and (futures_price / spot_price - 1 >= entry_threshold):
+			elif (effective_futures_bid_price > spot_price) \
+				 and (effective_futures_bid_price / spot_price - 1 >= entry_threshold):
 				decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
 
 		return decision
@@ -108,6 +113,8 @@ class SingleTradeArbitrag(Strategies):
 										spot_ask_price: float,
 										futures_bid_price: float,
 										futures_ask_price: float,
+										futures_funding_rate: float,
+										futures_estimated_funding_rate: float, 
 										entry_threshold: float,
 										take_profit_threshold: float,
 										*args,
@@ -119,16 +126,19 @@ class SingleTradeArbitrag(Strategies):
 		decision 			= ExecutionDecision.NO_DECISION
 		current_position 	= self.current_position()
 
-		profit_from_long_spot_short_futures = futures_bid_price - spot_ask_price
-		profit_from_short_spot_long_futures = spot_bid_price - futures_ask_price
+		effective_futures_bid_price 	= futures_bid_price * (1 + futures_funding_rate + futures_estimated_funding_rate)
+		effective_futures_ask_price 	= futures_ask_price * (1 - futures_funding_rate - futures_estimated_funding_rate)
+
+		profit_from_long_spot_short_futures = effective_futures_bid_price - spot_ask_price
+		profit_from_short_spot_long_futures = spot_bid_price - effective_futures_ask_price
 		self.logger.info(f"""Current position: {current_position}. Profits long_spot_short_futures: {profit_from_long_spot_short_futures}, short_spot_long_futures: {profit_from_short_spot_long_futures}""")
 
 		if 	(current_position is TradePosition.LONG_SPOT_SHORT_FUTURE) \
-			and (spot_bid_price / futures_ask_price - 1 >= take_profit_threshold):
+			and (spot_bid_price / effective_futures_ask_price - 1 >= take_profit_threshold):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE
 
 		elif (current_position is TradePosition.LONG_FUTURE_SHORT_SPOT) \
-			 and (futures_bid_price / spot_ask_price - 1 >= take_profit_threshold):
+			 and (effective_futures_bid_price / spot_ask_price - 1 >= take_profit_threshold):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT
 
 		else:
@@ -137,11 +147,11 @@ class SingleTradeArbitrag(Strategies):
 			 	decision = ExecutionDecision.NO_DECISION
 
 			elif (profit_from_long_spot_short_futures > profit_from_short_spot_long_futures) \
-				 and (futures_bid_price / spot_ask_price - 1 >= entry_threshold):
+				 and (effective_futures_bid_price / spot_ask_price - 1 >= entry_threshold):
 				decision = ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE
 
 			elif (profit_from_short_spot_long_futures > profit_from_long_spot_short_futures) \
-				 and (spot_bid_price / futures_ask_price - 1 >= entry_threshold):
+				 and (spot_bid_price / effective_futures_ask_price - 1 >= entry_threshold):
 				decision = ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT
 
 		return decision

@@ -115,6 +115,15 @@ class ExchangeClients(metaclass = ABCMeta):
 		"""
 		pass
 
+	@abstractmethod
+	def get_futures_effective_funding_rate(self, symbol: str, seconds_before: int):
+		"""
+		Gets the effective funding rate for futures contract.
+
+		Effective funding rate takes into account a variety of factors to decide on the funding rate.
+		"""
+		pass
+
 	@abstractmethod 
 	def place_spot_order(self, *args, **kwargs):
 		pass

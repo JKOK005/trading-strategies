@@ -2,7 +2,7 @@
 
 ### Example of execution
 ```python
-python3 src/main.py \
+python3 main.py \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
@@ -20,9 +20,11 @@ python3 src/main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
+--funding_interval_s 1800 \
 --db_url xxx \
 --use_sandbox \
---fake_orders
+--fake_orders \
+--funding_rate_disable
 ```
 
 Flag / description pairs are explained below.
@@ -50,6 +52,8 @@ Flag / description pairs are explained below.
 | fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
 | db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
+| funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
+| funding_rate_disable | If present, we do not take into account funding rate for trade decisions | - |
 
 
 ### Transfer of main account funds to trade account
@@ -151,10 +155,13 @@ docker run \
 --env ENTRY_GAP_FRAC=0.002 \
 --env PROFIT_TAKING_FRAC=0.002 \
 --env POLL_INTERVAL_S=10 \
+--env FUNDING_INTERVAL_S=1800 \
+--env DB_URL=xxx \
 arbitrag-bot:<label>
 ```
 
-*Note*: `db_reset` / `use_sandbox` / `fake_orders` flags are not enabled when running in docker. These flags should not be used in production anyway.
+*Note*: `db_reset` / `use_sandbox` / `fake_orders` / `funding_rate_disable` flags are not enabled when running in docker. These flags should not be used in production anyway.
+
 
 ### Miscellaneous
 1) A short write up on how to determine the threshold for entry / take profit in lieu of trading fees can be found in [trading-threshold-eq](docs/trading-threshold-eq.pdf)

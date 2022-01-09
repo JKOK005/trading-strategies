@@ -2,6 +2,7 @@ import copy
 import sys
 import pytest
 from clients.KucoinApiClient import KucoinApiClient
+from freezegun import freeze_time
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -13,7 +14,8 @@ class TestKucoinApiClient(TestCase):
 													futures_client_api_key 			= "456", 
 													futures_client_api_secret_key 	= "456", 
 													futures_client_pass_phrase 		= "fake_futures_passphrase",
-													sandbox = True
+													sandbox = True, 
+													funding_rate_enable = True,
 												)
 
 	@patch("kucoin.client.User")
@@ -322,4 +324,66 @@ class TestKucoinApiClient(TestCase):
 
 		with pytest.raises(Exception):
 			min_vol = _kucoin_api_client.get_futures_min_lot_size(symbol = "BTCUSDTM")
+		return
+
+	@patch("kucoin_futures.client.Market")
+	def test_get_futures_funding_rates(self, patch_client):
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_client 		= patch_client
+
+		patch_client.get_current_fund_rate.return_value = {"value" : 0.01, "predictedValue" : -0.01}
+		(funding_rate, estimated_funding_rate) = _kucoin_api_client.get_futures_funding_rate(symbol = "ETHUSDT")
+		assert (funding_rate == 0.01 and estimated_funding_rate == -0.01)
+		return
+
+	@freeze_time("2022-01-01 03:55:00")
+	def test_funding_rate_is_valid_interval(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		assert(_kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
+		return
+
+	@freeze_time("2022-01-01 03:50:00")
+	def test_funding_rate_is_not_valid_interval_A(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		assert(not _kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
+		return
+
+	@freeze_time("2022-01-01 04:00:01")
+	def test_funding_rate_is_not_valid_interval_B(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		assert(not _kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
+		return
+
+	def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.funding_rate_enable = False
+
+		with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
+			mock_funding_rate_valid_interval.return_value = True
+			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0, 0)
+		return
+
+	def test_effective_funding_rate_is_zero_when_invalid_interval(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+
+		with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval, \
+			 patch.object(_kucoin_api_client, "get_futures_funding_rate") as mock_get_futures_funding_rate:
+			mock_funding_rate_valid_interval.return_value 	= False
+			mock_get_futures_funding_rate.return_value 		= (0.01, -0.01)
+			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0.01, 0)
+		return
+
+	@patch("kucoin_futures.client.Market")
+	def test_effective_funding_rate_is_non_zero(self, patch_client):
+		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_client 		= patch_client
+
+		patch_client.get_current_fund_rate.return_value = {"value" : 0.01, "predictedValue" : -0.01}
+
+		with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
+			mock_funding_rate_valid_interval.return_value = True
+			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0.01, -0.01)
 		return
