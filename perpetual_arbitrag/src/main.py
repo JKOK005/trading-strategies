@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	parser.add_argument('--futures_api_key', type=str, nargs='?', default=os.environ.get("FUTURES_API_KEY"), help='Futures exchange api key')
 	parser.add_argument('--futures_api_secret_key', type=str, nargs='?', default=os.environ.get("FUTURES_API_SECRET_KEY"), help='Futures exchange secret api key')
 	parser.add_argument('--futures_api_passphrase', type=str, nargs='?', default=os.environ.get("FUTURES_API_PASSPHRASE"), help='Futures exchange api passphrase')
-	parser.add_argument('--funding_interval_s', type=int, nargs='?', default=os.environ.get("FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for funding rate P/L')
+	parser.add_argument('--funding_interval_s', type=int, nargs='?', default=os.environ.get("FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for estimated funding rate P/L')
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
 	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / futures lot sizes are set to 0')
 	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env')
