@@ -303,9 +303,11 @@ class KucoinApiClient(ExchangeClients):
 		2) If funding rate computation has been disabled, then the rates are 0.
 		"""
 		(funding_rate, estimated_funding_rate) = (0, 0)
-		if self.funding_rate_enable and self.funding_rate_valid_interval(seconds_before = seconds_before):
-			(funding_rate, estimated_funding_rate) = self.get_futures_funding_rate(symbol = symbol)
-
+		if self.funding_rate_enable: 
+			if self.funding_rate_valid_interval(seconds_before = seconds_before):
+				(funding_rate, estimated_funding_rate) = self.get_futures_funding_rate(symbol = symbol)
+			else:
+				(funding_rate, _) = self.get_futures_funding_rate(symbol = symbol)
 		self.logger.info(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
 		return (funding_rate, estimated_funding_rate)
 
