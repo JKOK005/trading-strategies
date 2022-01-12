@@ -21,6 +21,7 @@ python3 main.py \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
 --funding_interval_s 1800 \
+--retry_timeout_s 30 \
 --db_url xxx \
 --use_sandbox \
 --fake_orders \
@@ -54,6 +55,7 @@ Flag / description pairs are explained below.
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
 | funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
 | funding_rate_disable | If present, we do not take into account funding rate for trade decisions | - |
+| retry_timeout_s | Wait seconds before retrying main loop | 30 |
 
 
 ### Transfer of main account funds to trade account
@@ -161,6 +163,8 @@ arbitrag-bot:<label>
 ```
 
 *Note*: `db_reset` / `use_sandbox` / `fake_orders` / `funding_rate_disable` flags are not enabled when running in docker. These flags should not be used in production anyway.
+
+In addition, consider adding `--network=host` for connecting the application to a local DB
 
 
 ### Miscellaneous
