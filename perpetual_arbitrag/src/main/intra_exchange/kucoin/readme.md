@@ -2,7 +2,7 @@
 
 ### Example of execution
 ```python
-python3 main.py \
+python3 main/intra_exchange/kucoin/<script>.py \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
