@@ -2,7 +2,7 @@
 
 ### Example of execution
 ```python
-python3 main/intra_exchange/kucoin/<script>.py \
+python3 main/intra_exchange/kucoin/spot_perp/main.py \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
@@ -129,13 +129,7 @@ src/init_database.py
 ```
 
 
-### Dockerizing application
-Create a docker image for the arbitrag bot using
-
-```bash
-docker build -t arbitrag-bot:<version> -f ./Dockerfile .
-```
-
+### Executing docker image
 Run `docker run` in order to create an executable container running the app
 
 ```bash
