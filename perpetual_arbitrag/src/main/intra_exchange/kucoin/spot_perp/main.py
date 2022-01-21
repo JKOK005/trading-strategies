@@ -9,7 +9,7 @@ from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
-python3 main.py \
+python3 main/intra_exchange/kucoin/spot_perp.py \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
