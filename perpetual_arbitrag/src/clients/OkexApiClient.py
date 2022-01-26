@@ -1,49 +1,65 @@
 import datetime
 import logging
 import sys
-from okex.futures_api import FutureApi
-from okex.spot_api import SpotApi
-from clients.ExchangeClients import ExchangeClients
+from okex.swap_api import SwapAPI
+from okex.spot_api import SpotAPI
+from clients.ExchangeSpotClients import ExchangeSpotClients
+from clients.ExchangePerpetualClients import ExchangePerpetualClients
 
-class OkexApiClient(ExchangeClients):
+class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	def __init__(self, 	api_key: str, 
 						api_secret_key: str,
 						passphrase: str):
-		pass
+		
+		spot_client 	= SpotAPI(	api_key = api_key, 
+									api_secret_key = api_secret_key, 
+									passphrase = passphrase)
+
+		perp_client 	= SwapAPI(	api_key = api_key, 
+									api_secret_key = api_secret_key, 
+									passphrase = passphrase)
+
+		logger 			= logging.getLogger('OkexApiClient')
+		return
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""
 		Retrieves spot trading details
 		"""
-		pass
+		spot_accounts 	= self.spot_client.get_account_info()
+		return list(filter(lambda x: x["type"] == "trade" and x["currency"] == currency, spot_accounts))[0]
 
-	def get_futures_trading_account_details(self, currency: str):
+	def get_perpetual_trading_account_details(self, currency: str):
 		"""
-		Retrieves futures trading account details
+		Retrieves perpetual trading account details
 		"""
-		pass
+		return self.perp_client.get_coin_account(underlying = currency)
 
 	def get_spot_trading_price(self, symbol: str):
 		"""
 		Retrieves current spot pricing for trading symbol
 		"""
-		pass
+		asset_info 		= self.spot_client.get_specific_ticker(instrument_id = symbol)
+		return asset_info["last"]
 
-	def get_futures_trading_price(self, symbol: str):
+	def get_perpetual_trading_price(self, symbol: str):
 		"""
-		Retrieves current futures price for trading symbol
+		Retrieves current perpetual price for trading symbol
 		"""
-		pass
+		perp_info 		= self.perp_client.get_specific_ticker(instrument_id = symbol)
+		return perp_info["last"]
 
 	def get_spot_min_volume(self, symbol: str):
 		"""
 		Retrieves minimum order volume for spot trading symbol
 		"""
-		pass
+		all_spot_info 	= self.spot_client.get_ticker()
+		spot_info 		= next(filter(lambda x: x["instrument_id"] == symbol, all_spot_info))
+		return float(spot_info["min_size"])
 
-	def get_futures_min_lot_size(self, symbol: str):
+	def get_perpetual_min_lot_size(self, symbol: str):
 		"""
-		Retrieves minimum order lot size for futures trading symbol
+		Retrieves minimum order lot size for perpetual trading symbol
 		"""
 		pass
 
@@ -53,9 +69,9 @@ class OkexApiClient(ExchangeClients):
 		"""
 		pass
 
-	def get_futures_average_bid_ask_price(self, symbol: str, size: float):
+	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
-		Returns the average bid / ask price of the futures asset, assuming that we intend to trade at a given lot size. 
+		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""
 		pass
 
@@ -65,7 +81,7 @@ class OkexApiClient(ExchangeClients):
 		"""
 		pass
 
-	def get_futures_open_orders(self, symbol: str):
+	def get_perpetual_open_orders(self, symbol: str):
 		"""
 		Gets information of all open future orders by the user
 		"""
@@ -77,9 +93,9 @@ class OkexApiClient(ExchangeClients):
 		"""
 		pass
 
-	def get_futures_most_recent_open_order(self, symbol: str):
+	def get_perpetual_most_recent_open_order(self, symbol: str):
 		"""
-		Gets the most recent open orders for futures
+		Gets the most recent open orders for perpetual
 		"""
 		pass
 
@@ -89,7 +105,7 @@ class OkexApiClient(ExchangeClients):
 		"""
 		pass
 
-	def get_futures_fulfilled_orders(self, symbol: str):
+	def get_perpetual_fulfilled_orders(self, symbol: str):
 		"""
 		Gets information of all fulfilled future orders by the user
 		"""
@@ -101,15 +117,15 @@ class OkexApiClient(ExchangeClients):
 		"""
 		pass
 
-	def get_futures_most_recent_fulfilled_order(self, symbol: str):
+	def get_perpetual_most_recent_fulfilled_order(self, symbol: str):
 		"""
-		Gets information of the most recent futures trade that have been fulfilled
+		Gets information of the most recent perpetual trade that have been fulfilled
 		"""
 		pass
 
-	def get_futures_effective_funding_rate(self, symbol: str, seconds_before: int):
+	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before: int):
 		"""
-		Gets the effective funding rate for futures contract.
+		Gets the effective funding rate for perpetual contract.
 
 		Effective funding rate takes into account a variety of factors to decide on the funding rate.
 		"""
@@ -118,11 +134,11 @@ class OkexApiClient(ExchangeClients):
 	def place_spot_order(self, *args, **kwargs):
 		pass
 
-	def place_futures_order(self, *args, **kwargs):
+	def place_perpetual_order(self, *args, **kwargs):
 		pass
 
 	def cancel_spot_order(self, order_id: str):
 		pass
 
-	def cancel_futures_order(self, order_id: str):
+	def cancel_perpetual_order(self, order_id: str):
 		pass

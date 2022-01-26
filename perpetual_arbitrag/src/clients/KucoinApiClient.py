@@ -5,9 +5,10 @@ import sys
 from datetime import timedelta
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
-from clients.ExchangeClients import ExchangeClients
+from clients.ExchangeSpotClients import ExchangeSpotClients
+from clients.ExchangeFutureClients import ExchangeFutureClients
 
-class KucoinApiClient(ExchangeClients):
+class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 	default_page_size 			= 50
 	spot_client 				= None
 	futures_client 				= None
