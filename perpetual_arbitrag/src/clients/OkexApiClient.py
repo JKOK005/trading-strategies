@@ -1,6 +1,7 @@
 import datetime
 import logging
 import sys
+from datetime import timedelta
 from okex.swap_api import SwapAPI
 from okex.spot_api import SpotAPI
 from clients.ExchangeSpotClients import ExchangeSpotClients
@@ -19,13 +20,13 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 						funding_rate_enable: bool
 				):
 		
-		spot_client 	= SpotAPI(	api_key = api_key, 
-									api_secret_key = api_secret_key, 
-									passphrase = passphrase)
+		self.spot_client 	= SpotAPI(	api_key = api_key, 
+										api_secret_key = api_secret_key, 
+										passphrase = passphrase)
 
-		perp_client 	= SwapAPI(	api_key = api_key, 
-									api_secret_key = api_secret_key, 
-									passphrase = passphrase)
+		self.perp_client 	= SwapAPI(	api_key = api_key, 
+										api_secret_key = api_secret_key, 
+										passphrase = passphrase)
 
 		self.funding_rate_enable = funding_rate_enable
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
@@ -62,7 +63,7 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Retrieves minimum order volume for spot trading symbol
 		"""
-		all_spot_info 	= self.spot_client.get_ticker()
+		all_spot_info 	= self.spot_client.get_coin_info()
 		spot_info 		= next(filter(lambda x: x["instrument_id"] == symbol, all_spot_info))
 		return float(spot_info["min_size"])
 
@@ -112,8 +113,6 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the spot asset, assuming that we intend to trade at a given volume.
-
-		# TODO: Assert that number of liquidated orders in returned bid_ask_orders list is not needed in computation
 		"""
 		bid_ask_orders 		= self.spot_client.get_depth(instrument_id = symbol, size = 100)
 		bids 				= bid_ask_orders["bids"]
@@ -136,7 +135,7 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 
 		asks 				= bid_ask_orders["asks"]
 		asks 				= list(map(lambda x: [float(x[0]), float(x[1])], asks))
-		average_sell_price 	= self._compute_average_ask_priclientce(asks = asks, size = size)
+		average_sell_price 	= self._compute_average_ask_price(asks = asks, size = size)
 		return (average_bid_price, average_sell_price)
 
 	def get_spot_open_orders(self, symbol: str):
