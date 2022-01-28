@@ -51,12 +51,12 @@ class BotExecution(object):
 
 		try:
 			futures_order 	= self._place_futures_order(symbol 		= futures_symbol,
-											order_type 	= futures_order_type,
-											order_side 	= "sell",
-											price 		= futures_price,
-											size 		= futures_size,
-											lever 		= futures_lever
-										)
+														order_type 	= futures_order_type,
+														order_side 	= "sell",
+														price 		= futures_price,
+														size 		= futures_size,
+														lever 		= futures_lever
+													)
 			
 			spot_order  	= self._place_spot_order(symbol 	= spot_symbol,
 													 order_type = spot_order_type,

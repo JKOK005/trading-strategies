@@ -95,7 +95,6 @@ if __name__ == "__main__":
 											futures_symbol 				= args.futures_trading_pair,
 											current_futures_lot_size 	= current_futures_lot_size,
 											max_futures_lot_size		= args.max_futures_lot_size,
-											api_client 					= client
 										)
 
 	bot_executor 	= BotSimulatedExecution(api_client = client) if args.fake_orders else BotExecution(api_client = client)
