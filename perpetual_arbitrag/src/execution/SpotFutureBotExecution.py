@@ -54,8 +54,8 @@ class SpotFutureSimulatedBotExecution(SpotFutureBotExecution):
 		self.logger.warning("Order execution is simulated.")
 		super(SpotFutureSimulatedBotExecution, self).__init__(*args, *kwargs)
 
-	def long_spot_short_future(self, *args, **kwargs):
+	def long_spot_short_futures(self, *args, **kwargs):
 		return True
 
-	def short_spot_long_future(self, *args, **kwargs):
+	def short_spot_long_futures(self, *args, **kwargs):
 		return True
