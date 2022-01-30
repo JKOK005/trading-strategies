@@ -4,7 +4,7 @@ import logging
 from time import sleep
 from clients.KucoinApiClient import KucoinApiClient
 from clients.SqlClient import SqlClient
-from execution.BotExecution import BotExecution
+from execution.SpotFutureBotExecution import SpotFutureBotExecution, SpotFutureSimulatedBotExecution
 from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 											max_futures_lot_size		= args.max_futures_lot_size,
 										)
 
-	bot_executor 	= BotSimulatedExecution(api_client = client) if args.fake_orders else BotExecution(api_client = client)
+	bot_executor 	= SpotFutureSimulatedBotExecution(api_client = client) if args.fake_orders else SpotFutureBotExecution(api_client = client)
 
 	while True:
 		try:
@@ -138,30 +138,40 @@ if __name__ == "__main__":
 
 			if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) \
 				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
-				new_order_execution = bot_executor.long_spot_short_futures( spot_symbol 		= args.spot_trading_pair,
-																			spot_order_type 	= args.order_type,
-																			spot_price 			= spot_price if args.order_type == "limit" else 1,
-																			spot_size 			= args.spot_entry_vol,
-																			futures_symbol 		= args.futures_trading_pair,
-																			futures_order_type 	= args.order_type,
-																			futures_price 		= futures_price if args.order_type == "limit" else 1,
-																			futures_size 		= args.futures_entry_lot_size,
-																			futures_lever 		= args.futures_entry_leverage
+				new_order_execution = bot_executor.long_spot_short_futures(	spot_params 	= { "symbol" 		: args.spot_trading_pair, 
+																								"order_type" 	: args.order_type,
+																								"price" 		: spot_price if args.order_type == "limit" else 1,
+																								"size" 			: args.spot_entry_vol,
+																								"order_id_ref" 	: "orderId"
+																							},
+
+																			future_params 	= {	"symbol" 		: args.futures_trading_pair, 
+																								"order_type" 	: args.order_type, 
+																								"price" 		: futures_price if args.order_type == "limit" else 1,
+																								"size" 			: args.futures_entry_lot_size,
+																								"lever" 		: args.futures_entry_leverage,
+																								"order_id_ref" 	: "orderId"
+																							},
 																		)
 				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
 				if new_order_execution else None
 
 			elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
-				 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
-				new_order_execution = bot_executor.short_spot_long_futures( spot_symbol 		= args.spot_trading_pair,
-																			spot_order_type 	= args.order_type,
-																			spot_price 			= spot_price if args.order_type == "limit" else 1,
-																			spot_size 			= args.spot_entry_vol,
-																			futures_symbol 		= args.futures_trading_pair,
-																			futures_order_type 	= args.order_type,
-																			futures_price 		= futures_price if args.order_type == "limit" else 1,
-																			futures_size 		= args.futures_entry_lot_size,
-																			futures_lever 		= args.futures_entry_leverage
+				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
+				new_order_execution = bot_executor.short_spot_long_futures(	spot_params 	= {	"symbol" 		: args.spot_trading_pair, 
+																								"order_type" 	: args.order_type,
+																								"price" 		: spot_price if args.order_type == "limit" else 1,
+																								"size" 			: args.spot_entry_vol,
+																								"order_id_ref" 	: "orderId"
+																							},
+
+																			future_params 	= {	"symbol" 		: args.futures_trading_pair, 
+																								"order_type" 	: args.order_type, 
+																								"price" 		: futures_price if args.order_type == "limit" else 1,
+																								"size" 			: args.futures_entry_lot_size,
+																								"lever" 		: args.futures_entry_leverage,
+																								"order_id_ref" 	: "orderId"
+																							},
 																		)
 				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \
 				if new_order_execution else None
