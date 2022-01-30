@@ -211,7 +211,7 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		Gets the immediate and predicted funding rate for futures contract
 		"""
 		funding_rate_info = self.perp_client.get_funding_time(instrument_id = symbol)
-		return (funding_rate_info["funding_rate"], funding_rate_info["estimated_rate"])
+		return (float(funding_rate_info["funding_rate"]), float(funding_rate_info["estimated_rate"]))
 
 	def funding_rate_valid_interval(self, seconds_before: int):
 		current_time = datetime.datetime.utcnow()
