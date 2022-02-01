@@ -1,6 +1,9 @@
 import enum
 import logging
+from abc import ABCMeta
+from abc import abstractmethod
 from sqlalchemy import *
+from sqlalchemy.orm import sessionmaker
 
 class AssetInfoTable(object):
 	__table_args__	= (UniqueConstraint("strategy_id", "client_id", "exchange", "symbol"),)
@@ -16,7 +19,7 @@ class AssetInfoTable(object):
 	def __repr__(self):
 		return f"{self.strategy_id}-{self.client_id}-{self.exchange}-{self.symbol}"
 
-class AssetClient(object):
+class AssetClient(metaclass = ABCMeta):
 	db_url 		= None
 	session 	= None
 	symbol 		= None
@@ -34,44 +37,56 @@ class AssetClient(object):
 		self.exchange 		= exchange
 		self.symbol 		= symbol
 		self.units 			= units
+
+		engine 				= create_engine(self.db_url, echo = False)
+		self.session 		= sessionmaker(engine)
 		return
 
-	def start_session(self):
-		engine 				= create_engine(self.db_url, echo = False)
-		SESSION 			= sessionmaker()
-		SESSION.configure(bind = engine)
-		self.session 		= SESSION()
-		return self
+	def _with_session_context(func):
+		def wrapper(self, *args, **kwargs):
+			with self.session() as conn, conn.begin():
+				return func(self, conn = conn, *args, **kwargs)
+		return wrapper
 
-	def get_entry(self):
-		return self.session.query(SpotInfoTable).filter_by(	strategy_id = self.strategy_id,
-															client_id 	= self.client_id,
-															exchange	= self.exchange,
-															symbol 		= self.symbol).first()
+	@abstractmethod
+	def table_ref(self):
+		pass
+
+	@abstractmethod
+	def new_table(self):
+		pass
 
 	def modify_entry(self, entry, attribute, new_value):
 		setattr(entry, attribute, new_value)
 		self.logger.info(f"Modify {attribute} of {entry} -> {new_value}")
 		return
 
-	def get_position(self):
-		entry = self.get_entry()
+	def get_entry(self, conn):
+		return conn.query(self.table_ref()).filter_by(	strategy_id = self.strategy_id,
+														client_id 	= self.client_id,
+														exchange	= self.exchange,
+														symbol 		= self.symbol).first()
+
+	@_with_session_context
+	def create_entry(self, conn):
+		new_entry = self.new_table()
+		conn.add(new_entry)
+		conn.commit()
+		return
+
+	@_with_session_context
+	def get_position(self, conn):
+		entry = self.get_entry(conn = conn)
 		return entry.size
 
-	def set_position(self, size: float):
-		entry = self.get_entry()
+	@_with_session_context
+	def set_position(self, conn, size: float):
+		entry = self.get_entry(conn = conn)
 		self.modify_entry(entry = entry, attribute = "size", new_value = size)
-		self.session.commit()
+		conn.commit()
 		return
 
-	def create_entry(self):
-		new_entry = SpotInfoTable(	strategy_id = self.strategy_id, client_id = self.client_id, exchange = self.exchange,
-									symbol = self.symbol, size = 0, units = self.units)
-		self.session.add(new_entry)
-		self.session.commit()
-		self.logger.info(f"Created new entry for {new_entry}")
-		return
-
-	def is_exists(self):
-		entry = self.get_entry()
+	@_with_session_context
+	def is_exists(self, conn):
+		entry = self.get_entry(conn = conn)
 		return entry is not None
