@@ -1,12 +1,13 @@
 import argparse
-import os
 import logging
-from time import sleep
+import os
 from clients.KucoinApiClient import KucoinApiClient
-from clients.SqlClient import SqlClient
+from db.FutureClients import FutureClients
+from db.SpotClients import SpotClients
 from execution.SpotFutureBotExecution import SpotFutureBotExecution, SpotFutureSimulatedBotExecution
 from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
+from time import sleep
 
 """
 python3 main/intra_exchange/kucoin/spot_perp/main.py \
@@ -81,10 +82,17 @@ if __name__ == "__main__":
 
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
-		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, futures_symbol = args.futures_trading_pair).start_session()
-		db_client.create_entry() if not db_client.is_exists() else None
-		db_client.set_position(spot_volume = 0, futures_lot_size = 0) if args.db_reset else None
-		(current_spot_vol, current_futures_lot_size) = db_client.get_position()
+
+		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol")
+		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot")
+
+		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
+		db_futures_client.create_entry() if not db_futures_client.is_exists() else None
+		
+		db_spot_client.set_position(size = 0) if args.db_reset else None
+		db_futures_client.set_position(size = 0) if args.db_reset else None
+		
+		(current_spot_vol, current_futures_lot_size) = (db_spot_client.get_position(), db_futures_client.get_position())
 	else:
 		logging.warning(f"Zero state execution as no db_url detected")
 		(current_spot_vol, current_futures_lot_size) = (0, 0)
@@ -178,7 +186,9 @@ if __name__ == "__main__":
 
 			if new_order_execution and args.db_url is not None:
 				(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
-				db_client.set_position(spot_volume = current_spot_vol, futures_lot_size = current_futures_lot_size)
+
+				db_spot_client.set_position(size = current_spot_vol)
+				db_futures_client.set_position(size = current_futures_lot_size)
 			
 			sleep(args.poll_interval_s)
 
