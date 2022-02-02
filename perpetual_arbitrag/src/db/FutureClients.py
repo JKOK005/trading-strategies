@@ -1,5 +1,5 @@
 import logging
-from db.AssetInfoTable import *
+from db.AssetClient import *
 from sqlalchemy import *
 from sqlalchemy.orm import declarative_base
 

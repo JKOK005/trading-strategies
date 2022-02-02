@@ -83,8 +83,8 @@ if __name__ == "__main__":
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 
-		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol")
-		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot")
+		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol").create_session()
+		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot").create_session()
 
 		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
 		db_futures_client.create_entry() if not db_futures_client.is_exists() else None

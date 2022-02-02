@@ -37,15 +37,13 @@ class AssetClient(metaclass = ABCMeta):
 		self.exchange 		= exchange
 		self.symbol 		= symbol
 		self.units 			= units
-
-		engine 				= create_engine(self.db_url, echo = False)
-		self.session 		= sessionmaker(engine)
 		return
 
 	def _with_session_context(func):
 		def wrapper(self, *args, **kwargs):
 			with self.session() as conn, conn.begin():
-				return func(self, conn = conn, *args, **kwargs)
+				res = func(self, conn = conn, *args, **kwargs)
+				return res
 		return wrapper
 
 	@abstractmethod
@@ -56,9 +54,16 @@ class AssetClient(metaclass = ABCMeta):
 	def new_table(self):
 		pass
 
+	def create_session(self):
+		# Do not invoke this part for testing
+		engine 			= create_engine(self.db_url, echo = False)
+		self.session 	= sessionmaker(engine)
+		return self
+
 	def modify_entry(self, entry, attribute, new_value):
+		# TODO: Fix logging issue within context manager session
 		setattr(entry, attribute, new_value)
-		self.logger.info(f"Modify {attribute} of {entry} -> {new_value}")
+		# self.logger.info(f"Modify {attribute} of {entry} -> {new_value}")
 		return
 
 	def get_entry(self, conn):
@@ -71,7 +76,6 @@ class AssetClient(metaclass = ABCMeta):
 	def create_entry(self, conn):
 		new_entry = self.new_table()
 		conn.add(new_entry)
-		conn.commit()
 		return
 
 	@_with_session_context
@@ -83,7 +87,6 @@ class AssetClient(metaclass = ABCMeta):
 	def set_position(self, conn, size: float):
 		entry = self.get_entry(conn = conn)
 		self.modify_entry(entry = entry, attribute = "size", new_value = size)
-		conn.commit()
 		return
 
 	@_with_session_context
