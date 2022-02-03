@@ -55,11 +55,11 @@ if __name__ == "__main__":
 	logging.basicConfig(level = logging.INFO)
 	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
 
-	client 	= OkxApiClient(api_key 			= args.api_key, 
-							api_secret_key 		= args.api_secret_key, 
-							passphrase 			= args.api_passphrase, 
-							funding_rate_enable = not args.funding_rate_disable
-						)
+	client 	= 	OkxApiClient(api_key 			= args.api_key, 
+							 api_secret_key 		= args.api_secret_key, 
+							 passphrase 			= args.api_passphrase, 
+							 funding_rate_enable = not args.funding_rate_disable
+							)
 
 	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair) and \
 			args.perpetual_entry_lot_size >= client.get_perpetual_min_lot_size(symbol = args.perpetual_trading_pair), \

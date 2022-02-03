@@ -2,15 +2,18 @@ import datetime
 import logging
 import sys
 from datetime import timedelta
-from okx.swap_api import SwapAPI
-from okx.spot_api import SpotAPI
+from okx.Account_api import AccountAPI
+from okx.Market_api import MarketAPI
+from okx.Public_api import PublicAPI
+from okx.Trade_api import TradeAPI
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 
 class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
-	spot_client = None
-	perp_client = None
-	logger 		= logging.getLogger('okxApiClient')
+	account_client 	= None
+	trade_client 	= None
+	market_client 	= None
+	logger 			= logging.getLogger('okxApiClient')
 
 	okx_funding_rate_snapshot_times = ["04:00", "12:00", "20:00"]
 
@@ -20,13 +23,22 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 						funding_rate_enable: bool
 				):
 		
-		self.spot_client 	= SpotAPI(	api_key = api_key, 
-										api_secret_key = api_secret_key, 
-										passphrase = passphrase)
+		self.account_client = 	AccountApi(api_key = api_key, 
+										   api_secret_key = api_secret_key, 
+										   passphrase = passphrase)
 
-		self.perp_client 	= SwapAPI(	api_key = api_key, 
-										api_secret_key = api_secret_key, 
-										passphrase = passphrase)
+
+		self.market_client 	= 	MarketAPI(api_key = api_key, 
+										  api_secret_key = api_secret_key, 
+										  passphrase = passphrase)
+
+		self.public_client 	= 	PublicAPI(api_key = api_key, 
+										  api_secret_key = api_secret_key, 
+										  passphrase = passphrase)
+
+		self.trade_client 	= 	TradeAPI(api_key = api_key, 
+										 api_secret_key = api_secret_key, 
+										 passphrase = passphrase)
 
 		self.funding_rate_enable = funding_rate_enable
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
@@ -36,44 +48,49 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Retrieves spot trading details
 		"""
-		spot_accounts 	= self.spot_client.get_account_info()
-		return list(filter(lambda x: x["type"] == "trade" and x["currency"] == currency, spot_accounts))[0]
+		spot_info = self.account_client.get_account(ccy = currency)
+		return spot_info["data"][0]["details"][0]["eq"]
 
 	def get_perpetual_trading_account_details(self, currency: str):
 		"""
 		Retrieves perpetual trading account details
 		"""
-		return self.perp_client.get_coin_account(underlying = currency)
+		perpetual_info = self.account_client.get_positions(instType = "SWAP", instId = currency)
+		positions = list(map(lambda x: (x["availPos"], x["posSide"]), perpetual_info["data"]))
+		net_position = 0
+		for each_position in positions:
+			if each_position[0] is not '':
+				pos_multiplier = -1 if each_position[-1] == "short" else 1
+				net_position += pos_multiplier * float(each_position[0]) 
+		return net_position
 
 	def get_spot_trading_price(self, symbol: str):
 		"""
 		Retrieves current spot pricing for trading symbol
 		"""
-		asset_info 		= self.spot_client.get_specific_ticker(instrument_id = symbol)
-		return asset_info["last"]
+		asset_info = self.market_client.get_ticker(instId = symbol)
+		return spot_info["last"]
 
 	def get_perpetual_trading_price(self, symbol: str):
 		"""
 		Retrieves current perpetual price for trading symbol
 		"""
-		perp_info 		= self.perp_client.get_specific_ticker(instrument_id = symbol)
-		return perp_info["last"]
+		asset_info = self.market_client.get_ticker(instId = symbol)
+		return spot_info["last"]
 
 	def get_spot_min_volume(self, symbol: str):
 		"""
 		Retrieves minimum order volume for spot trading symbol
 		"""
-		all_spot_info 	= self.spot_client.get_coin_info()
-		spot_info 		= next(filter(lambda x: x["instrument_id"] == symbol, all_spot_info))
-		return float(spot_info["min_size"])
+		asset_info = self.public_client.get_instruments(instType = "SPOT", instId = symbol)
+		return asset_info["minSz"]
 
 	def get_perpetual_min_lot_size(self, symbol: str):
 		"""
 		Retrieves minimum order lot size for perpetual trading symbol
-
-		# Based on definition in https://www.okx.com/docs/en/#swap-swap---orders, minimum contract size is 1
 		"""
-		return 1
+		asset_info = self.public_client.get_instruments(instType = "SWAP", instId = symbol)
+		return asset_info["minSz"]
 
 	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
 		"""
@@ -114,7 +131,9 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Returns the average bid / ask price of the spot asset, assuming that we intend to trade at a given volume.
 		"""
-		bid_ask_orders 		= self.spot_client.get_depth(instrument_id = symbol, size = 100)
+		bid_ask_resp 		= self.market_client.get_orderbook(instId = symbol, sz = 100)
+		bid_ask_orders 		= bid_ask_resp["data"][0]
+		
 		bids 				= bid_ask_orders["bids"]
 		bids 				= list(map(lambda x: [float(x[0]), float(x[1])], bids))
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
@@ -128,7 +147,9 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""
-		bid_ask_orders 		= self.perp_client.get_depth(instrument_id = symbol, size = 100)
+		bid_ask_resp 		= self.market_client.get_orderbook(instId = symbol, sz = 100)
+		bid_ask_orders 		= bid_ask_resp["data"][0]
+
 		bids 				= bid_ask_orders["bids"]
 		bids 				= list(map(lambda x: [float(x[0]), float(x[1])], bids))
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
@@ -142,24 +163,23 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Gets information of all open spot orders by the user
 		"""
-		resp = self.spot_client.get_orders_pending(instrument_id = symbol)
-		return resp
+		resp = self.Trade_api.get_order_list(instType = "SPOT", instId = symbol, limit = 50)
+		return resp["data"]
 
 	def get_perpetual_open_orders(self, symbol: str):
 		"""
 		Gets information of all open future orders by the user
 		"""
-		resp = self.perp_client.get_order_list(instrument_id = symbol, state = 6)
-		return resp["order_info"]
+		resp = self.Trade_api.get_order_list(instType = "SWAP", instId = symbol, limit = 50)
+		return resp["data"]
 
 	def get_spot_most_recent_open_order(self, symbol: str):
 		"""
 		Gets the most recent open orders for spot
-
-		Based on https://www.okx.com/docs/en/#spot-orders_pending , the most recent order is at the first entry.
 		"""
-		open_orders = self.get_spot_open_orders(symbol = symbol)
-		most_recent_open_order = open_orders[0] if len(open_orders) > 0 else open_orders
+		open_orders 	= self.get_spot_open_orders(symbol = symbol)
+		sorted_orders 	= sorted(open_orders, key = lambda d: d['uTime'], reverse = True) 
+		most_recent_open_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_open_order
 
 	def get_perpetual_most_recent_open_order(self, symbol: str):
@@ -168,50 +188,50 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 
 		Based on https://www.okx.com/docs/en/#futures-list , the most recent order is at the first entry
 		"""
-		open_orders = self.get_perpetual_open_orders(symbol = symbol)
-		most_recent_open_order = open_orders[0] if len(open_orders) > 0 else open_orders
+		open_orders 	= self.get_perpetual_open_orders(symbol = symbol)
+		sorted_orders 	= sorted(open_orders, key = lambda d: d['uTime'], reverse = True) 
+		most_recent_open_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_open_order
 
 	def get_spot_fulfilled_orders(self, symbol: str):
 		"""
 		Gets information for all fulfilled spot orders by the user
 		"""
-		resp = self.spot_client.get_orders_list(instrument_id = symbol, state = 2)
+		resp = self.Trade_api.get_orders_history(instType = "SPOT", instId = symbol, state = "filled", limit = 50)
 		return resp
 
 	def get_perpetual_fulfilled_orders(self, symbol: str):
 		"""
 		Gets information of all fulfilled future orders by the user
 		"""
-		resp = self.perp_client.get_order_list(instrument_id = symbol, state = 2)
+		resp = self.Trade_api.get_orders_history(instType = "SWAP", instId = symbol, state = "filled", limit = 50)
 		return resp
 
 	def get_spot_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent spot trade that have been fulfilled
-
-		Based on https://www.okx.com/docs/en/#spot-list , the most recent fulfilled order is at the first entry
 		"""
-		fulfilled_orders = self.get_spot_fulfilled_orders(symbol = symbol)
-		most_recent_fulfilled_order = fulfilled_orders[0] if len(fulfilled_orders) > 0 else fulfilled_orders
+		fulfilled_orders 	= self.get_spot_fulfilled_orders(symbol = symbol)
+		sorted_orders 		= sorted(fulfilled_orders, key = lambda d: d['uTime'], reverse = True) 
+		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order
 
 	def get_perpetual_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent perpetual trade that have been fulfilled
-
-		Based on https://www.okx.com/docs/en/#swap-swap---list , the most recent fulfilled order is at the first entry
 		"""
-		fulfilled_orders = self.get_perpetual_fulfilled_orders(symbol = symbol)
-		most_recent_fulfilled_order = fulfilled_orders[0] if len(fulfilled_orders) > 0 else fulfilled_orders
+		fulfilled_orders 	= self.get_perpetual_fulfilled_orders(symbol = symbol)
+		sorted_orders 		= sorted(fulfilled_orders, key = lambda d: d['uTime'], reverse = True) 
+		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order
 
 	def get_perpetual_funding_rate(self, symbol: str):
 		"""
 		Gets the immediate and predicted funding rate for futures contract
 		"""
-		funding_rate_info = self.perp_client.get_funding_time(instrument_id = symbol)
-		return (float(funding_rate_info["funding_rate"]), float(funding_rate_info["estimated_rate"]))
+		funding_rate_resp = self.public_client.get_funding_rate(instId = symbol)\
+		funding_rate_info = funding_rate_resp["data"][0]
+		return (float(funding_rate_info["fundingRate"]), float(funding_rate_info["nextFundingRate"]))
 
 	def funding_rate_valid_interval(self, seconds_before: int):
 		current_time = datetime.datetime.utcnow()
@@ -253,30 +273,20 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		self.logger.info(f"Sport order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
 		if order_type == "limit":
-			return self.spot_client.take_order(	instrument_id = symbol, 
-												side 		= order_side, 
-												type 		= order_type,
-												price 		= price,
-												size 		= size, 
-												order_type 	= 0
+			return self.trade_client.place_order(instId 	= symbol,
+												 tdMode		= "cash",
+												 side 		= side,
+												 ordType 	= order_type,
+												 sz 		= size,
+												 px 		= price,
 											)
 		elif order_type == "market":
-			if order_side == "sell":
-				return self.spot_client.take_order(	instrument_id = symbol, 
-													side 		= order_side, 
-													type 		= order_type,
-													price 		= 1,
-													size 		= size, 
-													order_type 	= 0
-												)
-			elif order_side == "buy":
-				return self.spot_client.take_order(	instrument_id = symbol, 
-													side 		= order_side, 
-													type 		= order_type,
-													price 		= 1,
-													notational 	= price * size,
-													order_type 	= 0
-												)
+			return self.trade_client.place_order(instId 	= symbol,
+												 tdMode		= "cash",
+												 side 		= side,
+												 ordType 	= order_type,
+												 sz 		= size,
+											)
 
 	def place_perpetual_order(self, symbol: str, 
 									order_type: str, 
@@ -288,23 +298,31 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		order_type 	- Either limit or market
 		order_side 	- Either buy or sell
 		size 		- LOTS of asset to purchase
-
-		Ref: https://www.okx.com/docs/en/#swap-swap---orders
 		"""
 		self.logger.info(f"Futures order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
-		return self.perp_client.take_order(	instrument_id = symbol,
-											size 		= size,
-											type 		= '1' if order_side == "buy" else '2',
-											match_price = '1' if order_type == "market" else '0',
-											price 		= price,
-											order_type 	= 0
-										)
+		if order_type == "limit":
+			return self.trade_client.place_order(instId 	= symbol,
+												 tdMode		= "cross",
+												 side 		= side,
+												 ordType 	= order_type,
+												 sz 		= size,
+												 px 		= price,
+												 reduceOnly = "true",
+											)
+		elif order_type == "market":
+			return self.trade_client.place_order(instId 	= symbol,
+												 tdMode		= "cross",
+												 side 		= side,
+												 ordType 	= order_type,
+												 sz 		= size,
+												 reduceOnly = "true",
+											)
 
 	def cancel_spot_order(self, symbol: str, order_id: str):
 		self.logger.info(f"Cancelling spot order ID {order_id}")
 
 		try:
-			self.spot_client.revoke_order(instrument_id = symbol, order_id = order_id)
+			self.trade_client.cancel_order(instId = symbol, ordId = order_id)
 		except Exception as ex:
 			self.logger.error(ex)
 		return
@@ -313,7 +331,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		self.logger.info(f"Cancelling futures order ID {order_id}")
 
 		try:
-			self.perp_client.revoke_order(instrument_id = symbol, order_id = order_id)
+			self.trade_client.cancel_order(instId = symbol, ordId = order_id)
 		except Exception as ex:
 			self.logger.error(ex)
 		return
