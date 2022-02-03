@@ -2,7 +2,7 @@
 
 ### Example of execution
 ```python
-python3 main/intra_exchange/okex/spot_perp/main.py \
+python3 main/intra_exchange/okx/spot_perp/main.py \
 --spot_trading_pair BTC-USDT \
 --perpetual_trading_pair BTC-USDT-SWAP \
 --api_key xxx \

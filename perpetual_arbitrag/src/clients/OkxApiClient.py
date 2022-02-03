@@ -2,17 +2,17 @@ import datetime
 import logging
 import sys
 from datetime import timedelta
-from okex.swap_api import SwapAPI
-from okex.spot_api import SpotAPI
+from okx.swap_api import SwapAPI
+from okx.spot_api import SpotAPI
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 
-class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
+class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	spot_client = None
 	perp_client = None
-	logger 		= logging.getLogger('OkexApiClient')
+	logger 		= logging.getLogger('okxApiClient')
 
-	okex_funding_rate_snapshot_times = ["04:00", "12:00", "20:00"]
+	okx_funding_rate_snapshot_times = ["04:00", "12:00", "20:00"]
 
 	def __init__(self, 	api_key: str, 
 						api_secret_key: str,
@@ -215,7 +215,7 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 
 	def funding_rate_valid_interval(self, seconds_before: int):
 		current_time = datetime.datetime.utcnow()
-		for each_snaphsot_time in self.okex_funding_rate_snapshot_times:
+		for each_snaphsot_time in self.okx_funding_rate_snapshot_times:
 			ts = datetime.datetime.strptime(each_snaphsot_time, "%H:%M")
 			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute, second = 0)
 			if snapshot_timestamp - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp:
@@ -261,14 +261,22 @@ class OkexApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 												order_type 	= 0
 											)
 		elif order_type == "market":
-			return self.spot_client.take_order(	instrument_id = symbol, 
-												side 		= order_side, 
-												type 		= order_type,
-												price 		= 1,
-												size 		= size if order_side == "sell" else 0, 
-												notational 	= price * size if order_side == "buy" else 1,
-												order_type 	= 0
-											)
+			if order_side == "sell":
+				return self.spot_client.take_order(	instrument_id = symbol, 
+													side 		= order_side, 
+													type 		= order_type,
+													price 		= 1,
+													size 		= size, 
+													order_type 	= 0
+												)
+			elif order_side == "buy":
+				return self.spot_client.take_order(	instrument_id = symbol, 
+													side 		= order_side, 
+													type 		= order_type,
+													price 		= 1,
+													notational 	= price * size,
+													order_type 	= 0
+												)
 
 	def place_perpetual_order(self, symbol: str, 
 									order_type: str, 

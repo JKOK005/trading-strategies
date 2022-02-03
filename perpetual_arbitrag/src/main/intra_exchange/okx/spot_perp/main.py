@@ -2,14 +2,14 @@ import argparse
 import os
 import logging
 from time import sleep
-from clients.OkexApiClient import OkexApiClient
+from clients.OkxApiClient import OkxApiClient
 from db.SpotClients import SpotClients
 from db.PerpetualClients import PerpetualClients
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotPerpetualSimulatedBotExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
-python3 main/intra_exchange/okex/spot_perp/main.py \
+python3 main/intra_exchange/Okx/spot_perp/main.py \
 --spot_trading_pair BTC-USDT \
 --perpetual_trading_pair XBTUSDTM \
 --api_key xxx \
@@ -53,9 +53,9 @@ if __name__ == "__main__":
 	args 	= parser.parse_args()
 
 	logging.basicConfig(level = logging.INFO)
-	logging.info(f"Starting Okex arbitrag bot with the following params: {args}")
+	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
 
-	client 	= OkexApiClient(api_key 			= args.api_key, 
+	client 	= OkxApiClient(api_key 			= args.api_key, 
 							api_secret_key 		= args.api_secret_key, 
 							passphrase 			= args.api_passphrase, 
 							funding_rate_enable = not args.funding_rate_disable
@@ -68,8 +68,8 @@ if __name__ == "__main__":
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 
-		db_spot_client 			= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "okex", symbol = args.spot_trading_pair, units = "vol").create_session()
-		db_perpetual_clients 	= PerpetualClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "okex", symbol = args.perpetual_trading_pair, units = "lot").create_session()
+		db_spot_client 			= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "Okx", symbol = args.spot_trading_pair, units = "vol").create_session()
+		db_perpetual_clients 	= PerpetualClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "Okx", symbol = args.perpetual_trading_pair, units = "lot").create_session()
 		
 		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
 		db_perpetual_clients.create_entry() if not db_perpetual_clients.is_exists() else None
@@ -133,16 +133,18 @@ if __name__ == "__main__":
 			if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) \
 				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
 				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																					"symbol" 	 : args.spot_trading_pair, 
-																					"order_type" : args.order_type, 
-																					"price" 	 : spot_price if args.order_type == "limit" else 1,
-																					"size" 		 : args.spot_entry_vol,
+																					"symbol" 	 	: args.spot_trading_pair, 
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: spot_price if args.order_type == "limit" else 1,
+																					"size" 		 	: args.spot_entry_vol,
+																					"order_id_ref" 	: "order_id"
 																				},
 																				perpetual_params = {
-																					"symbol" 	 : args.perpetual_trading_pair, 
-																					"order_type" : args.order_type, 
-																					"price" 	 : perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 : args.perpetual_entry_lot_size,
+																					"symbol" 	 	: args.perpetual_trading_pair, 
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+																					"size" 		 	: args.perpetual_entry_lot_size,
+																					"order_id_ref" 	: "order_id"
 																				}
 																		)
 
@@ -152,16 +154,18 @@ if __name__ == "__main__":
 			elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
 				 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
 				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																					"symbol" 	 : args.spot_trading_pair, 
-																					"order_type" : args.order_type, 
-																					"price" 	 : spot_price if args.order_type == "limit" else 1,
-																					"size" 		 : args.spot_entry_vol,
+																					"symbol" 	 	: args.spot_trading_pair, 
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: spot_price if args.order_type == "limit" else 1,
+																					"size" 		 	: args.spot_entry_vol,
+																					"order_id_ref" 	: "order_id"
 																				},
 																				perpetual_params = {
-																					"symbol" 	 : args.perpetual_trading_pair, 
-																					"order_type" : args.order_type, 
-																					"price" 	 : perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 : args.perpetual_entry_lot_size,
+																					"symbol" 	 	: args.perpetual_trading_pair, 
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+																					"size" 		 	: args.perpetual_entry_lot_size,
+																					"order_id_ref" 	: "order_id"
 																				}
 																		)
 
