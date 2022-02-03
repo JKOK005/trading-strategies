@@ -3,7 +3,8 @@ import os
 import logging
 from time import sleep
 from clients.OkexApiClient import OkexApiClient
-from clients.SqlClient import SqlClient
+from db.SpotClients import SpotClients
+from db.PerpetualClients import PerpetualClients
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotPerpetualSimulatedBotExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
@@ -66,10 +67,17 @@ if __name__ == "__main__":
 
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
-		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, perpetual_symbol = args.perpetual_trading_pair).start_session()
-		db_client.create_entry() if not db_client.is_exists() else None
-		db_client.set_position(spot_volume = 0, perpetual_lot_size = 0) if args.db_reset else None
-		(current_spot_vol, current_perpetual_lot_size) = db_client.get_position()
+
+		db_spot_client 			= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "okex", symbol = args.spot_trading_pair, units = "vol").create_session()
+		db_perpetual_clients 	= PerpetualClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "okex", symbol = args.perpetual_trading_pair, units = "lot").create_session()
+		
+		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
+		db_perpetual_clients.create_entry() if not db_perpetual_clients.is_exists() else None
+		
+		db_spot_client.set_position(size = 0) if args.db_reset else None
+		db_perpetual_clients.set_position(size = 0) if args.db_reset else None
+
+		(current_spot_vol, current_perpetual_lot_size) = (db_spot_client.get_position(), db_perpetual_clients.get_position())
 	else:
 		logging.warning(f"Zero state execution as no db_url detected")
 		(current_spot_vol, current_perpetual_lot_size) = (0, 0)
@@ -138,7 +146,7 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perpetual = -1 * args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
 			elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
@@ -157,12 +165,14 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perpetual = args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
 				(current_spot_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
-				db_client.set_position(spot_volume = current_spot_vol, perpetual_lot_size = current_perpetual_lot_size)
+				
+				db_spot_client.set_position(size = current_spot_vol)
+				db_perpetual_clients.set_position(size = current_perpetual_lot_size)
 			
 			sleep(args.poll_interval_s)
 
