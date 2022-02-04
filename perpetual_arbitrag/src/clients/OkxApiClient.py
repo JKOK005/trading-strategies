@@ -210,21 +210,20 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		Gets information for all fulfilled spot orders by the user
 		"""
 		resp = self.trade_client.get_orders_history(instType = "SPOT", instId = symbol, state = "filled", limit = 50)
-		return resp
+		return resp["data"]
 
 	def get_perpetual_fulfilled_orders(self, symbol: str):
 		"""
 		Gets information of all fulfilled future orders by the user
 		"""
 		resp = self.trade_client.get_orders_history(instType = "SWAP", instId = symbol, state = "filled", limit = 50)
-		return resp
+		return resp["data"]
 
 	def get_spot_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent spot trade that have been fulfilled
 		"""
-		fulfilled_resp 		= self.get_spot_fulfilled_orders(symbol = symbol)
-		fulfilled_orders 	= fulfilled_resp["data"]
+		fulfilled_orders 	= self.get_spot_fulfilled_orders(symbol = symbol)
 		sorted_orders 		= sorted(fulfilled_orders, key = lambda d: int(d['uTime']), reverse = True) 
 		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order
@@ -233,8 +232,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Gets information of the most recent perpetual trade that have been fulfilled
 		"""
-		fulfilled_resp 		= self.get_perpetual_fulfilled_orders(symbol = symbol)
-		fulfilled_orders 	= fulfilled_resp["data"]
+		fulfilled_orders 	= self.get_perpetual_fulfilled_orders(symbol = symbol)
 		sorted_orders 		= sorted(fulfilled_orders, key = lambda d: int(d['uTime']), reverse = True) 
 		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order
