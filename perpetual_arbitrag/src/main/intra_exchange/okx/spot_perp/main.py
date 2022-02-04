@@ -55,9 +55,9 @@ if __name__ == "__main__":
 	logging.basicConfig(level = logging.INFO)
 	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
 
-	client 	= 	OkxApiClient(api_key 			= args.api_key, 
-							 api_secret_key 		= args.api_secret_key, 
-							 passphrase 			= args.api_passphrase, 
+	client 	= 	OkxApiClient(api_key 		= args.api_key, 
+							 api_secret_key = args.api_secret_key, 
+							 passphrase 	= args.api_passphrase, 
 							 funding_rate_enable = not args.funding_rate_disable
 							)
 
@@ -130,42 +130,84 @@ if __name__ == "__main__":
 			# Execute orders
 			new_order_execution = False
 
-			if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) \
-				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
+			if decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT:
 				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
 																					"symbol" 	 	: args.spot_trading_pair, 
 																					"order_type" 	: args.order_type, 
-																					"price" 	 	: spot_price if args.order_type == "limit" else 1,
+																					"price" 	 	: spot_price if args.order_type == "limit" else 0,
 																					"size" 		 	: args.spot_entry_vol,
-																					"order_id_ref" 	: "order_id"
+																					"order_id_ref" 	: "ordId"
 																				},
 																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair, 
+																					"symbol" 	 	: args.perpetual_trading_pair,
+																					"position_side" : "long",
 																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+																					"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
 																					"size" 		 	: args.perpetual_entry_lot_size,
-																					"order_id_ref" 	: "order_id"
+																					"order_id_ref" 	: "ordId"
 																				}
 																		)
 
 				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
-				 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
+			elif decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE:
 				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
 																					"symbol" 	 	: args.spot_trading_pair, 
 																					"order_type" 	: args.order_type, 
-																					"price" 	 	: spot_price if args.order_type == "limit" else 1,
+																					"price" 	 	: spot_price if args.order_type == "limit" else 0,
 																					"size" 		 	: args.spot_entry_vol,
-																					"order_id_ref" 	: "order_id"
+																					"order_id_ref" 	: "ordId"
 																				},
 																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair, 
+																					"symbol" 	 	: args.perpetual_trading_pair,
+																					"position_side" : "short",
 																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+																					"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
 																					"size" 		 	: args.perpetual_entry_lot_size,
-																					"order_id_ref" 	: "order_id"
+																					"order_id_ref" 	: "ordId"
+																				}
+																		)
+
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.perpetual_entry_lot_size) \
+				if new_order_execution else None
+
+			elif decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
+				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
+																					"symbol" 	 	: args.spot_trading_pair, 
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: spot_price if args.order_type == "limit" else 0,
+																					"size" 		 	: args.spot_entry_vol,
+																					"order_id_ref" 	: "ordId"
+																				},
+																				perpetual_params = {
+																					"symbol" 	 	: args.perpetual_trading_pair,
+																					"position_side" : "short",
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+																					"size" 		 	: args.perpetual_entry_lot_size,
+																					"order_id_ref" 	: "ordId"
+																				}
+																		)
+
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
+				if new_order_execution else None
+
+			elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
+				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
+																					"symbol" 	 	: args.spot_trading_pair, 
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: spot_price if args.order_type == "limit" else 0,
+																					"size" 		 	: args.spot_entry_vol,
+																					"order_id_ref" 	: "ordId"
+																				},
+																				perpetual_params = {
+																					"symbol" 	 	: args.perpetual_trading_pair,
+																					"position_side" : "long",
+																					"order_type" 	: args.order_type, 
+																					"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+																					"size" 		 	: args.perpetual_entry_lot_size,
+																					"order_id_ref" 	: "ordId"
 																				}
 																		)
 
