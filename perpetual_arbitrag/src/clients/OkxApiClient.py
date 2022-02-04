@@ -84,7 +84,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Retrieves current perpetual price for trading symbol
 		"""
-		asset_info = self.market_client.get_ticker(instId = symbol)
+		asset_resp = self.market_client.get_ticker(instId = symbol)
 		asset_info = asset_resp["data"][0]
 		return float(asset_info["last"])
 
