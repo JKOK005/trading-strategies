@@ -293,54 +293,51 @@ class TestKucoinApiClient(TestCase):
 		(funding_rate, estimated_funding_rate) = _okx_api_client.get_perpetual_funding_rate(symbol = "ETHUSDT")
 		assert (funding_rate == 0.01 and estimated_funding_rate == -0.01)
 
-	# @freeze_time("2022-01-01 03:55:00")
-	# def test_funding_rate_is_valid_interval(self):
-	# 	_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
-	# 	_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
-	# 	assert(_kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
-	# 	return
+	@freeze_time("2022-01-01 03:55:00")
+	def test_funding_rate_is_valid_interval(self):
+		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		assert(_okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 
-	# @freeze_time("2022-01-01 03:50:00")
-	# def test_funding_rate_is_not_valid_interval_A(self):
-	# 	_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
-	# 	_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
-	# 	assert(not _kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
-	# 	return
+	@freeze_time("2022-01-01 03:50:00")
+	def test_funding_rate_is_not_valid_interval_A(self):
+		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		assert(not _okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 
-	# @freeze_time("2022-01-01 04:00:01")
-	# def test_funding_rate_is_not_valid_interval_B(self):
-	# 	_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
-	# 	_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
-	# 	assert(not _kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
-	# 	return
+	@freeze_time("2022-01-01 04:00:01")
+	def test_funding_rate_is_not_valid_interval_B(self):
+		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		assert(not _okx_api_client.funding_rate_valid_interval(seconds_before = 300))
+		return
 
-	# def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
-	# 	_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
-	# 	_kucoin_api_client.funding_rate_enable = False
+	def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
+		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.funding_rate_enable = False
 
-	# 	with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
-	# 		mock_funding_rate_valid_interval.return_value = True
-	# 		assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0, 0)
-	# 	return
+		with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
+			mock_funding_rate_valid_interval.return_value = True
+			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0, 0)
+		return
 
-	# def test_effective_funding_rate_is_zero_when_invalid_interval(self):
-	# 	_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+	def test_effective_funding_rate_is_zero_when_invalid_interval(self):
+		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
 
-	# 	with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval, \
-	# 		 patch.object(_kucoin_api_client, "get_futures_funding_rate") as mock_get_futures_funding_rate:
-	# 		mock_funding_rate_valid_interval.return_value 	= False
-	# 		mock_get_futures_funding_rate.return_value 		= (0.01, -0.01)
-	# 		assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0.01, 0)
-	# 	return
+		with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval, \
+			 patch.object(_okx_api_client, "get_perpetual_funding_rate") as mock_get_futures_funding_rate:
+			mock_funding_rate_valid_interval.return_value 	= False
+			mock_get_futures_funding_rate.return_value 		= (0.01, -0.01)
+			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, 0)
+		return
 
-	# @patch("kucoin_futures.client.Market")
-	# def test_effective_funding_rate_is_non_zero(self, patch_client):
-	# 	_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
-	# 	_kucoin_api_client.futures_client 		= patch_client
+	@patch("okex.Public_api.PublicAPI")
+	def test_effective_funding_rate_is_non_zero(self, patch_public):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 	= patch_public
+		patch_public.get_funding_rate.return_value = {"data" : [{"fundingRate" : 0.01, "nextFundingRate" : -0.01}]}
 
-	# 	patch_client.get_current_fund_rate.return_value = {"value" : 0.01, "predictedValue" : -0.01}
-
-	# 	with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
-	# 		mock_funding_rate_valid_interval.return_value = True
-	# 		assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0.01, -0.01)
-	# 	return
+		with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
+			mock_funding_rate_valid_interval.return_value = True
+			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, -0.01)
+		return
