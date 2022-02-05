@@ -5,7 +5,6 @@ from clients.KucoinApiClient import KucoinApiClient
 from db.FutureClients import FutureClients
 from db.SpotClients import SpotClients
 from execution.SpotFutureBotExecution import SpotFutureBotExecution, SpotFutureSimulatedBotExecution
-from execution.BotSimulatedExecution import BotSimulatedExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 from time import sleep
 
