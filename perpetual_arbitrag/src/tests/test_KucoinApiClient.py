@@ -7,6 +7,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 class TestKucoinApiClient(TestCase):
+	
 	def setUp(self):
 		self.kucoin_api_client 	= KucoinApiClient(	spot_client_api_key 			= "123", 
 													spot_client_api_secret_key 		= "123", 

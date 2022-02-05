@@ -19,7 +19,6 @@ class ExecutionDecision(Enum):
 
 class SingleTradeArbitrag(Strategies):
 	logger 						= logging.getLogger('SingleTradeArbitrag')
-	api_client 					= None
 	spot_symbol 				= None
 	current_spot_vol			= 0
 	max_spot_vol 				= 0
@@ -33,12 +32,9 @@ class SingleTradeArbitrag(Strategies):
 						futures_symbol: str,
 						current_futures_lot_size: int,
 						max_futures_lot_size: int,
-						api_client,
 				):
 		"""
 		Class only maintains 1 position at a time. 
-
-		api_client 			- Exchange api client
 		"""
 		super(SingleTradeArbitrag, self).__init__()
 		self.spot_symbol 				= spot_symbol
@@ -47,7 +43,6 @@ class SingleTradeArbitrag(Strategies):
 		self.futures_symbol 			= futures_symbol
 		self.current_futures_lot_size 	= current_futures_lot_size
 		self.max_futures_lot_size 		= max_futures_lot_size
-		self.api_client 				= api_client
 		
 		self.logger.info(f"Spot vol: {self.current_spot_vol}, Futures lot size: {self.current_futures_lot_size}")
 		return

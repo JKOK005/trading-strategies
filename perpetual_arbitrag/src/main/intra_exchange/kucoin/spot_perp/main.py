@@ -1,15 +1,15 @@
 import argparse
-import os
 import logging
-from time import sleep
+import os
 from clients.KucoinApiClient import KucoinApiClient
-from clients.SqlClient import SqlClient
-from execution.BotExecution import BotExecution
-from execution.BotSimulatedExecution import BotSimulatedExecution
+from db.FutureClients import FutureClients
+from db.SpotClients import SpotClients
+from execution.SpotFutureBotExecution import SpotFutureBotExecution, SpotFutureSimulatedBotExecution
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
+from time import sleep
 
 """
-python3 main/intra_exchange/kucoin/spot_perp.py \
+python3 main/intra_exchange/kucoin/spot_perp/main.py \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
@@ -81,10 +81,17 @@ if __name__ == "__main__":
 
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
-		db_client 	= SqlClient(url = args.db_url, spot_symbol = args.spot_trading_pair, futures_symbol = args.futures_trading_pair).start_session()
-		db_client.create_entry() if not db_client.is_exists() else None
-		db_client.set_position(spot_volume = 0, futures_lot_size = 0) if args.db_reset else None
-		(current_spot_vol, current_futures_lot_size) = db_client.get_position()
+
+		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol").create_session()
+		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot").create_session()
+
+		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
+		db_futures_client.create_entry() if not db_futures_client.is_exists() else None
+		
+		db_spot_client.set_position(size = 0) if args.db_reset else None
+		db_futures_client.set_position(size = 0) if args.db_reset else None
+		
+		(current_spot_vol, current_futures_lot_size) = (db_spot_client.get_position(), db_futures_client.get_position())
 	else:
 		logging.warning(f"Zero state execution as no db_url detected")
 		(current_spot_vol, current_futures_lot_size) = (0, 0)
@@ -95,10 +102,9 @@ if __name__ == "__main__":
 											futures_symbol 				= args.futures_trading_pair,
 											current_futures_lot_size 	= current_futures_lot_size,
 											max_futures_lot_size		= args.max_futures_lot_size,
-											api_client 					= client
 										)
 
-	bot_executor 	= BotSimulatedExecution(api_client = client) if args.fake_orders else BotExecution(api_client = client)
+	bot_executor 	= SpotFutureSimulatedBotExecution(api_client = client) if args.fake_orders else SpotFutureBotExecution(api_client = client)
 
 	while True:
 		try:
@@ -139,37 +145,49 @@ if __name__ == "__main__":
 
 			if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) \
 				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
-				new_order_execution = bot_executor.long_spot_short_futures( spot_symbol 		= args.spot_trading_pair,
-																			spot_order_type 	= args.order_type,
-																			spot_price 			= spot_price if args.order_type == "limit" else 1,
-																			spot_size 			= args.spot_entry_vol,
-																			futures_symbol 		= args.futures_trading_pair,
-																			futures_order_type 	= args.order_type,
-																			futures_price 		= futures_price if args.order_type == "limit" else 1,
-																			futures_size 		= args.futures_entry_lot_size,
-																			futures_lever 		= args.futures_entry_leverage
+				new_order_execution = bot_executor.long_spot_short_futures(	spot_params 	= { "symbol" 		: args.spot_trading_pair, 
+																								"order_type" 	: args.order_type,
+																								"price" 		: spot_price if args.order_type == "limit" else 1,
+																								"size" 			: args.spot_entry_vol,
+																								"order_id_ref" 	: "orderId"
+																							},
+
+																			future_params 	= {	"symbol" 		: args.futures_trading_pair, 
+																								"order_type" 	: args.order_type, 
+																								"price" 		: futures_price if args.order_type == "limit" else 1,
+																								"size" 			: args.futures_entry_lot_size,
+																								"lever" 		: args.futures_entry_leverage,
+																								"order_id_ref" 	: "orderId"
+																							},
 																		)
 				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
 				if new_order_execution else None
 
 			elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
-				 or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
-				new_order_execution = bot_executor.short_spot_long_futures( spot_symbol 		= args.spot_trading_pair,
-																			spot_order_type 	= args.order_type,
-																			spot_price 			= spot_price if args.order_type == "limit" else 1,
-																			spot_size 			= args.spot_entry_vol,
-																			futures_symbol 		= args.futures_trading_pair,
-																			futures_order_type 	= args.order_type,
-																			futures_price 		= futures_price if args.order_type == "limit" else 1,
-																			futures_size 		= args.futures_entry_lot_size,
-																			futures_lever 		= args.futures_entry_leverage
+				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
+				new_order_execution = bot_executor.short_spot_long_futures(	spot_params 	= {	"symbol" 		: args.spot_trading_pair, 
+																								"order_type" 	: args.order_type,
+																								"price" 		: spot_price if args.order_type == "limit" else 1,
+																								"size" 			: args.spot_entry_vol,
+																								"order_id_ref" 	: "orderId"
+																							},
+
+																			future_params 	= {	"symbol" 		: args.futures_trading_pair, 
+																								"order_type" 	: args.order_type, 
+																								"price" 		: futures_price if args.order_type == "limit" else 1,
+																								"size" 			: args.futures_entry_lot_size,
+																								"lever" 		: args.futures_entry_leverage,
+																								"order_id_ref" 	: "orderId"
+																							},
 																		)
 				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \
 				if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
 				(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
-				db_client.set_position(spot_volume = current_spot_vol, futures_lot_size = current_futures_lot_size)
+
+				db_spot_client.set_position(size = current_spot_vol)
+				db_futures_client.set_position(size = current_futures_lot_size)
 			
 			sleep(args.poll_interval_s)
 
