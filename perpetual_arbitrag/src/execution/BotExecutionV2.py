@@ -5,10 +5,12 @@ class BotExecutionV2(object):
 
 	def idempotent_trade_execution(self, asset_A_order_fn,
 								 		 asset_A_cancel_fn,
+								 		 asset_A_assert_resp_error_fn,
 								 		 asset_A_params, 
 										 asset_A_order_id_ref: str,
 										 asset_B_order_fn,
 										 asset_B_cancel_fn,
+										 asset_B_assert_resp_error_fn,
 										 asset_B_params,
 										 asset_B_order_id_ref: str,
 								):
@@ -19,7 +21,10 @@ class BotExecutionV2(object):
 
 		try:
 			asset_A_order_resp  = asset_A_order_fn(**asset_A_params)
+			asset_A_assert_resp_error_fn(asset_A_order_resp)
+
 			asset_B_order_resp 	= asset_B_order_fn(**asset_B_params)
+			asset_B_assert_resp_error_fn(asset_B_order_resp)
 
 		except Exception as ex:
 			self.logger.error(ex)

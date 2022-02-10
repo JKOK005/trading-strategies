@@ -374,3 +374,15 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 		except Exception as ex:
 			self.logger.error(ex)
 		return
+
+	def assert_spot_resp_error(self, order_resp):
+		"""
+		Kucoin throws a response error on failure, hence no need to implement logics
+		"""
+		return
+
+	def assert_futures_resp_error(self, order_resp):
+		"""
+		Kucoin throws a response error on failure, hence no need to implement logics
+		"""
+		return

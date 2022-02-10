@@ -67,3 +67,12 @@ class ExchangeSpotClients(metaclass = ABCMeta):
 	@abstractmethod
 	def cancel_spot_order(self, order_id: str):
 		pass
+
+	@abstractmethod
+	def assert_spot_resp_error(self, order_resp):
+		"""
+		Function looks at an order response created after placing an order and decides if we should raise an error.
+
+		A raised error indicates a failed order attempt.
+		"""
+		pass

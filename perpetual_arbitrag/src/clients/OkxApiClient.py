@@ -355,3 +355,9 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		except Exception as ex:
 			self.logger.error(ex)
 		return
+
+	def assert_spot_resp_error(self, order_resp):
+		pass
+
+	def assert_perpetual_resp_error(self, order_resp):
+		pass
