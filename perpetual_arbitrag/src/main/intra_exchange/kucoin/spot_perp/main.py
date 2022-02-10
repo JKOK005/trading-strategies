@@ -107,90 +107,89 @@ if __name__ == "__main__":
 	bot_executor 	= SpotFutureSimulatedBotExecution(api_client = client) if args.fake_orders else SpotFutureBotExecution(api_client = client)
 
 	while True:
-		try:
-			if 	args.order_type == "limit":
-				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
-				futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
-				(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair, 
-																													seconds_before = args.funding_interval_s)
-				decision 		= trade_strategy.trade_decision(spot_price 				= spot_price, 
-																futures_price 			= futures_price,
-																futures_funding_rate 	= futures_funding_rate,
-																futures_estimated_funding_rate = futures_estimated_funding_rate,
-																entry_threshold 		= args.entry_gap_frac,
-																take_profit_threshold 	= args.profit_taking_frac
-															)
-				logging.info(f"Spot price: {spot_price}, Futures price: {futures_price}")			
+		if 	args.order_type == "limit":
+			spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
+			futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
+			(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair, 
+																												seconds_before = args.funding_interval_s)
+			decision 		= trade_strategy.trade_decision(spot_price 				= spot_price, 
+															futures_price 			= futures_price,
+															futures_funding_rate 	= futures_funding_rate,
+															futures_estimated_funding_rate = futures_estimated_funding_rate,
+															entry_threshold 		= args.entry_gap_frac,
+															take_profit_threshold 	= args.profit_taking_frac
+														)
+			logging.info(f"Spot price: {spot_price}, Futures price: {futures_price}")			
 
-			elif args.order_type == "market":
-				(avg_spot_bid, avg_spot_ask) 		= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
-				(avg_futures_bid, avg_futures_ask) 	= client.get_futures_average_bid_ask_price(symbol = args.futures_trading_pair, size = args.futures_entry_lot_size)
-				(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair,
-																													seconds_before = args.funding_interval_s)
+		elif args.order_type == "market":
+			(avg_spot_bid, avg_spot_ask) 		= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
+			(avg_futures_bid, avg_futures_ask) 	= client.get_futures_average_bid_ask_price(symbol = args.futures_trading_pair, size = args.futures_entry_lot_size)
+			(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair,
+																												seconds_before = args.funding_interval_s)
 
-				decision 							= trade_strategy.bid_ask_trade_decision(spot_bid_price 			= avg_spot_bid,
-																							spot_ask_price 			= avg_spot_ask,
-																							futures_bid_price 		= avg_futures_bid,
-																							futures_ask_price 		= avg_futures_ask,
-																							futures_funding_rate 	= futures_funding_rate,
-																							futures_estimated_funding_rate = futures_estimated_funding_rate,
-																							entry_threshold 		= args.entry_gap_frac,
-																							take_profit_threshold 	= args.profit_taking_frac
-																						)
-				logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_futures_bid}, asks: {avg_futures_ask}")
-			logging.info(f"Executing trade decision: {decision}")
+			decision 							= trade_strategy.bid_ask_trade_decision(spot_bid_price 			= avg_spot_bid,
+																						spot_ask_price 			= avg_spot_ask,
+																						futures_bid_price 		= avg_futures_bid,
+																						futures_ask_price 		= avg_futures_ask,
+																						futures_funding_rate 	= futures_funding_rate,
+																						futures_estimated_funding_rate = futures_estimated_funding_rate,
+																						entry_threshold 		= args.entry_gap_frac,
+																						take_profit_threshold 	= args.profit_taking_frac
+																					)
+			logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_futures_bid}, asks: {avg_futures_ask}")
+		logging.info(f"Executing trade decision: {decision}")
 
-			# Execute orders
-			new_order_execution = False
+		# Execute orders
+		new_order_execution = False
 
-			if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) \
-				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
-				new_order_execution = bot_executor.long_spot_short_futures(	spot_params 	= { "symbol" 		: args.spot_trading_pair, 
-																								"order_type" 	: args.order_type,
-																								"price" 		: spot_price if args.order_type == "limit" else 1,
-																								"size" 			: args.spot_entry_vol,
-																								"order_id_ref" 	: "orderId"
-																							},
+		if 	(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE) \
+			or (decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT):
+			new_order_execution = bot_executor.long_spot_short_futures(	spot_params 	= { "symbol" 		: args.spot_trading_pair, 
+																							"order_type" 	: args.order_type,
+																							"price" 		: spot_price if args.order_type == "limit" else 1,
+																							"size" 			: args.spot_entry_vol,
+																							"order_id_ref" 	: "orderId"
+																						},
 
-																			future_params 	= {	"symbol" 		: args.futures_trading_pair, 
-																								"order_type" 	: args.order_type, 
-																								"price" 		: futures_price if args.order_type == "limit" else 1,
-																								"size" 			: args.futures_entry_lot_size,
-																								"lever" 		: args.futures_entry_leverage,
-																								"order_id_ref" 	: "orderId"
-																							},
-																		)
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
-				if new_order_execution else None
+																		future_params 	= {	"symbol" 		: args.futures_trading_pair, 
+																							"order_type" 	: args.order_type, 
+																							"price" 		: futures_price if args.order_type == "limit" else 1,
+																							"size" 			: args.futures_entry_lot_size,
+																							"lever" 		: args.futures_entry_leverage,
+																							"order_id_ref" 	: "orderId"
+																						},
+																	)
+			trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
+			if new_order_execution else None
 
-			elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
-				or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
-				new_order_execution = bot_executor.short_spot_long_futures(	spot_params 	= {	"symbol" 		: args.spot_trading_pair, 
-																								"order_type" 	: args.order_type,
-																								"price" 		: spot_price if args.order_type == "limit" else 1,
-																								"size" 			: args.spot_entry_vol,
-																								"order_id_ref" 	: "orderId"
-																							},
+		elif (decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT) \
+			or (decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE):
+			new_order_execution = bot_executor.short_spot_long_futures(	spot_params 	= {	"symbol" 		: args.spot_trading_pair, 
+																							"order_type" 	: args.order_type,
+																							"price" 		: spot_price if args.order_type == "limit" else 1,
+																							"size" 			: args.spot_entry_vol,
+																							"order_id_ref" 	: "orderId"
+																						},
 
-																			future_params 	= {	"symbol" 		: args.futures_trading_pair, 
-																								"order_type" 	: args.order_type, 
-																								"price" 		: futures_price if args.order_type == "limit" else 1,
-																								"size" 			: args.futures_entry_lot_size,
-																								"lever" 		: args.futures_entry_leverage,
-																								"order_id_ref" 	: "orderId"
-																							},
-																		)
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \
-				if new_order_execution else None
+																		future_params 	= {	"symbol" 		: args.futures_trading_pair, 
+																							"order_type" 	: args.order_type, 
+																							"price" 		: futures_price if args.order_type == "limit" else 1,
+																							"size" 			: args.futures_entry_lot_size,
+																							"lever" 		: args.futures_entry_leverage,
+																							"order_id_ref" 	: "orderId"
+																						},
+																	)
+			trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \
+			if new_order_execution else None
 
-			if new_order_execution and args.db_url is not None:
-				(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
-
-				db_spot_client.set_position(size = current_spot_vol)
-				db_futures_client.set_position(size = current_futures_lot_size)
-			
+		if new_order_execution and args.db_url is not None:
+			(current_spot_vol, current_futures_lot_size) = trade_strategy.get_asset_holdings()
+			db_spot_client.set_position(size = current_spot_vol)
+			db_futures_client.set_position(size = current_futures_lot_size)
 			sleep(args.poll_interval_s)
 
-		except Exception as ex:
-			logging.error(ex)
+		elif decision == ExecutionDecision.NO_DECISION:
+			sleep(args.poll_interval_s)
+			
+		else:
 			sleep(args.retry_timeout_s)
