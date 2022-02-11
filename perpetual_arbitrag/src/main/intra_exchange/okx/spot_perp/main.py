@@ -9,7 +9,7 @@ from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotP
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 
 """
-python3 main/intra_exchange/Okx/spot_perp/main.py \
+python3 main/intra_exchange/okx/spot_perp/main.py \
 --spot_trading_pair BTC-USDT \
 --perpetual_trading_pair XBTUSDTM \
 --api_key xxx \
