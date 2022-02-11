@@ -106,4 +106,3 @@ if __name__ == "__main__":
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)
-	sleep(5)
