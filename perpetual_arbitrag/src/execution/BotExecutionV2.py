@@ -31,8 +31,15 @@ class BotExecutionV2(object):
 			is_success		= False
 			
 			if asset_A_order_resp is not None:
-				asset_A_cancel_fn(order_id = asset_A_order_resp[asset_A_order_id_ref])
+				try:
+					asset_A_cancel_fn(order_id = asset_A_order_resp[asset_A_order_id_ref])
+				except Exception as ex_A:
+					self.logger.error(ex_A)
 
 			if asset_B_order_resp is not None:
-				asset_B_cancel_fn(order_id = asset_B_order_resp[asset_B_order_id_ref])
+				try:
+					asset_B_cancel_fn(order_id = asset_B_order_resp[asset_B_order_id_ref])
+				except Exception as ex_B:
+					self.logger.error(ex_B)
+					
 		return is_success
