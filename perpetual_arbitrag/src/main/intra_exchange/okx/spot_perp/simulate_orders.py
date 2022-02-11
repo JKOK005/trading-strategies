@@ -13,7 +13,8 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --api_secret_key xxx \
 --api_passphrase xxx \
 --spot_entry_vol 0.01 \
---perpetual_entry_lot_size 10
+--perpetual_entry_lot_size 10 \
+--order_type market
 """
 
 if __name__ == "__main__":
