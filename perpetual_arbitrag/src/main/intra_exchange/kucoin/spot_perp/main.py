@@ -148,7 +148,6 @@ if __name__ == "__main__":
 																							"order_type" 	: args.order_type,
 																							"price" 		: spot_price if args.order_type == "limit" else 1,
 																							"size" 			: args.spot_entry_vol,
-																							"order_id_ref" 	: "orderId"
 																						},
 
 																		future_params 	= {	"symbol" 		: args.futures_trading_pair, 
@@ -156,7 +155,6 @@ if __name__ == "__main__":
 																							"price" 		: futures_price if args.order_type == "limit" else 1,
 																							"size" 			: args.futures_entry_lot_size,
 																							"lever" 		: args.futures_entry_leverage,
-																							"order_id_ref" 	: "orderId"
 																						},
 																	)
 			trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
@@ -168,7 +166,6 @@ if __name__ == "__main__":
 																							"order_type" 	: args.order_type,
 																							"price" 		: spot_price if args.order_type == "limit" else 1,
 																							"size" 			: args.spot_entry_vol,
-																							"order_id_ref" 	: "orderId"
 																						},
 
 																		future_params 	= {	"symbol" 		: args.futures_trading_pair, 
@@ -176,7 +173,6 @@ if __name__ == "__main__":
 																							"price" 		: futures_price if args.order_type == "limit" else 1,
 																							"size" 			: args.futures_entry_lot_size,
 																							"lever" 		: args.futures_entry_leverage,
-																							"order_id_ref" 	: "orderId"
 																						},
 																	)
 			trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \

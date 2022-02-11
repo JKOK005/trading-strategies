@@ -135,7 +135,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
 																				"size" 		 	: args.spot_entry_vol,
-																				"order_id_ref" 	: "ordId"
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -143,7 +142,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
 																				"size" 		 	: args.perpetual_entry_lot_size,
-																				"order_id_ref" 	: "ordId"
 																			}
 																	)
 
@@ -156,7 +154,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
 																				"size" 		 	: args.spot_entry_vol,
-																				"order_id_ref" 	: "ordId"
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -164,7 +161,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
 																				"size" 		 	: args.perpetual_entry_lot_size,
-																				"order_id_ref" 	: "ordId"
 																			}
 																	)
 
@@ -177,7 +173,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
 																				"size" 		 	: args.spot_entry_vol,
-																				"order_id_ref" 	: "ordId"
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -185,7 +180,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
 																				"size" 		 	: args.perpetual_entry_lot_size,
-																				"order_id_ref" 	: "ordId"
 																			}
 																	)
 
@@ -198,7 +192,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
 																				"size" 		 	: args.spot_entry_vol,
-																				"order_id_ref" 	: "ordId"
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -206,7 +199,6 @@ if __name__ == "__main__":
 																				"order_type" 	: args.order_type, 
 																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
 																				"size" 		 	: args.perpetual_entry_lot_size,
-																				"order_id_ref" 	: "ordId"
 																			}
 																	)
 

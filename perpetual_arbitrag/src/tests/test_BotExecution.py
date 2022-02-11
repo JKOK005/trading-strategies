@@ -15,12 +15,10 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(return_value = None),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 		
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
@@ -32,12 +30,10 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(return_value = None),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 		
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
@@ -49,12 +45,10 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(side_effect = Exception('order failed')),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(return_value = None),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 		
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
@@ -66,12 +60,10 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(side_effect = Exception('order failed')),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 		
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
@@ -83,12 +75,10 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(return_value = None),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(side_effect = Exception('order failed')),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
@@ -100,12 +90,10 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(return_value = None),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(side_effect = Exception('order failed')),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 		
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
@@ -117,30 +105,11 @@ class TestBotExecution(TestCase):
 						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
 						"asset_B_order_fn" 				: MagicMock(side_effect = Exception('order failed')),
 						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
 						"asset_B_assert_resp_error_fn" 	: MagicMock(return_value = None),
 						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
 					}
 		
 		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
 		assert fn_params["asset_A_cancel_fn"].called and not fn_params["asset_B_cancel_fn"].called
-
-	def test_asset_A_and_B_order_cancellation_invoked_when_asset_B_order_fails(self):
-		fn_params = {
-						"asset_A_order_fn" 				: MagicMock(return_value = {"order_id" : 100}),
-						"asset_A_cancel_fn" 			: MagicMock(return_value = None),
-						"asset_A_assert_resp_error_fn" 	: MagicMock(return_value = None),
-						"asset_A_params" 				: {},
-						"asset_A_order_id_ref" 			: "order_id",
-						"asset_B_order_fn" 				: MagicMock(return_value = {"order_id" : "order failed"}),
-						"asset_B_cancel_fn" 			: MagicMock(return_value = None),
-						"asset_B_assert_resp_error_fn" 	: MagicMock(side_effect = Exception('order failed')),
-						"asset_B_params" 				: {},
-						"asset_B_order_id_ref"  		: "order_id",
-					}
-		
-		execution_resp 	= self.bot_executor.idempotent_trade_execution(**fn_params)
-		assert fn_params["asset_A_cancel_fn"].called and fn_params["asset_B_cancel_fn"].called

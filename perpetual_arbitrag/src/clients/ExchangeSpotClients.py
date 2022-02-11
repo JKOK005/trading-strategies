@@ -65,7 +65,7 @@ class ExchangeSpotClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def cancel_spot_order(self, order_id: str):
+	def cancel_spot_order(self, order_resp):
 		pass
 
 	@abstractmethod

@@ -73,7 +73,7 @@ class ExchangeFutureClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def cancel_futures_order(self, order_id: str):
+	def cancel_futures_order(self, order_resp):
 		pass
 
 	@abstractmethod

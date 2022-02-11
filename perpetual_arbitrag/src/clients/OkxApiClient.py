@@ -338,7 +338,8 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 												 reduceOnly = "true",
 											)
 
-	def cancel_spot_order(self, symbol: str, order_id: str):
+	def cancel_spot_order(self, symbol: str, order_resp):
+		order_id = order_resp["data"][0]["ordId"]
 		self.logger.info(f"Cancelling spot order ID {order_id}")
 
 		try:
@@ -347,7 +348,8 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 			self.logger.error(ex)
 		return
 
-	def cancel_perpetual_order(self, symbol: str, order_id: str):
+	def cancel_perpetual_order(self, symbol: str, order_resp):
+		order_id = order_resp["data"][0]["ordId"]
 		self.logger.info(f"Cancelling futures order ID {order_id}")
 
 		try:
@@ -357,13 +359,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		return
 
 	def assert_spot_resp_error(self, order_resp):
-		if order_resp["data"]["sCode"] != "0":
-			error_msg = order_resp["data"]["sMsg"]
+		if order_resp["data"][0]["sCode"] != "0":
+			error_msg = order_resp["data"][0]["sMsg"]
 			raise Exception(f"Spot order failed: {error_msg}")
 		return
 
 	def assert_perpetual_resp_error(self, order_resp):
-		if order_resp["data"]["sCode"] != "0":
-			error_msg = order_resp["data"]["sMsg"]
+		if order_resp["data"][0]["sCode"] != "0":
+			error_msg = order_resp["data"][0]["sMsg"]
 			raise Exception(f"Spot order failed: {error_msg}")
 		return

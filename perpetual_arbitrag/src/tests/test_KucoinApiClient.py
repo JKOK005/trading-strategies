@@ -262,7 +262,7 @@ class TestKucoinApiClient(TestCase):
 		_kucoin_api_client.spot_trade 			= patch_trade
 		patch_trade.cancel_order.return_value 	= True
 
-		_kucoin_api_client.cancel_spot_order(order_id = "0001")
+		_kucoin_api_client.cancel_spot_order(order_resp = {"orderId" : "0001"})
 		assert(patch_trade.cancel_order.called)
 
 	@patch("kucoin_futures.client.Trade")
@@ -274,7 +274,7 @@ class TestKucoinApiClient(TestCase):
 		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
 
 		try:
-			_kucoin_api_client.cancel_spot_order(order_id = "0001")
+			_kucoin_api_client.cancel_spot_order(order_resp = {"orderId" : "0001"})
 		except Exception as ex:
 			assert(False)
 		return
@@ -285,7 +285,7 @@ class TestKucoinApiClient(TestCase):
 		_kucoin_api_client.futures_trade 		= patch_trade
 		patch_trade.cancel_order.return_value 	= True
 
-		_kucoin_api_client.cancel_futures_order(order_id = "0001")
+		_kucoin_api_client.cancel_futures_order(order_resp = {"orderId" : "0001"})
 		assert(patch_trade.cancel_order.called)
 
 	@patch("kucoin_futures.client.Trade")
@@ -297,7 +297,7 @@ class TestKucoinApiClient(TestCase):
 		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
 
 		try:
-			_kucoin_api_client.cancel_futures_order(order_id = "0001")
+			_kucoin_api_client.cancel_futures_order(order_resp = {"orderId" : "0001"})
 		except Exception as ex:
 			assert(False)
 		return

@@ -357,7 +357,8 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 														lever	= lever
 													)
 
-	def cancel_spot_order(self, order_id: str):
+	def cancel_spot_order(self, order_resp):
+		order_id = order_resp["orderId"]
 		self.logger.info(f"Cancelling spot order ID {order_id}")
 
 		try:
@@ -366,7 +367,8 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 			self.logger.error(ex)
 		return
 
-	def cancel_futures_order(self, order_id: str):
+	def cancel_futures_order(self, order_resp):
+		order_id = order_resp["orderId"]
 		self.logger.info(f"Cancelling futures order ID {order_id}")
 		
 		try:
