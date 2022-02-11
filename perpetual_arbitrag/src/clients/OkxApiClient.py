@@ -357,7 +357,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		return
 
 	def assert_spot_resp_error(self, order_resp):
-		pass
+		if order_resp["data"]["sCode"] != "0":
+			error_msg = order_resp["data"]["sMsg"]
+			raise Exception(f"Spot order failed: {error_msg}")
+		return
 
 	def assert_perpetual_resp_error(self, order_resp):
-		pass
+		if order_resp["data"]["sCode"] != "0":
+			error_msg = order_resp["data"]["sMsg"]
+			raise Exception(f"Spot order failed: {error_msg}")
+		return
