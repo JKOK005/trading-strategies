@@ -370,5 +370,5 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	def assert_perpetual_resp_error(self, order_resp):
 		if order_resp["data"][0]["sCode"] != "0":
 			error_msg = order_resp["data"][0]["sMsg"]
-			raise Exception(f"Spot order failed: {error_msg}")
+			raise Exception(f"Perpetual order failed: {error_msg}")
 		return
