@@ -357,7 +357,8 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 														lever	= lever
 													)
 
-	def cancel_spot_order(self, order_id: str):
+	def cancel_spot_order(self, order_resp):
+		order_id = order_resp["orderId"]
 		self.logger.info(f"Cancelling spot order ID {order_id}")
 
 		try:
@@ -366,11 +367,24 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 			self.logger.error(ex)
 		return
 
-	def cancel_futures_order(self, order_id: str):
+	def cancel_futures_order(self, order_resp):
+		order_id = order_resp["orderId"]
 		self.logger.info(f"Cancelling futures order ID {order_id}")
 		
 		try:
 			self.futures_trade.cancel_order(orderId = order_id)
 		except Exception as ex:
 			self.logger.error(ex)
+		return
+
+	def assert_spot_resp_error(self, order_resp):
+		"""
+		Kucoin throws a response error on failure, hence no need to implement logics
+		"""
+		return
+
+	def assert_futures_resp_error(self, order_resp):
+		"""
+		Kucoin throws a response error on failure, hence no need to implement logics
+		"""
 		return

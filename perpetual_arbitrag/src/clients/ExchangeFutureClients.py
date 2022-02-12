@@ -73,5 +73,14 @@ class ExchangeFutureClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def cancel_futures_order(self, order_id: str):
+	def cancel_futures_order(self, order_resp):
+		pass
+
+	@abstractmethod
+	def assert_futures_resp_error(self, order_resp):
+		"""
+		Function looks at an order response created after placing an order and decides if we should raise an error.
+
+		A raised error indicates a failed order attempt.
+		"""
 		pass

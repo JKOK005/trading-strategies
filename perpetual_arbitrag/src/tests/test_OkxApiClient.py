@@ -245,7 +245,16 @@ class TestKucoinApiClient(TestCase):
 		_okx_api_client 					  	= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 		  	= patch_trade
 		patch_trade.cancel_order.return_value 	= True
-		_okx_api_client.cancel_spot_order(symbol = "ETH-USDT", order_id = "0001")
+		_okx_api_client.cancel_spot_order(symbol = "ETH-USDT", order_resp = { "data" : 
+																				[
+																				    {
+																				      "ordId": "312269865356374016",
+																				      "sCode": "0",
+																				      "sMsg": ""
+																			    	}
+																			  	]
+																  			}
+															  			)
 		assert(patch_trade.cancel_order.called)
 
 	@patch("kucoin_futures.client.Trade")
@@ -257,7 +266,16 @@ class TestKucoinApiClient(TestCase):
 		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
 
 		try:
-			_okx_api_client.cancel_spot_order(symbol = "ETH-USDT", order_id = "0001")
+			_okx_api_client.cancel_spot_order(symbol = "ETH-USDT", order_resp = { "data" : 
+																					[
+																					    {
+																					      "ordId": "312269865356374016",
+																					      "sCode": "0",
+																					      "sMsg": ""
+																				    	}
+																				  	]
+																	  			}
+																  			)
 		except Exception as ex:
 			assert(False)
 		return
@@ -267,7 +285,16 @@ class TestKucoinApiClient(TestCase):
 		_okx_api_client 						= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 			= patch_trade
 		patch_trade.cancel_order.return_value 	= True
-		_okx_api_client.cancel_perpetual_order(symbol = "ETH-USDT-SWAP", order_id = "0001")
+		_okx_api_client.cancel_perpetual_order(symbol = "ETH-USDT-SWAP", order_resp = 	{ "data" : 
+																								[
+																								    {
+																								      "ordId": "312269865356374016",
+																								      "sCode": "0",
+																								      "sMsg": ""
+																							    	}
+																							  	]
+																				  			}
+																			  			)
 		assert(patch_trade.cancel_order.called)
 
 	@patch("kucoin_futures.client.Trade")
@@ -279,7 +306,16 @@ class TestKucoinApiClient(TestCase):
 		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
 
 		try:
-			_okx_api_client.cancel_perpetual_order(symbol = "ETH-USDT-SWAP", order_id = "0001")
+			_okx_api_client.cancel_perpetual_order(symbol = "ETH-USDT-SWAP", order_resp = 	{ "data" : 
+																								[
+																								    {
+																								      "ordId": "312269865356374016",
+																								      "sCode": "0",
+																								      "sMsg": ""
+																							    	}
+																							  	]
+																				  			}
+																			  			)
 		except Exception as ex:
 			assert(False)
 		return

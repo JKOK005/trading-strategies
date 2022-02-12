@@ -19,14 +19,14 @@ class SpotFutureBotExecution(BotExecutionV2):
 		self.logger.info(spot_params)
 		self.logger.info(future_params)
 
-		return self.idempotent_trade_execution(	asset_A_order_fn 		= self.api_client.place_futures_order,
-												asset_A_cancel_fn 		= self.api_client.cancel_futures_order,
-												asset_A_params 			= future_params,
-												asset_A_order_id_ref 	= future_params["order_id_ref"],
-												asset_B_order_fn 		= self.api_client.place_spot_order,
-												asset_B_cancel_fn 		= self.api_client.cancel_spot_order,
-												asset_B_params 			= spot_params,
-												asset_B_order_id_ref 	= spot_params["order_id_ref"],
+		return self.idempotent_trade_execution(	asset_A_order_fn 				= self.api_client.place_futures_order,
+												asset_A_cancel_fn 				= self.api_client.cancel_futures_order,
+												asset_A_assert_resp_error_fn 	= self.api_client.assert_futures_resp_error,
+												asset_A_params 					= future_params,
+												asset_B_order_fn 				= self.api_client.place_spot_order,
+												asset_B_cancel_fn 				= self.api_client.cancel_spot_order,
+												asset_B_assert_resp_error_fn 	= self.api_client.assert_spot_resp_error,
+												asset_B_params 					= spot_params,
 											)
 
 	def short_spot_long_futures(self, spot_params, 
@@ -39,14 +39,14 @@ class SpotFutureBotExecution(BotExecutionV2):
 		self.logger.info(spot_params)
 		self.logger.info(future_params)
 
-		return self.idempotent_trade_execution(	asset_A_order_fn 		= self.api_client.place_spot_order,
-												asset_A_cancel_fn 		= self.api_client.cancel_spot_order,
-												asset_A_params 			= spot_params,
-												asset_A_order_id_ref 	= spot_params["order_id_ref"],
-												asset_B_order_fn 		= self.api_client.place_futures_order,
-												asset_B_cancel_fn 		= self.api_client.cancel_futures_order,
-												asset_B_params 			= future_params,
-												asset_B_order_id_ref 	= future_params["order_id_ref"],
+		return self.idempotent_trade_execution(	asset_A_order_fn 				= self.api_client.place_spot_order,
+												asset_A_cancel_fn 				= self.api_client.cancel_spot_order,
+												asset_A_assert_resp_error_fn 	= self.api_client.assert_spot_resp_error,
+												asset_A_params 					= spot_params,
+												asset_B_order_fn 				= self.api_client.place_futures_order,
+												asset_B_cancel_fn 				= self.api_client.cancel_futures_order,
+												asset_B_assert_resp_error_fn 	= self.api_client.assert_futures_resp_error,
+												asset_B_params 					= future_params,
 											)
 
 class SpotFutureSimulatedBotExecution(SpotFutureBotExecution):
