@@ -213,10 +213,9 @@ if __name__ == "__main__":
 			(current_spot_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
 			db_spot_client.set_position(size = current_spot_vol)
 			db_perpetual_clients.set_position(size = current_perpetual_lot_size)
-			sleep(args.poll_interval_s)
 
-		elif decision == ExecutionDecision.NO_DECISION:
+		if 	(new_order_execution) or \
+			(decision == ExecutionDecision.NO_DECISION):
 			sleep(args.poll_interval_s)
-
 		else:
 			sleep(args.retry_timeout_s)
