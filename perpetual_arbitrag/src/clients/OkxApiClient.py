@@ -360,3 +360,6 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 			error_msg = order_resp["data"][0]["sMsg"]
 			raise Exception(f"Perpetual order failed: {error_msg}")
 		return
+
+	def set_perpetual_leverage(self, symbol: str, leverage: int, ):
+		pass
