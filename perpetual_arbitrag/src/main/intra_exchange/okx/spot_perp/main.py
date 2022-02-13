@@ -131,10 +131,11 @@ if __name__ == "__main__":
 
 		if decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT:
 			new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																				"symbol" 	 	: args.spot_trading_pair, 
-																				"order_type" 	: args.order_type, 
-																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
-																				"size" 		 	: args.spot_entry_vol,
+																				"symbol" 	 		: args.spot_trading_pair, 
+																				"order_type" 		: args.order_type, 
+																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"size" 		 		: args.spot_entry_vol,
+																				"target_currency" 	: "base_ccy",
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -150,10 +151,11 @@ if __name__ == "__main__":
 
 		elif decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE:
 			new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																				"symbol" 	 	: args.spot_trading_pair, 
-																				"order_type" 	: args.order_type, 
-																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
-																				"size" 		 	: args.spot_entry_vol,
+																				"symbol" 	 		: args.spot_trading_pair, 
+																				"order_type" 		: args.order_type, 
+																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"size" 		 		: args.spot_entry_vol,
+																				"target_currency" 	: "base_ccy" 
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -169,10 +171,11 @@ if __name__ == "__main__":
 
 		elif decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
 			new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																				"symbol" 	 	: args.spot_trading_pair, 
-																				"order_type" 	: args.order_type, 
-																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
-																				"size" 		 	: args.spot_entry_vol,
+																				"symbol" 	 		: args.spot_trading_pair, 
+																				"order_type" 		: args.order_type, 
+																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"size" 		 		: args.spot_entry_vol,
+																				"target_currency" 	: "base_ccy" 
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -188,10 +191,11 @@ if __name__ == "__main__":
 
 		elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
 			new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																				"symbol" 	 	: args.spot_trading_pair, 
-																				"order_type" 	: args.order_type, 
-																				"price" 	 	: spot_price if args.order_type == "limit" else 0,
-																				"size" 		 	: args.spot_entry_vol,
+																				"symbol" 	 		: args.spot_trading_pair, 
+																				"order_type" 		: args.order_type, 
+																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"size" 		 		: args.spot_entry_vol,
+																				"target_currency" 	: "base_ccy" 
 																			},
 																			perpetual_params = {
 																				"symbol" 	 	: args.perpetual_trading_pair,
@@ -209,10 +213,9 @@ if __name__ == "__main__":
 			(current_spot_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
 			db_spot_client.set_position(size = current_spot_vol)
 			db_perpetual_clients.set_position(size = current_perpetual_lot_size)
-			sleep(args.poll_interval_s)
 
-		elif decision == ExecutionDecision.NO_DECISION:
+		if 	(new_order_execution) or \
+			(decision == ExecutionDecision.NO_DECISION):
 			sleep(args.poll_interval_s)
-
 		else:
 			sleep(args.retry_timeout_s)

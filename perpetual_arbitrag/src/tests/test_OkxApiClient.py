@@ -15,14 +15,14 @@ class TestKucoinApiClient(TestCase):
 											funding_rate_enable = True,
 										)
 
-	@patch("okex.Account_api.AccountAPI")
+	@patch("okx.Account_api.AccountAPI")
 	def test_spot_account_api_call(self, patch_account):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.account_client 	= patch_account
 		_okx_api_client.get_spot_trading_account_details(currency = "ETH")
 		assert(patch_account.get_account.called)
 
-	@patch("okex.Account_api.AccountAPI")
+	@patch("okx.Account_api.AccountAPI")
 	def test_compute_correct_perpetual_amt(self, patch_account):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.account_client 	= patch_account
@@ -39,28 +39,28 @@ class TestKucoinApiClient(TestCase):
 		perpetual_position 	= _okx_api_client.get_perpetual_trading_account_details(currency = "ETH-USDT-SWAP")
 		assert(perpetual_position == 5)
 
-	@patch("okex.Market_api.MarketAPI")
+	@patch("okx.Market_api.MarketAPI")
 	def test_spot_trading_price_api_call(self, patch_market):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.market_client 	= patch_market
 		_okx_api_client.get_spot_trading_price(symbol = "ETH-USDT")
 		assert(patch_market.get_ticker.called)
 
-	@patch("okex.Market_api.MarketAPI")
+	@patch("okx.Market_api.MarketAPI")
 	def test_perpetual_trading_price_api_call(self, patch_market):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.market_client 	= patch_market
 		_okx_api_client.get_perpetual_trading_price(symbol = "ETH-USDT-SWAP")
 		assert(patch_market.get_ticker.called)
 
-	@patch("okex.Public_api.PublicAPI")
+	@patch("okx.Public_api.PublicAPI")
 	def test_spot_min_volume_api_call(self, patch_public):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.public_client 	= patch_public
 		_okx_api_client.get_spot_min_volume(symbol = "ETH-USDT")
 		assert(patch_public.get_instruments.called)
 
-	@patch("okex.Public_api.PublicAPI")
+	@patch("okx.Public_api.PublicAPI")
 	def test_perpetual_min_volume_api_call(self, patch_public):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.public_client 	= patch_public
@@ -117,14 +117,14 @@ class TestKucoinApiClient(TestCase):
 		size 	= 200
 		assert(self.okx_api_client._compute_average_ask_price(asks = asks, size = size) == 125)
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_open_spot_orders_api_call(self, patch_trade):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 	= patch_trade
 		_okx_api_client.get_spot_open_orders(symbol = "ETH-USDT")
 		assert(patch_trade.get_order_list.called)
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_open_perpetual_orders_api_call(self, patch_trade):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 	= patch_trade
@@ -163,14 +163,14 @@ class TestKucoinApiClient(TestCase):
 			mock_get_perpetual_open_orders.return_value = []
 			assert(_okx_api_client.get_perpetual_most_recent_open_order(symbol = "ETH-USDT-SWAP") == [])
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_fulfilled_spot_orders_api_call(self, patch_trade):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 	= patch_trade
 		_okx_api_client.get_spot_fulfilled_orders(symbol = "ETH-USDT")
 		assert(patch_trade.get_orders_history.called)
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_fulfilled_perpetual_orders_api_call(self, patch_trade):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 	= patch_trade
@@ -211,21 +211,22 @@ class TestKucoinApiClient(TestCase):
 			mock_get_perpetual_fulfilled_orders.return_value = []
 			assert(_okx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "ETH-USDT-SWAP") == [])
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_spot_order_call_invoked(self, patch_trade):
 		_okx_api_client 					 = copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 		 = patch_trade
 		patch_trade.place_order.return_value = {"orderId" : "0001"}
 
-		_okx_api_client.place_spot_order(symbol 		= "BTC-USDT", 
-										 order_type 	= "market", 
-										 order_side 	= "sell", 
-										 price 		= 1,
-										 size 		= 1
+		_okx_api_client.place_spot_order(symbol 		 = "BTC-USDT", 
+										 order_type 	 = "market", 
+										 order_side 	 = "sell", 
+										 price 			 = 1,
+										 size 			 = 1,
+										 target_currency = "base_ccy"
 										)
 		assert(patch_trade.place_order.called)
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_futures_order_call_invoked(self, patch_trade):
 		_okx_api_client 					  = copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 		  = patch_trade
@@ -240,7 +241,7 @@ class TestKucoinApiClient(TestCase):
 											)
 		assert(patch_trade.place_order.called)
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_spot_order_cancellation_without_error(self, patch_trade):
 		_okx_api_client 					  	= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 		  	= patch_trade
@@ -280,7 +281,7 @@ class TestKucoinApiClient(TestCase):
 			assert(False)
 		return
 
-	@patch("okex.Trade_api.TradeAPI")
+	@patch("okx.Trade_api.TradeAPI")
 	def test_perpetual_order_cancellation_without_error(self, patch_trade):
 		_okx_api_client 						= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.trade_client 			= patch_trade
@@ -320,7 +321,7 @@ class TestKucoinApiClient(TestCase):
 			assert(False)
 		return
 
-	@patch("okex.Public_api.PublicAPI")
+	@patch("okx.Public_api.PublicAPI")
 	def test_get_perpetual_funding_rates(self, patch_public):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.public_client 	= patch_public
@@ -367,7 +368,7 @@ class TestKucoinApiClient(TestCase):
 			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, 0)
 		return
 
-	@patch("okex.Public_api.PublicAPI")
+	@patch("okx.Public_api.PublicAPI")
 	def test_effective_funding_rate_is_non_zero(self, patch_public):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.public_client 	= patch_public

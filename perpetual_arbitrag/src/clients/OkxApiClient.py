@@ -2,10 +2,10 @@ import datetime
 import logging
 import sys
 from datetime import timedelta
-from okex.Account_api import AccountAPI
-from okex.Market_api import MarketAPI
-from okex.Public_api import PublicAPI
-from okex.Trade_api import TradeAPI
+from okx.Account_api import AccountAPI
+from okx.Market_api import MarketAPI
+from okx.Public_api import PublicAPI
+from okx.Trade_api import TradeAPI
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 
@@ -67,7 +67,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		positions = list(map(lambda x: (x["availPos"], x["posSide"]), perpetual_info["data"]))
 		net_position = 0
 		for each_position in positions:
-			if each_position[0] is not '':
+			if each_position[0] != '':
 				pos_multiplier = -1 if each_position[-1] == "short" else 1
 				net_position += pos_multiplier * float(each_position[0]) 
 		return net_position
@@ -277,6 +277,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 								order_side: str, 
 								price: int,
 								size: float,
+								target_currency: str,
 								*args, **kwargs):
 		"""
 		order_type 	- Either limit or market
@@ -286,18 +287,20 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		self.logger.info(f"Sport order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
 		if order_type == "limit":
 			return self.trade_client.place_order(instId 	= symbol,
-												 tdMode		= "cash",
 												 side 		= order_side,
 												 ordType 	= order_type,
 												 sz 		= size,
 												 px 		= price,
+												 tdMode		= "cash",
+												 tgtCcy 	= target_currency
 											)
 		elif order_type == "market":
 			return self.trade_client.place_order(instId 	= symbol,
-												 tdMode		= "cash",
 												 side 		= order_side,
 												 ordType 	= order_type,
 												 sz 		= size,
+												 tdMode		= "cash",
+												 tgtCcy 	= target_currency
 											)
 
 	def place_perpetual_order(self, symbol: str, 
@@ -367,5 +370,5 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	def assert_perpetual_resp_error(self, order_resp):
 		if order_resp["data"][0]["sCode"] != "0":
 			error_msg = order_resp["data"][0]["sMsg"]
-			raise Exception(f"Spot order failed: {error_msg}")
+			raise Exception(f"Perpetual order failed: {error_msg}")
 		return
