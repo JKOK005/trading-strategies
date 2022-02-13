@@ -67,7 +67,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		positions = list(map(lambda x: (x["availPos"], x["posSide"]), perpetual_info["data"]))
 		net_position = 0
 		for each_position in positions:
-			if each_position[0] is not '':
+			if each_position[0] != '':
 				pos_multiplier = -1 if each_position[-1] == "short" else 1
 				net_position += pos_multiplier * float(each_position[0]) 
 		return net_position
