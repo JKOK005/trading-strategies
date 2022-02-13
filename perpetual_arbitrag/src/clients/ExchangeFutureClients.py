@@ -73,7 +73,7 @@ class ExchangeFutureClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def cancel_futures_order(self, order_resp):
+	def revert_futures_order(self, order_resp, *args, **kwargs):
 		pass
 
 	@abstractmethod

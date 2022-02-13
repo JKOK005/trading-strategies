@@ -377,6 +377,14 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 			self.logger.error(ex)
 		return
 
+	def revert_spot_order(self, order_resp, revert_params):
+		self.logger.info(f"Reverting spot order")
+		return self.place_spot_order(**revert_params)
+
+	def revert_futures_order(self, order_resp, revert_params):
+		self.logger.info(f"Reverting futures order")
+		return self.place_futures_order(**revert_params)
+
 	def assert_spot_resp_error(self, order_resp):
 		"""
 		Kucoin throws a response error on failure, hence no need to implement logics
