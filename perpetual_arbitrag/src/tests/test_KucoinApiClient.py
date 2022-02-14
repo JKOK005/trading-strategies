@@ -256,51 +256,17 @@ class TestKucoinApiClient(TestCase):
 											)
 		assert(patch_trade.create_limit_order.called)
 
-	@patch("kucoin_futures.client.Trade")
-	def test_spot_order_cancellation_without_error(self, patch_trade):
-		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
-		_kucoin_api_client.spot_trade 			= patch_trade
-		patch_trade.cancel_order.return_value 	= True
+	def test_spot_order_revertion(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		with patch.object(_kucoin_api_client, "place_spot_order") as mock_place_spot_order:
+			_kucoin_api_client.revert_spot_order(order_resp = {"orderId" : "0001"}, revert_params = {})
+			assert(mock_place_spot_order.called)
 
-		_kucoin_api_client.cancel_spot_order(order_resp = {"orderId" : "0001"})
-		assert(patch_trade.cancel_order.called)
-
-	@patch("kucoin_futures.client.Trade")
-	def test_spot_order_cancellation_with_error_handelled_internally(self, patch_trade):
-		# Main program should not crash
-		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
-		_kucoin_api_client.spot_trade 			= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
-
-		try:
-			_kucoin_api_client.cancel_spot_order(order_resp = {"orderId" : "0001"})
-		except Exception as ex:
-			assert(False)
-		return
-
-	@patch("kucoin_futures.client.Trade")
-	def test_futures_order_cancellation_without_error(self, patch_trade):
-		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
-		_kucoin_api_client.futures_trade 		= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-
-		_kucoin_api_client.cancel_futures_order(order_resp = {"orderId" : "0001"})
-		assert(patch_trade.cancel_order.called)
-
-	@patch("kucoin_futures.client.Trade")
-	def test_futures_order_cancellation_with_error_handelled_internally(self, patch_trade):
-		# Main program should not crash
-		_kucoin_api_client 						= copy.deepcopy(self.kucoin_api_client)
-		_kucoin_api_client.futures_trade 		= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
-
-		try:
-			_kucoin_api_client.cancel_futures_order(order_resp = {"orderId" : "0001"})
-		except Exception as ex:
-			assert(False)
-		return
+	def test_futures_order_revertion(self):
+		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		with patch.object(_kucoin_api_client, "place_futures_order") as mock_place_futures_order:
+			_kucoin_api_client.revert_futures_order(order_resp = {"orderId" : "0001"}, revert_params = {})
+			assert(mock_place_futures_order.called)
 
 	@patch("kucoin.client.Market")
 	def test_spot_min_volume_throws_error_on_invalid_symbol(self, patch_client):

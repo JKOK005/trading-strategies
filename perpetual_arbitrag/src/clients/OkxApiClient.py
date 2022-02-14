@@ -343,11 +343,11 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 
 	def revert_spot_order(self, order_resp, revert_params):
 		self.logger.info(f"Reverting spot order")
-		return self.place_spot_order(**spot_revert_params)
+		return self.place_spot_order(**revert_params)
 
 	def revert_perpetual_order(self, order_resp, revert_params):
 		self.logger.info(f"Reverting perpetual order")
-		return self.place_perpetual_order(**perpetual_revert_params)
+		return self.place_perpetual_order(**revert_params)
 
 	def assert_spot_resp_error(self, order_resp):
 		if order_resp["data"][0]["sCode"] != "0":
