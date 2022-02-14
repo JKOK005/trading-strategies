@@ -357,25 +357,13 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 														lever	= lever
 													)
 
-	def cancel_spot_order(self, order_resp):
-		order_id = order_resp["orderId"]
-		self.logger.info(f"Cancelling spot order ID {order_id}")
+	def revert_spot_order(self, order_resp, revert_params):
+		self.logger.info(f"Reverting spot order")
+		return self.place_spot_order(**revert_params)
 
-		try:
-			self.spot_trade.cancel_order(orderId = order_id)
-		except Exception as ex:
-			self.logger.error(ex)
-		return
-
-	def cancel_futures_order(self, order_resp):
-		order_id = order_resp["orderId"]
-		self.logger.info(f"Cancelling futures order ID {order_id}")
-		
-		try:
-			self.futures_trade.cancel_order(orderId = order_id)
-		except Exception as ex:
-			self.logger.error(ex)
-		return
+	def revert_futures_order(self, order_resp, revert_params):
+		self.logger.info(f"Reverting futures order")
+		return self.place_futures_order(**revert_params)
 
 	def assert_spot_resp_error(self, order_resp):
 		"""

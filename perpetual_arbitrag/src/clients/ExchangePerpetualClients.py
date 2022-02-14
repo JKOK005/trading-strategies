@@ -73,7 +73,7 @@ class ExchangePerpetualClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def cancel_perpetual_order(self, order_resp):
+	def revert_perpetual_order(self, order_resp, *args, **kwargs):
 		pass
 
 	@abstractmethod

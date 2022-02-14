@@ -52,7 +52,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "short",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 											)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "short",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "long",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "long",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)

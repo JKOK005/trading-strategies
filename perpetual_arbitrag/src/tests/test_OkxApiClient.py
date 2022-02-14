@@ -6,7 +6,7 @@ from freezegun import freeze_time
 from unittest import TestCase
 from unittest.mock import patch
 
-class TestKucoinApiClient(TestCase):
+class TestOkxApiClient(TestCase):
 	
 	def setUp(self):
 		self.okx_api_client = OkxApiClient(	api_key 		= "123", 
@@ -241,85 +241,37 @@ class TestKucoinApiClient(TestCase):
 											)
 		assert(patch_trade.place_order.called)
 
-	@patch("okx.Trade_api.TradeAPI")
-	def test_spot_order_cancellation_without_error(self, patch_trade):
-		_okx_api_client 					  	= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.trade_client 		  	= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-		_okx_api_client.cancel_spot_order(symbol = "ETH-USDT", order_resp = { "data" : 
-																				[
-																				    {
-																				      "ordId": "312269865356374016",
-																				      "sCode": "0",
-																				      "sMsg": ""
-																			    	}
-																			  	]
-																  			}
-															  			)
-		assert(patch_trade.cancel_order.called)
+	def test_spot_order_revertion(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+		with patch.object(_okx_api_client, "place_spot_order") as mock_place_spot_order:
+			_okx_api_client.revert_spot_order(	order_resp = { 
+																"data" : [
+																		    {
+																		      "ordId": "312269865356374016",
+																		      "sCode": "0",
+																		      "sMsg": ""
+																	    	}
+															  			]
+												  			},
+												revert_params = {}
+							  				)
+			assert(mock_place_spot_order.called)
 
-	@patch("kucoin_futures.client.Trade")
-	def test_spot_order_cancellation_with_error_handelled_internally(self, patch_trade):
-		# Main program should not crash
-		_okx_api_client 						= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.trade_client 			= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
-
-		try:
-			_okx_api_client.cancel_spot_order(symbol = "ETH-USDT", order_resp = { "data" : 
-																					[
-																					    {
-																					      "ordId": "312269865356374016",
-																					      "sCode": "0",
-																					      "sMsg": ""
-																				    	}
-																				  	]
-																	  			}
-																  			)
-		except Exception as ex:
-			assert(False)
-		return
-
-	@patch("okx.Trade_api.TradeAPI")
-	def test_perpetual_order_cancellation_without_error(self, patch_trade):
-		_okx_api_client 						= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.trade_client 			= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-		_okx_api_client.cancel_perpetual_order(symbol = "ETH-USDT-SWAP", order_resp = 	{ "data" : 
-																								[
-																								    {
-																								      "ordId": "312269865356374016",
-																								      "sCode": "0",
-																								      "sMsg": ""
-																							    	}
-																							  	]
-																				  			}
-																			  			)
-		assert(patch_trade.cancel_order.called)
-
-	@patch("kucoin_futures.client.Trade")
-	def test_perpetual_order_cancellation_with_error_handelled_internally(self, patch_trade):
-		# Main program should not crash
-		_okx_api_client 						= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.trade_client 			= patch_trade
-		patch_trade.cancel_order.return_value 	= True
-		patch_trade.cancel_order.side_effect 	= Exception("Test throw error")
-
-		try:
-			_okx_api_client.cancel_perpetual_order(symbol = "ETH-USDT-SWAP", order_resp = 	{ "data" : 
-																								[
-																								    {
-																								      "ordId": "312269865356374016",
-																								      "sCode": "0",
-																								      "sMsg": ""
-																							    	}
-																							  	]
-																				  			}
-																			  			)
-		except Exception as ex:
-			assert(False)
-		return
+	def test_perpetual_order_cancellation_without_error(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+		with patch.object(_okx_api_client, "place_perpetual_order") as mock_place_perpetual_order:
+			_okx_api_client.revert_perpetual_order(	order_resp = { 
+																	"data" : [
+																			    {
+																			      "ordId": "312269865356374016",
+																			      "sCode": "0",
+																			      "sMsg": ""
+																		    	}
+																  			]
+												  				},
+													revert_params = {}
+							  					)
+			assert(mock_place_perpetual_order.called)
 
 	@patch("okx.Public_api.PublicAPI")
 	def test_get_perpetual_funding_rates(self, patch_public):

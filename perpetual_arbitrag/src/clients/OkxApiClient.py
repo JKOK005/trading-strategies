@@ -341,25 +341,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 												 reduceOnly = "true",
 											)
 
-	def cancel_spot_order(self, symbol: str, order_resp):
-		order_id = order_resp["data"][0]["ordId"]
-		self.logger.info(f"Cancelling spot order ID {order_id}")
+	def revert_spot_order(self, order_resp, revert_params):
+		self.logger.info(f"Reverting spot order")
+		return self.place_spot_order(**revert_params)
 
-		try:
-			self.trade_client.cancel_order(instId = symbol, ordId = order_id)
-		except Exception as ex:
-			self.logger.error(ex)
-		return
-
-	def cancel_perpetual_order(self, symbol: str, order_resp):
-		order_id = order_resp["data"][0]["ordId"]
-		self.logger.info(f"Cancelling futures order ID {order_id}")
-
-		try:
-			self.trade_client.cancel_order(instId = symbol, ordId = order_id)
-		except Exception as ex:
-			self.logger.error(ex)
-		return
+	def revert_perpetual_order(self, order_resp, revert_params):
+		self.logger.info(f"Reverting perpetual order")
+		return self.place_perpetual_order(**revert_params)
 
 	def assert_spot_resp_error(self, order_resp):
 		if order_resp["data"][0]["sCode"] != "0":
