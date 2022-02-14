@@ -133,7 +133,7 @@ if __name__ == "__main__":
 			new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
 																				"symbol" 	 		: args.spot_trading_pair, 
 																				"order_type" 		: args.order_type, 
-																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"price" 	 		: spot_price if args.order_type == "limit" else 1,
 																				"size" 		 		: args.spot_entry_vol,
 																				"target_currency" 	: "base_ccy",
 																			},
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 																				"symbol" 	 	: args.perpetual_trading_pair,
 																				"position_side" : "long",
 																				"order_type" 	: args.order_type, 
-																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+																				"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 																				"size" 		 	: args.perpetual_entry_lot_size,
 																			}
 																	)
@@ -153,7 +153,7 @@ if __name__ == "__main__":
 			new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
 																				"symbol" 	 		: args.spot_trading_pair, 
 																				"order_type" 		: args.order_type, 
-																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"price" 	 		: spot_price if args.order_type == "limit" else 1,
 																				"size" 		 		: args.spot_entry_vol,
 																				"target_currency" 	: "base_ccy" 
 																			},
@@ -161,7 +161,7 @@ if __name__ == "__main__":
 																				"symbol" 	 	: args.perpetual_trading_pair,
 																				"position_side" : "short",
 																				"order_type" 	: args.order_type, 
-																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+																				"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 																				"size" 		 	: args.perpetual_entry_lot_size,
 																			}
 																	)
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 			new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
 																				"symbol" 	 		: args.spot_trading_pair, 
 																				"order_type" 		: args.order_type, 
-																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"price" 	 		: spot_price if args.order_type == "limit" else 1,
 																				"size" 		 		: args.spot_entry_vol,
 																				"target_currency" 	: "base_ccy" 
 																			},
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 																				"symbol" 	 	: args.perpetual_trading_pair,
 																				"position_side" : "short",
 																				"order_type" 	: args.order_type, 
-																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+																				"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 																				"size" 		 	: args.perpetual_entry_lot_size,
 																			}
 																	)
@@ -193,7 +193,7 @@ if __name__ == "__main__":
 			new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
 																				"symbol" 	 		: args.spot_trading_pair, 
 																				"order_type" 		: args.order_type, 
-																				"price" 	 		: spot_price if args.order_type == "limit" else 0,
+																				"price" 	 		: spot_price if args.order_type == "limit" else 1,
 																				"size" 		 		: args.spot_entry_vol,
 																				"target_currency" 	: "base_ccy" 
 																			},
@@ -201,7 +201,7 @@ if __name__ == "__main__":
 																				"symbol" 	 	: args.perpetual_trading_pair,
 																				"position_side" : "long",
 																				"order_type" 	: args.order_type, 
-																				"price" 	 	: perpetual_price if args.order_type == "limit" else 10000,
+																				"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 																				"size" 		 	: args.perpetual_entry_lot_size,
 																			}
 																	)
