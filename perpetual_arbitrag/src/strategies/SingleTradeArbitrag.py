@@ -79,7 +79,7 @@ class SingleTradeArbitrag(Strategies):
 		current_position 	= self.current_position()
 
 		effective_futures_bid_price 	= futures_price * (1 + futures_funding_rate + futures_estimated_funding_rate)
-		effective_futures_ask_price 	= futures_price * (1 - futures_funding_rate - futures_estimated_funding_rate)
+		effective_futures_ask_price 	= futures_price * (1 + futures_funding_rate + futures_estimated_funding_rate)
 
 		if 	(current_position is TradePosition.LONG_SPOT_SHORT_FUTURE) \
 			and (spot_price / effective_futures_ask_price - 1 >= take_profit_threshold):
@@ -122,10 +122,11 @@ class SingleTradeArbitrag(Strategies):
 		current_position 	= self.current_position()
 
 		effective_futures_bid_price 	= futures_bid_price * (1 + futures_funding_rate + futures_estimated_funding_rate)
-		effective_futures_ask_price 	= futures_ask_price * (1 - futures_funding_rate - futures_estimated_funding_rate)
+		effective_futures_ask_price 	= futures_ask_price * (1 + futures_funding_rate + futures_estimated_funding_rate)
 
 		profit_from_long_spot_short_futures = effective_futures_bid_price - spot_ask_price
 		profit_from_short_spot_long_futures = spot_bid_price - effective_futures_ask_price
+
 		self.logger.info(f"""Current position: {current_position}. Profits long_spot_short_futures: {profit_from_long_spot_short_futures}, short_spot_long_futures: {profit_from_short_spot_long_futures}""")
 
 		if 	(current_position is TradePosition.LONG_SPOT_SHORT_FUTURE) \
