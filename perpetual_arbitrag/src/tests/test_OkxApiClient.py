@@ -330,3 +330,10 @@ class TestOkxApiClient(TestCase):
 			mock_funding_rate_valid_interval.return_value = True
 			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, -0.01)
 		return
+
+	@patch("okx.Account_api.AccountAPI")
+	def test_perpetual_leverage_set(self, patch_account):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.account_client 	= patch_account
+		_okx_api_client.set_perpetual_leverage(symbol = "ETH-USDT", leverage = 5)
+		assert patch_account.set_leverage.called

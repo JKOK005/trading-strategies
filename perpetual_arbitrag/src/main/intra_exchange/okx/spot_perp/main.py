@@ -63,6 +63,8 @@ if __name__ == "__main__":
 							 funding_rate_enable = not args.funding_rate_disable
 							)
 
+	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
+
 	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair) and \
 			args.perpetual_entry_lot_size >= client.get_perpetual_min_lot_size(symbol = args.perpetual_trading_pair), \
 			"Minimum entry size not satisfied."

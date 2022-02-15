@@ -13,6 +13,7 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --max_spot_vol 0.1 \
 --perpetual_entry_lot_size 10 \
 --max_perpetual_lot_size 100 \
+--perpetual_leverage 1 \
 --entry_gap_frac 0 \
 --profit_taking_frac -0.02 \
 --poll_interval_s 1 \
@@ -37,6 +38,7 @@ Flag / description pairs are explained below.
 | max_spot_vol | Max Size of buy / sell for spot asset | 0.1 |
 | perpetual_entry_lot_size | Lot size for buy / sell of perpetual asset | 10 |
 | max_perpetual_lot_size | Max lot size for buy / sell of perpetual asset | 100 |
+| perpetual_leverage | Leverage size for perpetual trading | 1 |
 | futures_entry_leverage | Leverage for perpetual | 1 |
 | entry_gap_frac | Ratio difference between spot / perpetual asset for consideration of entry | 0.001 |
 | profit_taking_frac | Ratio difference for profit taking. For example, if we are short spot long perpetual, then if spot price goes above perpetual by the threshold, we immediately take profit | 0.0005 |
