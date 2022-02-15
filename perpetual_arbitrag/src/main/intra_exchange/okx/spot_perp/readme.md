@@ -49,3 +49,9 @@ Flag / description pairs are explained below.
 | funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
 | funding_rate_disable | If present, we do not take into account funding rate for trade decisions | - |
 | retry_timeout_s | Wait seconds before retrying main loop | 30 |
+
+
+### Minimum buffer size for spot trading
+Fees in OKX are paid based on the spot currency traded. We have to ensure sufficient spot currencies in our account prior to trading, as these currencies will be used for paying the exchange fees for subsequent trades. 
+
+The current solution is to ensure at least `1 lot` size of spot assets present before the trade is executed. In the case where the bot encounters the error `Insufficient spot buffer for trade ...`, simply ensure that the account has minimally 1 lot size of the asset and rerun the bot. 
