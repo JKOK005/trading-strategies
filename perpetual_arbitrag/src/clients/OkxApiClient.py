@@ -56,8 +56,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		"""
 		Retrieves spot trading details
 		"""
-		spot_info = self.account_client.get_account(ccy = currency)
-		return float(spot_info["data"][0]["details"][0]["eq"])
+		spot_info 	= self.account_client.get_account(ccy = currency)
+		spot_info_details = spot_info["data"][0]["details"]
+		spot_value 	= 0
+
+		if len(spot_info_details) > 0:
+			spot_value = float(spot_info_details[0]["eq"])
+		return spot_value
 
 	def get_perpetual_trading_account_details(self, currency: str):
 		"""

@@ -75,9 +75,8 @@ if __name__ == "__main__":
 										funding_rate_enable 			= not args.funding_rate_disable
 									)
 
-	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair) and \
-			args.futures_entry_lot_size >= client.get_futures_min_lot_size(symbol = args.futures_trading_pair), \
-			"Minimum entry size not satisfied."
+	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair), "Minimum spot entry size not satisfied."
+	assert 	args.futures_entry_lot_size >= client.get_futures_min_lot_size(symbol = args.futures_trading_pair), "Minimum futures entry size not satisfied."
 
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
