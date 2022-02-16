@@ -5,11 +5,10 @@ import sys
 from datetime import timedelta
 from kucoin.client import Market as Market_C, Trade as Trade_C, User as User_C
 from kucoin_futures.client import Market as Market_F, Trade as Trade_F, User as User_F
-from clients.BaseClients import BaseClients
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangeFutureClients import ExchangeFutureClients
 
-class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients, BaseClients):
+class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 	default_page_size 			= 50
 	spot_client 				= None
 	futures_client 				= None
@@ -67,10 +66,6 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients, BaseClients):
 		self.funding_rate_enable = funding_rate_enable
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
 		return
-
-	def get_client_id(self):
-		account_info = self.spot_user.get_sub_user()
-		return account_info[0]["userId"]
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""

@@ -6,11 +6,10 @@ from okx.Account_api import AccountAPI
 from okx.Market_api import MarketAPI
 from okx.Public_api import PublicAPI
 from okx.Trade_api import TradeAPI
-from clients.BaseClients import BaseClients
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 
-class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients, BaseClients):
+class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	account_client 	= None
 	trade_client 	= None
 	market_client 	= None
@@ -52,10 +51,6 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients, BaseClients):
 		self.funding_rate_enable = funding_rate_enable
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
 		return
-
-	def get_client_id(self):
-		account_info = self.account_client.get_account_config()
-		return account_info["data"][0]["uid"]
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""
@@ -374,3 +369,4 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients, BaseClients):
 	def set_perpetual_leverage(self, symbol: str, leverage: int):
 		self.logger.info(f"Set leverage {leverage}")
 		self.account_client.set_leverage(instId = symbol, lever = leverage, mgnMode = "cross")
+		return
