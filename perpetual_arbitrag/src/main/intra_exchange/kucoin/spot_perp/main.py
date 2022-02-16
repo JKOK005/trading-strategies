@@ -193,7 +193,7 @@ if __name__ == "__main__":
 				sleep(args.poll_interval_s)
 			
 			else:
-				sleep(args.retry_timeout_s)
+				raise Exception(f"Order execution failed - Status: {new_order_execution}, Decision: {decision}")
 
 		except Exception as ex:
 			logging.error(ex)
