@@ -81,8 +81,11 @@ if __name__ == "__main__":
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 
-		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol").create_session()
-		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot").create_session()
+		strategy_id 		= SingleTradeArbitrag.get_strategy_id()
+		client_id 			= client.get_client_id()
+
+		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol").create_session()
+		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot").create_session()
 
 		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
 		db_futures_client.create_entry() if not db_futures_client.is_exists() else None
@@ -104,6 +107,9 @@ if __name__ == "__main__":
 										)
 
 	bot_executor 	= SpotFutureSimulatedBotExecution(api_client = client) if args.fake_orders else SpotFutureBotExecution(api_client = client)
+
+	import IPython
+	IPython.embed()
 
 	while True:
 		if 	args.order_type == "limit":

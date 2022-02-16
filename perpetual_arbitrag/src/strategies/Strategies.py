@@ -1,13 +1,7 @@
 from abc import ABCMeta
 from abc import abstractmethod
-import hashlib
 
 class Strategies(metaclass = ABCMeta):
-	def get_strategy_id(self):
-		hash_obj 	= hashlib.sha256(str(self.__class__.__name__).encode('utf-8'))
-		hex_dig 	= hash_obj.hexdigest()
-		return hex_dig[:10]
-
 	@abstractmethod
 	def trade_decision(self, 	spot_price: float, 
 								futures_price: float,
