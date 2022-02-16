@@ -3,6 +3,7 @@
 ### Example of execution
 ```python
 python3 main/intra_exchange/kucoin/spot_perp/main.py \
+--client_id 123asd \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
@@ -32,6 +33,7 @@ Flag / description pairs are explained below.
 
 | Flag | Description | Example |
 | --- | --- | --- |
+| client_id | Client ID registered on the exchange | 123asd |
 | spot_trading_pair | Spot trading pair symbol on exchange | BTC-USDT |
 | futures_trading_pair | Perpetual trading pair symbol on exchange |XBTUSDTM |
 | spot_api_key | Exchange API key for spot account | 0123456789asdzxc |

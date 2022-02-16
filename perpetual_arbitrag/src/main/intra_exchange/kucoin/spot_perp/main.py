@@ -10,6 +10,7 @@ from time import sleep
 
 """
 python3 main/intra_exchange/kucoin/spot_perp/main.py \
+--client_id 123asd \
 --spot_trading_pair BTC-USDT \
 --futures_trading_pair XBTUSDTM \
 --spot_api_key xxx \
@@ -36,6 +37,7 @@ python3 main/intra_exchange/kucoin/spot_perp/main.py \
 
 if __name__ == "__main__":
 	parser 	= argparse.ArgumentParser(description='Spot - Futures arbitrag trading')
+	parser.add_argument('--client_id', type=str, nargs='?', default=os.environ.get("CLIENT_ID"), help='Client ID registered on the exchange')
 	parser.add_argument('--spot_trading_pair', type=str, nargs='?', default=os.environ.get("SPOT_TRADING_PAIR"), help='Spot trading pair symbol as defined by exchange')
 	parser.add_argument('--futures_trading_pair', type=str, nargs='?', default=os.environ.get("FUTURES_TRADING_PAIR"), help='Futures trading pair symbol as defined by exchange')
 	parser.add_argument('--order_type', type=str, nargs='?', default=os.environ.get("ORDER_TYPE"), help='Either limit or market orders')
@@ -81,8 +83,11 @@ if __name__ == "__main__":
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 
-		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol").create_session()
-		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = "1", client_id = "1", exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot").create_session()
+		strategy_id 		= SingleTradeArbitrag.get_strategy_id()
+		client_id 			= args.client_id
+
+		db_spot_client 		= SpotClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "kucoin", symbol = args.spot_trading_pair, units = "vol").create_session()
+		db_futures_client 	= FutureClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "kucoin", symbol = args.futures_trading_pair, units = "lot").create_session()
 
 		db_spot_client.create_entry() if not db_spot_client.is_exists() else None
 		db_futures_client.create_entry() if not db_futures_client.is_exists() else None

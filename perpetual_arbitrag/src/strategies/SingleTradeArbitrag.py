@@ -1,4 +1,5 @@
 import deprecation
+import hashlib
 import logging
 from enum import Enum
 from strategies.Strategies import Strategies
@@ -46,6 +47,12 @@ class SingleTradeArbitrag(Strategies):
 		
 		self.logger.info(f"Spot vol: {self.current_spot_vol}, Futures lot size: {self.current_futures_lot_size}")
 		return
+
+	@classmethod
+	def get_strategy_id(cls):
+		hash_obj 	= hashlib.sha256(str(cls.__name__).encode('utf-8'))
+		hex_dig 	= hash_obj.hexdigest()
+		return hex_dig[:10]
 
 	def change_asset_holdings(self, delta_spot, delta_futures):
 		self.current_spot_vol 			+= delta_spot
