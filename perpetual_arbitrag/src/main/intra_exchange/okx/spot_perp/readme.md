@@ -19,6 +19,7 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --profit_taking_frac -0.02 \
 --poll_interval_s 1 \
 --funding_interval_s 1800 \
+--funding_rate_disable 0 \
 --retry_timeout_s 30 \
 --db_url xxx \
 --fake_orders \
@@ -45,11 +46,11 @@ Flag / description pairs are explained below.
 | entry_gap_frac | Ratio difference between spot / perpetual asset for consideration of entry | 0.001 |
 | profit_taking_frac | Ratio difference for profit taking. For example, if we are short spot long perpetual, then if spot price goes above perpetual by the threshold, we immediately take profit | 0.0005 |
 | poll_interval_s | Frequency (s) of polling API | 60 |
+| funding_rate_disable | If 1, we do not take into account funding rate for trade decisions. If 0, otherwise | 0 |
 | fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
 | db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
 | funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
-| funding_rate_disable | If present, we do not take into account funding rate for trade decisions | - |
 | retry_timeout_s | Wait seconds before retrying main loop | 30 |
 
 

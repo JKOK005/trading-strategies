@@ -22,6 +22,7 @@ python3 main/intra_exchange/kucoin/spot_perp/main.py \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
 --funding_interval_s 1800 \
+--funding_rate_disable 0 \
 --retry_timeout_s 30 \
 --db_url xxx \
 --use_sandbox \
@@ -53,10 +54,10 @@ Flag / description pairs are explained below.
 | poll_interval_s | Frequency (s) of polling API | 60 |
 | use_sandbox | If present, we use sandbox environment. Remove for REAL environment | - |
 | fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
+| funding_rate_disable | If 1, we do not take into account funding rate for trade decisions. If 0, otherwise | 0 |
 | db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
 | funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
-| funding_rate_disable | If present, we do not take into account funding rate for trade decisions | - |
 | retry_timeout_s | Wait seconds before retrying main loop | 30 |
 
 
