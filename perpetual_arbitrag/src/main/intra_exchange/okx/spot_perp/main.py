@@ -26,6 +26,7 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
 --funding_interval_s 1800 \
+--funding_rate_disable 0 \
 --retry_timeout_s 30 \
 --db_url xxx \
 --fake_orders
@@ -50,19 +51,19 @@ if __name__ == "__main__":
 	parser.add_argument('--api_passphrase', type=str, nargs='?', default=os.environ.get("API_PASSPHRASE"), help='Exchange api passphrase')
 	parser.add_argument('--funding_interval_s', type=int, nargs='?', default=os.environ.get("FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for estimated funding rate P/L')
 	parser.add_argument('--retry_timeout_s', type=int, nargs='?', default=os.environ.get("RETRY_TIMEOUT_S"), help='Retry main loop after specified seconds')
+	parser.add_argument('--funding_rate_disable', type=int, nargs='?', choices={0, 1}, default=os.environ.get("FUNDING_RATE_DISABLE"), help='If 1, disable the effects of funding rate in the trade decision. If 0, otherwise')
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
 	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / perpetual lot sizes are set to 0')
 	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only')
-	parser.add_argument('--funding_rate_disable', action='store_true', help='If present, disable the effects of funding rate in the trade decision')
 	args 	= parser.parse_args()
 
 	logging.basicConfig(level = logging.INFO)
 	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
 
-	client 	= 	OkxApiClient(api_key 		= args.api_key, 
-							 api_secret_key = args.api_secret_key, 
-							 passphrase 	= args.api_passphrase, 
-							 funding_rate_enable = not args.funding_rate_disable
+	client 	= 	OkxApiClient(api_key 				= args.api_key, 
+							 api_secret_key 		= args.api_secret_key, 
+							 passphrase 			= args.api_passphrase, 
+							 funding_rate_enable 	= args.funding_rate_disable == 0
 							)
 
 	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
