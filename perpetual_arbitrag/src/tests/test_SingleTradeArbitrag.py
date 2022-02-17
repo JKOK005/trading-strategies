@@ -19,7 +19,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 150, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.6, take_profit_threshold = 0.1)
+													entry_threshold = 1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_enter_when_threshold_not_met_on_limit_case_B(self):
@@ -27,7 +27,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision = self.strategy.trade_decision(spot_price = 150, futures_price = 100, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.6, take_profit_threshold = 0.1)
+													entry_threshold = 1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_take_profit_when_take_profit_threshold_not_met_on_limit_case_A(self):
@@ -35,7 +35,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_SPOT_SHORT_FUTURE
 			decision = self.strategy.trade_decision(spot_price = 150, futures_price = 100, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.7, take_profit_threshold = 0.6)
+													entry_threshold = 1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_take_profit_when_take_profit_threshold_not_met_on_limit_case_B(self):
@@ -43,7 +43,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_FUTURE_SHORT_SPOT
 			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 150, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.7, take_profit_threshold = 0.6)
+													entry_threshold = 1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_entry_long_spot_short_futures_on_limit(self):
@@ -51,7 +51,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 150, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.3, take_profit_threshold = 0.5)
+													entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
 
 	def test_continued_long_spot_short_futures_on_limit(self):
@@ -59,7 +59,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_SPOT_SHORT_FUTURE
 			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 150, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.3, take_profit_threshold = 0.5)
+													entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
 
 	def test_entry_long_futures_short_spot_on_limit(self):
@@ -67,7 +67,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision = self.strategy.trade_decision(spot_price = 150, futures_price = 100, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.3, take_profit_threshold = 0.5)
+													entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
 
 	def test_continued_long_futures_short_spot_on_limit(self):
@@ -75,7 +75,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_FUTURE_SHORT_SPOT
 			decision = self.strategy.trade_decision(spot_price = 150, futures_price = 100,
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.3, take_profit_threshold = 0.5)
+													entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
 
 	def test_take_profit_long_spot_short_futures_on_limit(self):
@@ -83,7 +83,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_SPOT_SHORT_FUTURE
 			decision = self.strategy.trade_decision(spot_price = 150, futures_price = 100, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.3, take_profit_threshold = 0.3)
+													entry_threshold = 1, take_profit_threshold = 0.1)
 			assert(decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE)
 
 	def test_take_profit_long_futures_short_spot_on_limit(self):
@@ -91,7 +91,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_FUTURE_SHORT_SPOT
 			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 150, 
 													futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-													entry_threshold = 0.3, take_profit_threshold = 0.3)
+													entry_threshold = 1, take_profit_threshold = 0.1)
 			assert(decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT)
 
 	def test_do_not_exceed_maximum_spot_holdings_on_long(self):
@@ -102,7 +102,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_SPOT_SHORT_FUTURE
 			decision = _strategy.trade_decision(spot_price = 100, futures_price = 150, 
 												futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-												entry_threshold = 0.3, take_profit_threshold = 0.5)
+												entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_exceed_maximum_spot_holdings_on_short(self):
@@ -113,7 +113,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_FUTURE_SHORT_SPOT
 			decision = _strategy.trade_decision(spot_price = 150, futures_price = 100, 
 												futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-												entry_threshold = 0.3, take_profit_threshold = 0.5)
+												entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_exceed_maximum_futures_holdings_on_long(self):
@@ -124,7 +124,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_FUTURE_SHORT_SPOT
 			decision = _strategy.trade_decision(spot_price = 150, futures_price = 100, 
 												futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-												entry_threshold = 0.3, take_profit_threshold = 0.5)
+												entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_exceed_maximum_futures_holdings_on_short(self):
@@ -135,7 +135,7 @@ class TestSingleTradeArbitrag(TestCase):
 			mock_current_position.return_value = TradePosition.LONG_SPOT_SHORT_FUTURE
 			decision = _strategy.trade_decision(spot_price = 100, futures_price = 150, 
 												futures_funding_rate = 0, futures_estimated_funding_rate = 0,
-												entry_threshold = 0.3, take_profit_threshold = 0.5)
+												entry_threshold = 0.1, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_enter_when_threshold_not_met_on_market_case_A(self):
@@ -148,8 +148,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 200,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.6,
-																take_profit_threshold 	= 0.1,
+																entry_threshold 		= 1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -163,8 +163,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 100,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.6,
-																take_profit_threshold 	= 0.1,
+																entry_threshold 		= 1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -178,8 +178,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 100,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.6,
-																take_profit_threshold 	= 0.6,
+																entry_threshold 		= 1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -193,8 +193,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 200,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.6,
-																take_profit_threshold 	= 0.6,
+																entry_threshold 		= 1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -207,8 +207,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 200,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.3,
-																take_profit_threshold 	= 0.1,
+																entry_threshold 		= 0.1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
 
@@ -221,8 +221,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 200,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.3,
-																take_profit_threshold 	= 0.1,
+																entry_threshold 		= 0.1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
 
@@ -235,8 +235,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 100,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.3,
-																take_profit_threshold 	= 0.1,
+																entry_threshold 		= 0.1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
 
@@ -249,8 +249,8 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 100,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.3,
-																take_profit_threshold 	= 0.1,
+																entry_threshold 		= 0.1,
+																take_profit_threshold 	= 1,
 															)
 			assert(decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
 
@@ -263,7 +263,7 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 100,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.3,
+																entry_threshold 		= 1,
 																take_profit_threshold 	= 0.1,
 															)
 			assert(decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE)
@@ -277,7 +277,7 @@ class TestSingleTradeArbitrag(TestCase):
 																futures_ask_price 		= 200,
 																futures_funding_rate 	= 0, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0.3,
+																entry_threshold 		= 1,
 																take_profit_threshold 	= 0.1,
 															)
 			assert(decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT)
@@ -294,8 +294,8 @@ class TestSingleTradeArbitrag(TestCase):
 															futures_ask_price 		= 200,
 															futures_funding_rate 	= 0, 
 															futures_estimated_funding_rate = 0,
-															entry_threshold 		= 0.3,
-															take_profit_threshold 	= 0.1,
+															entry_threshold 		= 0.1,
+															take_profit_threshold 	= 1,
 														)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -311,8 +311,8 @@ class TestSingleTradeArbitrag(TestCase):
 															futures_ask_price 		= 100,
 															futures_funding_rate 	= 0, 
 															futures_estimated_funding_rate = 0,
-															entry_threshold 		= 0.3,
-															take_profit_threshold 	= 0.1,
+															entry_threshold 		= 0.1,
+															take_profit_threshold 	= 1,
 														)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -345,8 +345,8 @@ class TestSingleTradeArbitrag(TestCase):
 															futures_ask_price 		= 200,
 															futures_funding_rate 	= 0, 
 															futures_estimated_funding_rate = 0,
-															entry_threshold 		= 0.3,
-															take_profit_threshold 	= 0.1,
+															entry_threshold 		= 0.1,
+															take_profit_threshold 	= 1,
 														)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
@@ -354,42 +354,86 @@ class TestSingleTradeArbitrag(TestCase):
 		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 110, 
-													futures_funding_rate = -0.2, futures_estimated_funding_rate = 0,
-													entry_threshold = 0, take_profit_threshold = 0)
+													futures_funding_rate = -0.8, futures_estimated_funding_rate = 0,
+													entry_threshold = 0.2, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
+
+	def test_funding_rate_deny_entry_long_futures_short_spot_on_limit(self):
+		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision = self.strategy.trade_decision(spot_price = 150, futures_price = 100, 
+													futures_funding_rate = 0.8, futures_estimated_funding_rate = 0,
+													entry_threshold = 0.2, take_profit_threshold = 1)
+			assert(decision != ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
 
 	def test_funding_rate_permit_entry_long_spot_short_futures_on_limit(self):
 		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision = self.strategy.trade_decision(spot_price = 110, futures_price = 100,
-													futures_funding_rate = 0.2, futures_estimated_funding_rate = 0,
-													entry_threshold = 0, take_profit_threshold = 0)
+													futures_funding_rate = 0.8, futures_estimated_funding_rate = 0,
+													entry_threshold = 0.2, take_profit_threshold = 1)
 			assert(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
+
+	def test_funding_rate_deny_entry_long_spot_short_futures_on_limit(self):
+		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision = self.strategy.trade_decision(spot_price = 100, futures_price = 150,
+													futures_funding_rate = -0.8, futures_estimated_funding_rate = 0,
+													entry_threshold = 0.2, take_profit_threshold = 1)
+			assert(decision != ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
 
 	def test_funding_rate_deny_entry_long_spot_short_futures_on_market(self):
 		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision 	= self.strategy.bid_ask_trade_decision(	spot_bid_price 			= 10,
 																spot_ask_price 			= 100,
-																futures_bid_price 		= 110,
+																futures_bid_price 		= 150,
 																futures_ask_price 		= 200,
-																futures_funding_rate 	= -0.2,
+																futures_funding_rate 	= -0.8,
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0,
-																take_profit_threshold 	= 0,
+																entry_threshold 		= 0.2,
+																take_profit_threshold 	= 1,
 															)
-			assert(decision == ExecutionDecision.NO_DECISION)
+			assert(decision != ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
 
 	def test_funding_rate_permit_entry_long_spot_short_futures_on_market(self):
 		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision 	= self.strategy.bid_ask_trade_decision(	spot_bid_price 			= 10,
-																spot_ask_price 			= 110,
+																spot_ask_price 			= 100,
 																futures_bid_price 		= 100,
 																futures_ask_price 		= 200,
-																futures_funding_rate 	= 0.2, 
+																futures_funding_rate 	= 0.8, 
 																futures_estimated_funding_rate = 0,
-																entry_threshold 		= 0,
+																entry_threshold 		= 0.2,
 																take_profit_threshold 	= 0,
 															)
 			assert(decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE)
+
+	def test_funding_rate_deny_entry_short_spot_long_futures_on_market(self):
+		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision 	= self.strategy.bid_ask_trade_decision(	spot_bid_price 			= 150,
+																spot_ask_price 			= 200,
+																futures_bid_price 		= 10,
+																futures_ask_price 		= 100,
+																futures_funding_rate 	= 0.8,
+																futures_estimated_funding_rate = 0,
+																entry_threshold 		= 0.2,
+																take_profit_threshold 	= 1,
+															)
+			assert(decision != ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
+
+	def test_funding_rate_permit_entry_short_spot_long_futures_on_market(self):
+		with patch.object(SingleTradeArbitrag, "current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision 	= self.strategy.bid_ask_trade_decision(	spot_bid_price 			= 100,
+																spot_ask_price 			= 200,
+																futures_bid_price 		= 10,
+																futures_ask_price 		= 100,
+																futures_funding_rate 	= -0.8,
+																futures_estimated_funding_rate = 0,
+																entry_threshold 		= 0.2,
+																take_profit_threshold 	= 1,
+															)
+			assert(decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT)
