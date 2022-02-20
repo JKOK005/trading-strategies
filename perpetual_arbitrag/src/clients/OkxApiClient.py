@@ -265,15 +265,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 
 		Effective funding rate takes into account a variety of factors to decide on the funding rate.
 
-		1) If we are not within a valid funding interval, then the estimated funding rates are 0.
-		2) If funding rate computation has been disabled, then all rates are 0.
+		1) If we are not within a valid funding interval, then the funding rates are 0.
+		2) If we are within the valid funding interval, then the funding rate is non-zero. In all cases, the estimated funding rate is 0.
+		3) If funding rate computation has been disabled, then all rates are 0.
 		"""
 		(funding_rate, estimated_funding_rate) = (0, 0)
-		if self.funding_rate_enable: 
-			if self.funding_rate_valid_interval(seconds_before = seconds_before):
-				(funding_rate, estimated_funding_rate) = self.get_perpetual_funding_rate(symbol = symbol)
-			else:
-				(funding_rate, _) = self.get_perpetual_funding_rate(symbol = symbol)
+		if self.funding_rate_enable and self.funding_rate_valid_interval(seconds_before = seconds_before): 
+			(funding_rate, _) = self.get_perpetual_funding_rate(symbol = symbol)
 		self.logger.info(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
 		return (funding_rate, estimated_funding_rate)
  

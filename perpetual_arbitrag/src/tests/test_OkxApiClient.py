@@ -305,8 +305,10 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
 		_okx_api_client.funding_rate_enable = False
 
-		with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
+		with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval, \
+			 patch.object(_okx_api_client, "get_perpetual_funding_rate") as mock_get_futures_funding_rate:
 			mock_funding_rate_valid_interval.return_value = True
+			mock_get_futures_funding_rate.return_value 	  = (0.01, -0.01)
 			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0, 0)
 		return
 
@@ -317,7 +319,7 @@ class TestOkxApiClient(TestCase):
 			 patch.object(_okx_api_client, "get_perpetual_funding_rate") as mock_get_futures_funding_rate:
 			mock_funding_rate_valid_interval.return_value 	= False
 			mock_get_futures_funding_rate.return_value 		= (0.01, -0.01)
-			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, 0)
+			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0, 0)
 		return
 
 	@patch("okx.Public_api.PublicAPI")
@@ -328,7 +330,7 @@ class TestOkxApiClient(TestCase):
 
 		with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
 			mock_funding_rate_valid_interval.return_value = True
-			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, -0.01)
+			assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before = 300) == (0.01, 0)
 		return
 
 	@patch("okx.Account_api.AccountAPI")
