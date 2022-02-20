@@ -57,7 +57,7 @@ Flag / description pairs are explained below.
 | funding_rate_disable | If 1, we do not take into account funding rate for trade decisions. If 0, otherwise | 0 |
 | db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
-| funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
+| funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account funding rate | 1800 |
 | retry_timeout_s | Wait seconds before retrying main loop | 30 |
 
 
