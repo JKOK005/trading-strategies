@@ -6,18 +6,18 @@ from sqlalchemy.orm import sessionmaker
 class BotManagerTable(object):
 	# For spot / futures / perpetual arbitrag, we follow the order of spot / futures / perpetual as pair_A.
 
-	ID 			= Column(Integer, primary_key = True)
-	exchange 	= Column(String, nullable = False)
-	asset_pair 	= Column(String, nullable = False)
-	pair_A 		= Column(String, nullable = False)
-	dca_size_A 	= Column(Float, nullable = False)
-	max_dca_A 	= Column(Float, nullable = False)
-	pair_B 		= Column(String, nullable = False)
-	dca_size_B 	= Column(Float, nullable = False)
-	max_dca_B 	= Column(Float, nullable = False)
+	ID 				= Column(Integer, primary_key = True)
+	exchange 		= Column(String,  nullable = False)
+	asset_pair 		= Column(String,  nullable = False)
+	docker_img 		= Column(String,  nullable = False)
+	default_args 	= Column(String,  nullable = False)
+	entry_args 		= Column(String,  nullable = False)
+	exit_args 		= Column(String,  nullable = False)
+	is_active 		= Column(Boolean, nullable = False)
+	to_close 		= Column(Boolean, nullable = False)
 
 	def __repr__(self):
-		return f"{self.exchange}-{self.asset_pair}-{self.pair_A}-{self.pair_B}"
+		return f"{self.exchange}-{self.asset_pair}-active_{self.is_active}-close_{self.to_close}"
 
 class BotManagerClients():
 	db_url 		= None
@@ -31,6 +31,12 @@ class BotManagerClients():
 		self.db_url 	= url
 		self.exchange 	= exchange
 		self.asset_pair = asset_pair
+		return
+
+	def modify_entry(self, entry, attribute, new_value):
+		# TODO: Fix logging issue within context manager session
+		setattr(entry, attribute, new_value)
+		# self.logger.info(f"Modify {attribute} of {entry} -> {new_value}")
 		return
 
 	def _with_session_context(func):
@@ -49,26 +55,23 @@ class BotManagerClients():
 		self.session 	= sessionmaker(engine)
 		return self
 
-	def get_entries(self, conn, **filters):
-		return conn.query(self.table_ref()).filter_by(**filters)
-
 	def get_entry(self, conn, **filters):
-		return self.get_entries(conn = conn, **filters).first()
+		return conn.query(self.table_ref()).filter_by(**filters).first()
+
+	def get_entries(self, conn, **filters):
+		return conn.query(self.table_ref()).filter_by(**filters).all()
 
 	@_with_session_context
-	def get_trade_pairs(self, conn):
-		entries = self.get_entries(	conn = conn, 
-									exchange = self.exchange, 
-									asset_pair = self.asset_pair)
-
-		return list(map(lamda row: (row.pair_A, row.pair_B), entries))
+	def get_trades(self, conn, is_active: bool, to_close: bool):
+		return self.get_entries(conn = conn, 
+								exchange = self.exchange, 
+								asset_pair = self.asset_pair,
+								is_active = is_active,
+								to_close = to_close
+							)
 
 	@_with_session_context
-	def get_trade_pair_sizes(self, conn, pair_A_symbol, pair_B_symbol):
-		entry 	= self.get_entry(	conn = conn, 
-									exchange = self.exchange, 
-									asset_pair = self.asset_pair, 
-									pair_A = pair_A_symbol, 
-									pair_B = pair_B_symbol)
-
-		return (entry.pair_A, entry.dca_size_A, entry.max_dca_A, entry.pair_B, entry.dca_size_B, entry.max_dca_B)
+	def set_status(self, conn, id: int, is_active: bool):
+		entry = self.get_entry(conn = conn, ID = id)
+		self.modify_entry(entry = entry, attribute = "is_active", new_value = is_active)
+		return
