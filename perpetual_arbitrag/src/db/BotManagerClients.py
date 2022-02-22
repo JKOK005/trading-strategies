@@ -1,14 +1,18 @@
 import enum
 import logging
 from sqlalchemy import *
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-class BotManagerTable(object):
-	# For spot / futures / perpetual arbitrag, we follow the order of spot / futures / perpetual as pair_A.
+BASE = declarative_base()
 
+class AssetPairsJobs(BASE):
+	# For spot / futures / perpetual arbitrag, we follow the order of spot / futures / perpetual as pair_A.
+	__tablename__ 	= "asset_pairs_jobs"
 	ID 				= Column(Integer, primary_key = True)
 	exchange 		= Column(String,  nullable = False)
 	asset_pair 		= Column(String,  nullable = False)
+	client_id 		= Column(String,  nullable = False)
 	docker_img 		= Column(String,  nullable = False)
 	default_args 	= Column(String,  nullable = False)
 	entry_args 		= Column(String,  nullable = False)
@@ -17,7 +21,7 @@ class BotManagerTable(object):
 	to_close 		= Column(Boolean, nullable = False)
 
 	def __repr__(self):
-		return f"{self.exchange}-{self.asset_pair}-active_{self.is_active}-close_{self.to_close}"
+		return f"{self.exchange}-{self.asset_pair}-{self.ID}"
 
 class BotManagerClients():
 	db_url 		= None
@@ -26,11 +30,13 @@ class BotManagerClients():
 
 	def __init__(self, 	url: str,
 						exchange: str,
-						asset_pair: str
+						asset_pair: str,
+						client_id: str,
 				):
 		self.db_url 	= url
 		self.exchange 	= exchange
 		self.asset_pair = asset_pair
+		self.client_id 	= client_id
 		return
 
 	def modify_entry(self, entry, attribute, new_value):
@@ -47,7 +53,7 @@ class BotManagerClients():
 		return wrapper
 
 	def table_ref(self):
-		return BotManagerTable
+		return AssetPairsJobs
 
 	def create_session(self):
 		# Do not invoke this part for testing
@@ -63,12 +69,15 @@ class BotManagerClients():
 
 	@_with_session_context
 	def get_trades(self, conn, is_active: bool, to_close: bool):
-		return self.get_entries(conn = conn, 
+		res = self.get_entries( conn = conn, 
 								exchange = self.exchange, 
 								asset_pair = self.asset_pair,
+								client_id = self.client_id,
 								is_active = is_active,
 								to_close = to_close
 							)
+		conn.expunge_all()
+		return res
 
 	@_with_session_context
 	def set_status(self, conn, id: int, is_active: bool):
