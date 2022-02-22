@@ -23,7 +23,7 @@ class AssetPairsJobs(BASE):
 	def __repr__(self):
 		return f"{self.exchange}-{self.asset_pair}-{self.ID}"
 
-class BotManagerClients():
+class BotManagerClient():
 	db_url 		= None
 	session 	= None
 	symbol 		= None

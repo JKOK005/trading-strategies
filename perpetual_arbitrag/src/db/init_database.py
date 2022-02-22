@@ -2,7 +2,7 @@ import argparse
 from SpotClients import SpotInfoTable
 from FutureClients import FutureInfoTable
 from PerpetualClients import PerpetualInfoTable
-from BotManagerClients import AssetPairsJobs
+from BotManagerClient import AssetPairsJobs
 from sqlalchemy import create_engine
 
 """
