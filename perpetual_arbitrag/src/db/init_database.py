@@ -2,6 +2,7 @@ import argparse
 from SpotClients import SpotInfoTable
 from FutureClients import FutureInfoTable
 from PerpetualClients import PerpetualInfoTable
+from BotManagerClient import *
 from sqlalchemy import create_engine
 
 """
@@ -15,6 +16,10 @@ if __name__ == "__main__":
 	args 	= parser.parse_args()
 	engine 	= create_engine(url = args.db_url)
 	
-	SpotInfoTable.__table__.create(engine)
-	FutureInfoTable.__table__.create(engine)
-	PerpetualInfoTable.__table__.create(engine)
+	SpotInfoTable.__table__.create(engine, checkfirst=True)
+	FutureInfoTable.__table__.create(engine, checkfirst=True)
+	PerpetualInfoTable.__table__.create(engine, checkfirst=True)
+	Users.__table__.create(engine, checkfirst=True)
+	SecretKeys.__table__.create(engine, checkfirst=True)
+	ArbitragDockerImages.__table__.create(engine, checkfirst=True)
+	AssetPairsJobs.__table__.create(engine, checkfirst=True)
