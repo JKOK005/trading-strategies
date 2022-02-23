@@ -1,19 +1,46 @@
 import enum
 import logging
 from sqlalchemy import *
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 BASE = declarative_base()
 
+class Users(BASE):
+	__tablename__ 	= "users"
+	ID 				= Column(Integer, primary_key = True)
+	name 			= Column(String, nullable = False)
+
+	def __repr__(self):
+		return f"{self.name}-{self.ID}"
+
+class SecretKeys(BASE):
+	__tablename__ 	= "secret_keys"
+	ID 				= Column(Integer, primary_key = True)
+	user_id 		= Column(Integer, ForeignKey('users.ID'))
+	exchange 		= Column(String,  nullable = False)
+	client_id 		= Column(String,  nullable = False)
+	api_keys 		= Column(String,  nullable = False)
+
+	def __repr__(self):
+		return f"{self.user_id}-{self.exchange}-{self.ID}"		
+
+class ArbitragDockerImages(BASE):
+	__tablename__ 	= "arbitrag_docker_images"
+	ID 				= Column(Integer, primary_key = True)
+	exchange		= Column(String,  nullable = False)
+	asset_pair 		= Column(String,  nullable = False)
+	docker_img 		= Column(String,  nullable = False)
+
+	def __repr__(self):
+		return f"{self.exchange}-{self.asset_pair}-{self.ID}"
+
 class AssetPairsJobs(BASE):
 	# For spot / futures / perpetual arbitrag, we follow the order of spot / futures / perpetual as pair_A.
-	__tablename__ 	= "asset_pairs_jobs"
+	__tablename__ 	= "asset_pairs_job"
 	ID 				= Column(Integer, primary_key = True)
-	exchange 		= Column(String,  nullable = False)
-	asset_pair 		= Column(String,  nullable = False)
-	client_id 		= Column(String,  nullable = False)
-	docker_img 		= Column(String,  nullable = False)
+	user_id 		= Column(Integer, ForeignKey('users.ID'))
+	secret_id 		= Column(Integer, ForeignKey('secret_keys.ID'))
+	arb_img_id 		= Column(Integer, ForeignKey('arbitrag_docker_images.ID'))
 	default_args 	= Column(String,  nullable = False)
 	entry_args 		= Column(String,  nullable = False)
 	exit_args 		= Column(String,  nullable = False)
@@ -21,28 +48,21 @@ class AssetPairsJobs(BASE):
 	to_close 		= Column(Boolean, nullable = False)
 
 	def __repr__(self):
-		return f"{self.exchange}-{self.asset_pair}-{self.ID}"
+		return f"{self.user_id}-{self.secret_id}-{self.ID}"
 
 class BotManagerClient():
 	db_url 		= None
+	user_id 	= None
 	session 	= None
-	symbol 		= None
 
-	def __init__(self, 	url: str,
-						exchange: str,
-						asset_pair: str,
-						client_id: str,
+	def __init__(self, 	url: str, user_id: int,
 				):
 		self.db_url 	= url
-		self.exchange 	= exchange
-		self.asset_pair = asset_pair
-		self.client_id 	= client_id
+		self.user_id 	= user_id
 		return
 
 	def modify_entry(self, entry, attribute, new_value):
-		# TODO: Fix logging issue within context manager session
 		setattr(entry, attribute, new_value)
-		# self.logger.info(f"Modify {attribute} of {entry} -> {new_value}")
 		return
 
 	def _with_session_context(func):
@@ -52,27 +72,23 @@ class BotManagerClient():
 				return res
 		return wrapper
 
-	def table_ref(self):
-		return AssetPairsJobs
-
 	def create_session(self):
 		# Do not invoke this part for testing
 		engine 			= create_engine(self.db_url, echo = False)
 		self.session 	= sessionmaker(engine)
 		return self
 
-	def get_entry(self, conn, **filters):
-		return conn.query(self.table_ref()).filter_by(**filters).first()
+	def get_entry(self, conn, table_ref, **filters):
+		return conn.query(table_ref).filter_by(**filters).first()
 
-	def get_entries(self, conn, **filters):
-		return conn.query(self.table_ref()).filter_by(**filters).all()
+	def get_entries(self, conn, table_ref, **filters):
+		return conn.query(table_ref).filter_by(**filters).all()
 
 	@_with_session_context
-	def get_trades(self, conn, is_active: bool, to_close: bool):
-		res = self.get_entries( conn = conn, 
-								exchange = self.exchange, 
-								asset_pair = self.asset_pair,
-								client_id = self.client_id,
+	def get_jobs(self, conn, is_active: bool, to_close: bool):
+		res = self.get_entries( conn = conn,
+								table_ref = AssetPairsJobs,
+								user_id = self.user_id,
 								is_active = is_active,
 								to_close = to_close
 							)
@@ -80,7 +96,17 @@ class BotManagerClient():
 		return res
 
 	@_with_session_context
-	def set_status(self, conn, id: int, is_active: bool):
-		entry = self.get_entry(conn = conn, ID = id)
-		self.modify_entry(entry = entry, attribute = "is_active", new_value = is_active)
-		return
+	def get_secret_keys(self, conn, secret_id: int):
+		res = self.get_entry( 	conn = conn,
+								table_ref = SecretKeys,
+								ID = secret_id,
+							)
+		return res.api_keys
+
+	@_with_session_context
+	def get_image(self, conn, image_id: int):
+		res = self.get_entry( 	conn = conn,
+								table_ref = ArbitragDockerImages,
+								ID = image_id,
+							)
+		return res.docker_img
