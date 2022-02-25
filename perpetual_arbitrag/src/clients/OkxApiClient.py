@@ -15,7 +15,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	market_client 	= None
 	logger 			= logging.getLogger('okxApiClient')
 
-	okx_funding_rate_snapshot_times = ["04:00", "12:00", "20:00"]
+	okx_funding_rate_snapshot_times = ["00:00", "08:00", "16:00"]
 
 	def __init__(self, 	api_key: str, 
 						api_secret_key: str,
