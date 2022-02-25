@@ -285,19 +285,19 @@ class TestOkxApiClient(TestCase):
 	@freeze_time("2022-01-01 03:55:00")
 	def test_funding_rate_is_valid_interval(self):
 		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		_okx_api_client.okx_funding_rate_snapshot_times = ["04:00"]
 		assert(_okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 
 	@freeze_time("2022-01-01 03:50:00")
 	def test_funding_rate_is_not_valid_interval_A(self):
 		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		_okx_api_client.okx_funding_rate_snapshot_times = ["04:00"]
 		assert(not _okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 
 	@freeze_time("2022-01-01 04:00:01")
 	def test_funding_rate_is_not_valid_interval_B(self):
 		_okx_api_client 	= copy.deepcopy(self.okx_api_client)
-		_okx_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
+		_okx_api_client.okx_funding_rate_snapshot_times = ["04:00"]
 		assert(not _okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 		return
 
