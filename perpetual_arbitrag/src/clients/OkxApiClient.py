@@ -259,7 +259,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 				return True
 		return False
 
-	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before: int):
+	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before_current: int, seconds_before_estimated: int):
 		"""
 		Gets the effective funding rate for perpetual contract.
 
@@ -270,8 +270,10 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		3) If funding rate computation has been disabled, then all rates are 0.
 		"""
 		(funding_rate, estimated_funding_rate) = (0, 0)
-		if self.funding_rate_enable and self.funding_rate_valid_interval(seconds_before = seconds_before): 
-			(funding_rate, _) = self.get_perpetual_funding_rate(symbol = symbol)
+		if self.funding_rate_enable:
+			(_funding_rate, _estimated_funding_rate) = self.get_perpetual_funding_rate(symbol = symbol)
+			funding_rate 			= _funding_rate if self.funding_rate_valid_interval(seconds_before = seconds_before_current) else 0
+			estimated_funding_rate 	= _estimated_funding_rate if self.funding_rate_valid_interval(seconds_before = seconds_before_estimated) else 0
 		self.logger.info(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
 		return (funding_rate, estimated_funding_rate)
  

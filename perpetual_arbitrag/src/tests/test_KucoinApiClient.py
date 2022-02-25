@@ -332,7 +332,7 @@ class TestKucoinApiClient(TestCase):
 			 patch.object(_kucoin_api_client, "get_futures_funding_rate") as mock_get_futures_funding_rate:
 			mock_funding_rate_valid_interval.return_value = True
 			mock_get_futures_funding_rate.return_value 	  = (0.01, -0.01)
-			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0, 0)
+			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before_current = 300, seconds_before_estimated = 300) == (0, 0)
 		return
 
 	def test_effective_funding_rate_is_zero_when_invalid_interval(self):
@@ -342,7 +342,7 @@ class TestKucoinApiClient(TestCase):
 			 patch.object(_kucoin_api_client, "get_futures_funding_rate") as mock_get_futures_funding_rate:
 			mock_funding_rate_valid_interval.return_value 	= False
 			mock_get_futures_funding_rate.return_value 		= (0.01, -0.01)
-			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0, 0)
+			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before_current = 300, seconds_before_estimated = 300) == (0, 0)
 		return
 
 	@patch("kucoin_futures.client.Market")
@@ -354,5 +354,5 @@ class TestKucoinApiClient(TestCase):
 
 		with patch.object(_kucoin_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
 			mock_funding_rate_valid_interval.return_value = True
-			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before = 300) == (0.01, 0)
+			assert _kucoin_api_client.get_futures_effective_funding_rate(symbol = "ETHUSDT", seconds_before_current = 300, seconds_before_estimated = 300) == (0.01, -0.01)
 		return
