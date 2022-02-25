@@ -27,7 +27,8 @@ def kill(container):
 """
 python3 main/intra_exchange/manager/arbitrag_manager.py \
 --user_id 1 \
---db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag
+--db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
+--poll_interval_s 1800
 """
 
 if __name__ == "__main__":
