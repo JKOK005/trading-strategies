@@ -21,7 +21,8 @@ python3 main/intra_exchange/kucoin/spot_perp/main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
---funding_interval_s 1800 \
+--current_funding_interval_s 1800 \
+--estimated_funding_interval_s 1800 \
 --funding_rate_disable 0 \
 --retry_timeout_s 30 \
 --db_url xxx \
@@ -57,7 +58,8 @@ Flag / description pairs are explained below.
 | funding_rate_disable | If 1, we do not take into account funding rate for trade decisions. If 0, otherwise | 0 |
 | db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
-| funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account funding rate | 1800 |
+| current_funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account current funding rate | 1800 |
+| estimated_funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
 | retry_timeout_s | Wait seconds before retrying main loop | 30 |
 
 
@@ -154,7 +156,8 @@ docker run \
 --env ENTRY_GAP_FRAC=0.002 \
 --env PROFIT_TAKING_FRAC=0.002 \
 --env POLL_INTERVAL_S=10 \
---env FUNDING_INTERVAL_S=1800 \
+--env CURRENT_FUNDING_INTERVAL_S=1800 \
+--env ESTIMATED_FUNDING_INTERVAL_S=1800 \
 --env DB_URL=xxx \
 arbitrag-bot:<label>
 ```

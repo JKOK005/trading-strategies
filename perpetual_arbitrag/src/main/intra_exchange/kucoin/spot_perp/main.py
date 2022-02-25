@@ -28,7 +28,8 @@ python3 main/intra_exchange/kucoin/spot_perp/main.py \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
---funding_interval_s 1800 \
+--current_funding_interval_s 1800 \
+--estimated_funding_interval_s 1800 \
 --retry_timeout_s 30 \
 --funding_rate_disable 0 \
 --db_url xxx \
@@ -56,7 +57,8 @@ if __name__ == "__main__":
 	parser.add_argument('--futures_api_key', type=str, nargs='?', default=os.environ.get("FUTURES_API_KEY"), help='Futures exchange api key')
 	parser.add_argument('--futures_api_secret_key', type=str, nargs='?', default=os.environ.get("FUTURES_API_SECRET_KEY"), help='Futures exchange secret api key')
 	parser.add_argument('--futures_api_passphrase', type=str, nargs='?', default=os.environ.get("FUTURES_API_PASSPHRASE"), help='Futures exchange api passphrase')
-	parser.add_argument('--funding_interval_s', type=int, nargs='?', default=os.environ.get("FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for estimated funding rate P/L')
+	parser.add_argument('--current_funding_interval_s', type=int, nargs='?', default=os.environ.get("CURRENT_FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for current funding rate P/L')
+	parser.add_argument('--estimated_funding_interval_s', type=int, nargs='?', default=os.environ.get("ESTIMATED_FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for estimated funding rate P/L')
 	parser.add_argument('--retry_timeout_s', type=int, nargs='?', default=os.environ.get("RETRY_TIMEOUT_S"), help='Retry main loop after specified seconds')
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
 	parser.add_argument('--funding_rate_disable', type=int, nargs='?', choices={0, 1}, default=os.environ.get("FUNDING_RATE_DISABLE"), help='If 1, disable the effects of funding rate in the trade decision. If 0, otherwise')
@@ -117,7 +119,9 @@ if __name__ == "__main__":
 				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
 				futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
 				(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair, 
-																													seconds_before = args.funding_interval_s)
+																													seconds_before_current = args.current_funding_interval_s,
+																													seconds_before_estimated = args.estimated_funding_interval_s)
+				
 				decision 		= trade_strategy.trade_decision(spot_price 				= spot_price, 
 																futures_price 			= futures_price,
 																futures_funding_rate 	= futures_funding_rate,
@@ -131,7 +135,8 @@ if __name__ == "__main__":
 				(avg_spot_bid, avg_spot_ask) 		= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
 				(avg_futures_bid, avg_futures_ask) 	= client.get_futures_average_bid_ask_price(symbol = args.futures_trading_pair, size = args.futures_entry_lot_size)
 				(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair,
-																													seconds_before = args.funding_interval_s)
+																													seconds_before_current = args.current_funding_interval_s,
+																													seconds_before_estimated = args.estimated_funding_interval_s)
 
 				decision 							= trade_strategy.bid_ask_trade_decision(spot_bid_price 			= avg_spot_bid,
 																							spot_ask_price 			= avg_spot_ask,
