@@ -159,7 +159,7 @@ docker run \
 --env CURRENT_FUNDING_INTERVAL_S=1800 \
 --env ESTIMATED_FUNDING_INTERVAL_S=1800 \
 --env DB_URL=xxx \
-arbitrag-bot:<label>
+<image>:<label>
 ```
 
 *Note*: `db_reset` / `use_sandbox` / `fake_orders` / `funding_rate_disable` flags are not enabled when running in docker. These flags should not be used in production anyway.
