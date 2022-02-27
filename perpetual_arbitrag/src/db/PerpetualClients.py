@@ -7,6 +7,7 @@ BASE = declarative_base()
 
 class PerpetualInfoTable(AssetInfoTable, BASE):
 	__tablename__ 		= "perpetual_info"
+	__table_args__ 		= {'extend_existing': True} 
 
 class PerpetualClients(AssetClient):
 	logger 		= logging.getLogger('PerpetualClients')

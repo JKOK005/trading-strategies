@@ -19,6 +19,8 @@ class AssetInfoTable(object):
 	def __repr__(self):
 		return f"{self.strategy_id}-{self.client_id}-{self.exchange}-{self.symbol}"
 
+# TODO: Shift implementation to DbClient in future
+
 class AssetClient(metaclass = ABCMeta):
 	db_url 		= None
 	session 	= None
