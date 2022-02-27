@@ -18,3 +18,12 @@ class ArbitragDockerImages(BASE):
 class DockerImageClient(DbClient):
 	def table_ref(self):
 		return ArbitragDockerImages
+
+	@DbClient._with_session_context
+	def get_img_name(self, conn, exchange, asset_pair):
+		image_info 	= self.get_entry(conn = conn,
+									 exchange = exchange,
+									 asset_pair = asset_pair,
+									)
+
+		return image_info.docker_img
