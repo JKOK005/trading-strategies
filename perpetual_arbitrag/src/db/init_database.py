@@ -2,7 +2,10 @@ import argparse
 from SpotClients import SpotInfoTable
 from FutureClients import FutureInfoTable
 from PerpetualClients import PerpetualInfoTable
-from BotManagerClient import *
+from DockerImageClient import ArbitragDockerImages
+from JobConfigClient import JobConfig
+from UsersClient import Users
+from SecretsClient import SecretKeys
 from sqlalchemy import create_engine
 
 """
@@ -19,7 +22,8 @@ if __name__ == "__main__":
 	SpotInfoTable.__table__.create(engine, checkfirst=True)
 	FutureInfoTable.__table__.create(engine, checkfirst=True)
 	PerpetualInfoTable.__table__.create(engine, checkfirst=True)
+
 	Users.__table__.create(engine, checkfirst=True)
 	SecretKeys.__table__.create(engine, checkfirst=True)
 	ArbitragDockerImages.__table__.create(engine, checkfirst=True)
-	AssetPairsJobs.__table__.create(engine, checkfirst=True)
+	JobConfig.__table__.create(engine, checkfirst=True)

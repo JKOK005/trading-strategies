@@ -6,7 +6,8 @@ from sqlalchemy.orm import declarative_base
 BASE = declarative_base()
 
 class SpotInfoTable(AssetInfoTable, BASE):
-	__tablename__ 		= "spot_info"
+	__tablename__ 	= "spot_info"
+	__table_args__ 	= {'extend_existing': True} 
 
 class SpotClients(AssetClient):
 	logger 		= logging.getLogger('SpotClients')
