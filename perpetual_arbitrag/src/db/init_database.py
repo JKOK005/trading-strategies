@@ -4,6 +4,7 @@ from FutureClients import FutureInfoTable
 from PerpetualClients import PerpetualInfoTable
 from DockerImageClient import ArbitragDockerImages
 from JobConfigClient import JobConfig
+from JobRankerClient import JobRanking
 from UsersClient import Users
 from SecretsClient import SecretKeys
 from sqlalchemy import create_engine
@@ -27,3 +28,4 @@ if __name__ == "__main__":
 	SecretKeys.__table__.create(engine, checkfirst=True)
 	ArbitragDockerImages.__table__.create(engine, checkfirst=True)
 	JobConfig.__table__.create(engine, checkfirst=True)
+	JobRanking.__table__.create(engine, checkfirst=True)
