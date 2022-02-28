@@ -25,14 +25,18 @@ class JobRanking(BASE):
 	def __repr__(self):
 		return f"{self.ID}-{self.exchange}-{self.asset_type}-{self.first_asset}-{self.second_asset}"
 
-class JobRankingClient(DbClient):
+class JobRankerClient(DbClient):
 	def table_ref(self):
 		return JobRanking
 
 	@DbClient._with_session_context
-	def fetch_ranked(self, conn, exchange: str, asset_type: str, top_N: int):
+	def fetch_jobs(self, conn, exchange: str, asset_type: str):
 		rows = self.get_entries(conn = conn, exchange = exchange, asset_type = asset_type)
 		conn.expunge_all()
+		return rows
+
+	def fetch_jobs_ranked(self, exchange: str, asset_type: str, top_N: int):
+		rows = self.fetch_jobs(exchange = exchange, asset_type = asset_type)
 		return rows.sort()[ : top_N]
 
 	@DbClient._with_session_context
@@ -51,3 +55,9 @@ class JobRankingClient(DbClient):
 	def insert_rows(self, conn, params):
 		# params expected to be a list of dictionary containing params in JobRanking table
 		return self.insert_table(conn = conn, params = params)
+
+	@DbClient._with_session_context
+	def set_rank(self, conn, job_ranking_id: int, new_rank: int):
+		row = self.get_entry(conn = conn, ID = job_ranking_id)
+		self.modify_entry(entry = row, attribute = "ranking", new_value = new_rank)
+		return
