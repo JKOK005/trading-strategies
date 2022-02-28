@@ -2,6 +2,7 @@ import enum
 import logging
 import json
 from db.DbClient import DbClient, BASE
+from functools import cmp_to_key
 from sqlalchemy import *
 
 class JobRanking(BASE):
@@ -10,6 +11,9 @@ class JobRanking(BASE):
 	 
 	__tablename__ 	= "job_ranking"
 	__table_args__ 	= {'extend_existing': True} 
+
+	def __lt__(self, other):
+         return self.ranking < other.ranking
 
 	ID 				= Column(Integer, primary_key = True)
 	exchange 		= Column(String, nullable = False)
@@ -26,10 +30,10 @@ class JobRankingClient(DbClient):
 		return JobRanking
 
 	@DbClient._with_session_context
-	def fetch_ranking(self, conn, exchange, asset_type):
-		rows 	= self.get_entries(conn = conn, exchange = exchange, asset_type = asset_type)
+	def fetch_ranked(self, conn, exchange: str, asset_type: str, top_N: int):
+		rows = self.get_entries(conn = conn, exchange = exchange, asset_type = asset_type)
 		conn.expunge_all()
-		return rows
+		return rows.sort()[ : top_N]
 
 	@DbClient._with_session_context
 	def insert_row(self, conn, param):
