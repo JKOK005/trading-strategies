@@ -60,7 +60,7 @@ class ExchangePerpetualClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before: int):
+	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before_current: int, seconds_before_estimated: int):
 		"""
 		Gets the effective funding rate for perpetual contract.
 
