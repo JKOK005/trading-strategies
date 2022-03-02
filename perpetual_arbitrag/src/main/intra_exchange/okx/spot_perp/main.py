@@ -70,13 +70,8 @@ if __name__ == "__main__":
 
 	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
 
-	spot_currency 	= args.spot_trading_pair.split("-")[0]
-	spot_value 		= client.get_spot_trading_account_details(currency = spot_currency)
-	spot_buffer 	= args.spot_entry_vol * 0.9
-
 	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair), "Minimum spot entry size not satisfied."
 	assert 	args.perpetual_entry_lot_size >= client.get_perpetual_min_lot_size(symbol = args.perpetual_trading_pair), "Minimum perpetual entry size not satisfied."
-	assert 	spot_value >= spot_buffer, f"Insufficient spot buffer for trade. Present: {spot_value} - Required {spot_buffer}"
 
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
