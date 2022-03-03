@@ -58,6 +58,7 @@ python3 ./main/general/scanner/arbitrag_scanner.py \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
 --poll_interval_s 3600 \
+--processors 8 \
 --samples 30
 """
 if __name__ == "__main__":
@@ -66,6 +67,7 @@ if __name__ == "__main__":
 	parser.add_argument('--asset_type', type=str, nargs='?', default=os.environ.get("ASSET_TYPE"), help="spot-perp / spot-future / future-perp")
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database")
 	parser.add_argument('--samples', type=int, nargs='?', default=os.environ.get("SAMPLES"), help="Samples to compute average arb score for an asset pair")
+	parser.add_argument('--processors', type=int, nargs='?', default=os.environ.get("PROCESSORS"), help="Processors for parallel computation")
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=os.environ.get("POLL_INTERVAL_S"), help='Poll interval in seconds')
 	args 	= parser.parse_args()
 
@@ -75,15 +77,18 @@ if __name__ == "__main__":
 	exchange_client = get_exchange_client(exchange = args.exchange)
 	jobs_to_rank 	= db_client.fetch_jobs(exchange = args.exchange, asset_type = args.asset_type)
 
-	with Pool(processes=8) as pool:
-		collective_rank = pool.map(compute_arb_score, jobs_to_rank)
+	while True:
+		with Pool(processes = args.processors) as pool:
+			collective_rank = pool.map(compute_arb_score, jobs_to_rank)
 
-	logging.info(f"{collective_rank}")
+		logging.info(f"{collective_rank}")
 
-	# Rank job scoring
-	collective_rank.sort(key = lambda x: x[-1], reverse = True)
+		# Rank job scoring
+		collective_rank.sort(key = lambda x: x[-1], reverse = True)
 
-	# Write rank to db
-	rank_counter = itertools.count()
-	for (each_job, _) in collective_rank:
-		db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
+		# Write rank to db
+		rank_counter = itertools.count()
+		for (each_job, _) in collective_rank:
+			db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
+
+		sleep(args.poll_interval_s)
