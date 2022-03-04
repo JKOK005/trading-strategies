@@ -255,7 +255,8 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		for each_snaphsot_time in self.okx_funding_rate_snapshot_times:
 			ts = datetime.datetime.strptime(each_snaphsot_time, "%H:%M")
 			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute, second = 0)
-			if snapshot_timestamp - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp:
+			if 	(snapshot_timestamp - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp) or \
+				(snapshot_timestamp + timedelta(days = 1) - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp + timedelta(days = 1)):
 				return True
 		return False
 

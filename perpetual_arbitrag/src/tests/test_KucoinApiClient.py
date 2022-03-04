@@ -304,11 +304,17 @@ class TestKucoinApiClient(TestCase):
 		return
 
 	@freeze_time("2022-01-01 03:55:00")
-	def test_funding_rate_is_valid_interval(self):
+	def test_funding_rate_is_valid_interval_A(self):
 		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
 		_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
 		assert(_kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
 		return
+
+	@freeze_time("2022-01-01 23:55:00")
+	def test_funding_rate_is_valid_interval_B(self):
+		_okx_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		_okx_api_client.kucoin_funding_rate_snapshot_times = ["00:00"]
+		assert(_okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 
 	@freeze_time("2022-01-01 03:50:00")
 	def test_funding_rate_is_not_valid_interval_A(self):
@@ -322,6 +328,13 @@ class TestKucoinApiClient(TestCase):
 		_kucoin_api_client 	= copy.deepcopy(self.kucoin_api_client)
 		_kucoin_api_client.kucoin_funding_rate_snapshot_times = ["04:00"]
 		assert(not _kucoin_api_client.funding_rate_valid_interval(seconds_before = 300))
+		return
+
+	@freeze_time("2022-01-01 23:50:00")
+	def test_funding_rate_is_not_valid_interval_C(self):
+		_okx_api_client 	= copy.deepcopy(self.kucoin_api_client)
+		_okx_api_client.kucoin_funding_rate_snapshot_times = ["00:00"]
+		assert(not _okx_api_client.funding_rate_valid_interval(seconds_before = 300))
 		return
 
 	def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
