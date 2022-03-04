@@ -11,7 +11,7 @@ from time import sleep
 
 def get_exchange_client(exchange):
 	if exchange.lower() == "okx":
-		return OkxApiClient(api_key = None, api_secret_key = None, passphrase = None, funding_rate_enable = True)
+		return OkxApiClient(api_key = "None", api_secret_key = "None", passphrase = "None", funding_rate_enable = True)
 
 	elif exchange.lower() == "kucoin":
 		return KucoinApiClient(	spot_client_api_key = None, spot_client_api_secret_key = None, spot_client_pass_phrase = None, 
@@ -54,12 +54,12 @@ def compute_arb_score(job_to_rank):
 
 """
 python3 ./main/general/scanner/arbitrag_scanner.py \
---exchange kucoin \
+--exchange okx \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
 --poll_interval_s 3600 \
 --processors 8 \
---samples 30
+--samples 60
 """
 if __name__ == "__main__":
 	parser 	= argparse.ArgumentParser(description='Arbitrag Scanner')
