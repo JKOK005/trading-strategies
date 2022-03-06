@@ -22,8 +22,9 @@ def get_exchange_client(exchange):
 	else:
 		raise Exception(f"{exchange} does not exist")
 
-def arb_score_formula(asset_a_price, asset_b_price, current_funding_rate, estimated_funding_rate):
-	return abs(asset_b_price - asset_a_price) / max(asset_a_price, asset_b_price) + current_funding_rate + estimated_funding_rate
+def arb_score_formula(spot_price, perp_price, current_funding_rate, estimated_funding_rate):
+	effective_perp_price = perp_price * (1 + current_funding_rate + estimated_funding_rate)
+	return (effective_perp_price - spot_price) / (perp_price + spot_price)
 
 def compute_arb_score(job_to_rank):
 	(first_asset, second_asset) = (job_to_rank.first_asset, job_to_rank.second_asset)
@@ -32,20 +33,19 @@ def compute_arb_score(job_to_rank):
 
 	for _ in range(args.samples):
 		if args.asset_type.lower() == "spot-perp":
-			asset_a_price = exchange_client.get_spot_trading_price(symbol = first_asset)
+			(_, asset_a_ask_price) = exchange_client.get_spot_average_bid_ask_price(symbol = first_asset, size = 0.00001)
 
 			if args.exchange.lower() == "kucoin":
-				asset_b_price = exchange_client.get_futures_trading_price(symbol = second_asset)
+				(asset_b_bid_price, _) = exchange_client.get_futures_average_bid_ask_price(symbol = second_asset, size = 1)
 				(current_funding_rate, estimated_funding_rate) = exchange_client.get_futures_effective_funding_rate(symbol = second_asset, 
 																													seconds_before_current = 86400, 
 																													seconds_before_estimated = 86400)
 			else:
-				asset_b_price = exchange_client.get_perpetual_trading_price(symbol = second_asset)
+				(asset_b_bid_price, _) = exchange_client.get_perpetual_average_bid_ask_price(symbol = second_asset, size = 1)
 				(current_funding_rate, estimated_funding_rate) = exchange_client.get_perpetual_effective_funding_rate(	symbol = second_asset, 
 																														seconds_before_current = 86400, 
 																														seconds_before_estimated = 86400)
-
-		arb_scores.append(arb_score_formula(asset_a_price = asset_a_price, asset_b_price = asset_b_price,
+		arb_scores.append(arb_score_formula(spot_price = asset_a_ask_price, perp_price = asset_b_bid_price,
 											current_funding_rate = current_funding_rate, estimated_funding_rate = estimated_funding_rate))
 		sleep(1)
 
@@ -58,7 +58,7 @@ python3 ./main/general/scanner/arbitrag_scanner.py \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
 --poll_interval_s 3600 \
---processors 8 \
+--processors 3 \
 --samples 60
 """
 if __name__ == "__main__":
@@ -88,7 +88,8 @@ if __name__ == "__main__":
 
 		# Write rank to db
 		rank_counter = itertools.count()
-		for (each_job, _) in collective_rank:
+		for (each_job, score) in collective_rank:
 			db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
+			db_client.set_arb_score(job_ranking_id = each_job.ID, new_score = score)
 
 		sleep(args.poll_interval_s)
