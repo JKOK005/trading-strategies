@@ -21,6 +21,7 @@ class JobRanking(BASE):
 	first_asset 	= Column(String, nullable = False)
 	second_asset 	= Column(String, nullable = False)
 	ranking 		= Column(Integer, nullable = False)
+	effective_arb 	= Column(Float, nullable = False)
 
 	def __repr__(self):
 		return f"{self.ID}-{self.exchange}-{self.asset_type}-{self.first_asset}-{self.second_asset}"
@@ -60,4 +61,10 @@ class JobRankerClient(DbClient):
 	def set_rank(self, conn, job_ranking_id: int, new_rank: int):
 		row = self.get_entry(conn = conn, ID = job_ranking_id)
 		self.modify_entry(entry = row, attribute = "ranking", new_value = new_rank)
+		return
+
+	@DbClient._with_session_context
+	def set_arb_score(self, conn, job_ranking_id: int, new_score: int):
+		row = self.get_entry(conn = conn, ID = job_ranking_id)
+		self.modify_entry(entry = row, attribute = "effective_arb", new_value = new_score)
 		return
