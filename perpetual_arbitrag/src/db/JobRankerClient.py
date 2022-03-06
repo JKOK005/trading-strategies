@@ -38,7 +38,8 @@ class JobRankerClient(DbClient):
 
 	def fetch_jobs_ranked(self, exchange: str, asset_type: str, top_N: int):
 		rows = self.fetch_jobs(exchange = exchange, asset_type = asset_type)
-		return rows.sort()[ : top_N]
+		rows.sort()
+		return rows[ : top_N]
 
 	@DbClient._with_session_context
 	def insert_row(self, conn, param):

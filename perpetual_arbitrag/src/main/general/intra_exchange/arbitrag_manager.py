@@ -4,9 +4,10 @@ import json
 import os
 import re
 import logging
+from db.DockerImageClient import DockerImageClient
 from db.JobRankerClient import JobRankerClient
 from db.JobConfigClient import JobConfigClient
-from db.DockerImageClient import DockerImageClient
+from db.SecretsClient import SecretsClient
 from time import sleep
 
 """
@@ -28,7 +29,7 @@ def pull(image_name: str):
 
 def run(container_name: str, container_args, labels):
 	pull(image_name = container_name)
-	logging.info(f"Starting {container_name}")
+	logging.info(f"Starting {container_name}, args: {container_args}")
 	return docker_client.containers.run(image = container_name, environment = container_args, labels = labels, 
 										detach = True, network = "host")
 
@@ -67,9 +68,10 @@ if __name__ == "__main__":
 
 	logging.info(f"Starting arbitrag manager with the following params: {args}")
 
+	docker_image_client = DockerImageClient(db_url = args.db_url).create_session()
 	job_ranker_client 	= JobRankerClient(db_url = args.db_url).create_session()
 	job_config_client 	= JobConfigClient(db_url = args.db_url).create_session()
-	docker_image_client = DockerImageClient(db_url = args.db_url).create_session()
+	secrets_client 		= SecretsClient(db_url = args.db_url).create_session()
 
 	jobs_to_run 		= job_ranker_client.fetch_jobs_ranked(exchange = args.exchange, asset_type = args.asset_type, top_N = args.jobs)
 	active_containers	= docker_client.containers.list(filters = {"label" : [	f"user_id={args.user_id}",
@@ -86,9 +88,14 @@ if __name__ == "__main__":
 	while len(jobs_to_run) > 0 and new_containers_to_create_count > 0:
 		next_job_to_run 	= jobs_to_run.pop(0)
 		docker_image_name 	= docker_image_client.get_img_name(exchange = args.exchange, asset_pair = args.asset_type)
-		docker_args 		= job_config_client.get_exit_config(user_id = args.user_id, exchange = args.exchange, asset_type = args.asset_type, 
-																first_asset = next_job_to_run.first_asset, second_asset = next_job_to_run.second_asset)
+		
+		docker_args 		= job_config_client.get_job_config(user_id = args.user_id, exchange = args.exchange, asset_type = args.asset_type, 
+															   first_asset = next_job_to_run.first_asset, second_asset = next_job_to_run.second_asset)
+
+		client_secrets 		= secrets_client.get_secrets(user_id = args.user_id, exchange = args.exchange)
+		
 		labels = {	"user_id" : args.user_id, "exchange" : args.exchange, "asset_type" : args.asset_type, 
-					"first_asset" : each_job_for_entry.first_asset, "second_asset" : each_job_for_entry.second_asset}
-		run(container_name = docker_image_name, container_args = docker_args, labels = labels)
+					"first_asset" : next_job_to_run.first_asset, "second_asset" : next_job_to_run.second_asset}
+		
+		run(container_name = docker_image_name, container_args = {**docker_args, **client_secrets}, labels = labels)
 		new_containers_to_create_count -= 1
