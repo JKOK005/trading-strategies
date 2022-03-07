@@ -57,14 +57,14 @@ def compute_arb_score(job_to_rank):
 
 """
 python3 ./main/general/scanner/arbitrag_scanner.py \
---exchange test-okx \
+--exchange okx \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
 --message_url localhost \
 --message_port 6379 \
 --poll_interval_s 3600 \
---processors 3 \
---samples 60
+--processors 4 \
+--samples 120
 """
 if __name__ == "__main__":
 	parser 	= argparse.ArgumentParser(description='Arbitrag Scanner')
