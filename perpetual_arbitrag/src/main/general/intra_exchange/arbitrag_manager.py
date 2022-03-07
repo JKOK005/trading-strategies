@@ -48,7 +48,7 @@ def get_containers_with_no_position(all_containers):
 	return containers_with_no_position
 
 """
-python3 main/general/intra_exchange/arbitrag_manager.py \
+python3 ./main/general/intra_exchange/arbitrag_manager.py \
 --user_id 1 \
 --exchange test-okx \
 --asset_type spot-perp \
