@@ -1,8 +1,11 @@
 import argparse
 import itertools
+import json
 import logging
 import numpy as np
 import os
+import redis
+from datetime import datetime
 from db.JobRankerClient import JobRankerClient
 from clients.OkxApiClient import OkxApiClient
 from clients.KucoinApiClient import KucoinApiClient
@@ -57,6 +60,8 @@ python3 ./main/general/scanner/arbitrag_scanner.py \
 --exchange okx \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
+--message_url localhost \
+--message_port 6379 \
 --poll_interval_s 3600 \
 --processors 3 \
 --samples 60
@@ -66,6 +71,8 @@ if __name__ == "__main__":
 	parser.add_argument('--exchange', type=str, nargs='?', default=os.environ.get("EXCHANGE"), help="Exchange for trading")
 	parser.add_argument('--asset_type', type=str, nargs='?', default=os.environ.get("ASSET_TYPE"), help="spot-perp / spot-future / future-perp")
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database")
+	parser.add_argument('--message_url', type=str, nargs='?', default=os.environ.get("MESSAGE_URL"), help="URL pointing to the messaging queue, such as redis")
+	parser.add_argument('--message_port', type=str, nargs='?', default=os.environ.get("MESSAGE_PORT"), help="Port of the messaging queue app")
 	parser.add_argument('--samples', type=int, nargs='?', default=os.environ.get("SAMPLES"), help="Samples to compute average arb score for an asset pair")
 	parser.add_argument('--processors', type=int, nargs='?', default=os.environ.get("PROCESSORS"), help="Processors for parallel computation")
 	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=os.environ.get("POLL_INTERVAL_S"), help='Poll interval in seconds')
@@ -73,9 +80,12 @@ if __name__ == "__main__":
 
 	logging.basicConfig(level = logging.INFO)
 
-	db_client 		= JobRankerClient(db_url = args.db_url).create_session()
-	exchange_client = get_exchange_client(exchange = args.exchange)
-	jobs_to_rank 	= db_client.fetch_jobs(exchange = args.exchange, asset_type = args.asset_type)
+	db_client 			= JobRankerClient(db_url = args.db_url).create_session()
+	messaging_client 	= redis.Redis(host = args.message_url, port = args.message_port, decode_responses=True, encoding="utf-8")
+	messaging_channel 	= f'arb/{args.exchange}/{args.asset_type}'
+
+	exchange_client 	= get_exchange_client(exchange = args.exchange)
+	jobs_to_rank 		= db_client.fetch_jobs(exchange = args.exchange, asset_type = args.asset_type)
 
 	while True:
 		with Pool(processes = args.processors) as pool:
@@ -92,4 +102,6 @@ if __name__ == "__main__":
 			db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
 			db_client.set_arb_score(job_ranking_id = each_job.ID, new_score = score)
 
+		payload 	= {"update_time" : datetime.utcnow().timestamp()}
+		messaging_client.publish(messaging_channel, json.dumps(payload))
 		sleep(args.poll_interval_s)
