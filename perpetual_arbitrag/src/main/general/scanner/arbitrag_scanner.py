@@ -13,7 +13,7 @@ from multiprocessing import Pool
 from time import sleep
 
 def get_exchange_client(exchange):
-	if exchange.lower() == "okx":
+	if exchange.lower() == "okx" or exchange.lower() == "test-okx":
 		return OkxApiClient(api_key = "None", api_secret_key = "None", passphrase = "None", funding_rate_enable = True)
 
 	elif exchange.lower() == "kucoin":
@@ -57,7 +57,7 @@ def compute_arb_score(job_to_rank):
 
 """
 python3 ./main/general/scanner/arbitrag_scanner.py \
---exchange okx \
+--exchange test-okx \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
 --message_url localhost \

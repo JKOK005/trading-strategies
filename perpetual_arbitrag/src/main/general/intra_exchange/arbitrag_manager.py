@@ -3,6 +3,7 @@ import docker
 import json
 import os
 import re
+import redis
 import logging
 from db.DockerImageClient import DockerImageClient
 from db.JobRankerClient import JobRankerClient
@@ -47,13 +48,14 @@ def get_containers_with_no_position(all_containers):
 	return containers_with_no_position
 
 """
-python3 main/intra_exchange/manager/arbitrag_manager.py \
+python3 main/general/intra_exchange/arbitrag_manager.py \
 --user_id 1 \
---exchange kucoin \
+--exchange test-okx \
 --asset_type spot-perp \
 --jobs 3 \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
---poll_interval_s 86400
+--message_url localhost \
+--message_port 6379
 """
 
 if __name__ == "__main__":
@@ -63,7 +65,8 @@ if __name__ == "__main__":
 	parser.add_argument('--asset_type', type=str, nargs='?', default=os.environ.get("ASSET_TYPE"), help="spot-perp / spot-future / future-perp")
 	parser.add_argument('--jobs', type=int, nargs='?', default=os.environ.get('JOBS'), help="Number of currency pairs to trade")
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database")
-	parser.add_argument('--poll_interval_s', type=int, nargs='?', default=os.environ.get("POLL_INTERVAL_S"), help='Poll interval in seconds')
+	parser.add_argument('--message_url', type=str, nargs='?', default=os.environ.get("MESSAGE_URL"), help="URL pointing to the messaging queue, such as redis")
+	parser.add_argument('--message_port', type=str, nargs='?', default=os.environ.get("MESSAGE_PORT"), help="Port of the messaging queue app")
 	args 	= parser.parse_args()
 
 	logging.info(f"Starting arbitrag manager with the following params: {args}")
@@ -73,29 +76,35 @@ if __name__ == "__main__":
 	job_config_client 	= JobConfigClient(db_url = args.db_url).create_session()
 	secrets_client 		= SecretsClient(db_url = args.db_url).create_session()
 
-	jobs_to_run 		= job_ranker_client.fetch_jobs_ranked(exchange = args.exchange, asset_type = args.asset_type, top_N = args.jobs)
-	active_containers	= docker_client.containers.list(filters = {"label" : [	f"user_id={args.user_id}",
-																				f"exchange={args.exchange}",
-																				f"asset_type={args.asset_type}"]})
+	message_client 		= redis.Redis(host = args.message_url, port = args.message_port, charset="utf-8", decode_responses=True)
+	message_pubsub 		= message_client.pubsub()
+	messaging_channel 	= f'arb/{args.exchange}/{args.asset_type}'
+	message_pubsub.subscribe(messaging_channel)
 
-	containers_with_no_position 	= get_containers_with_no_position(all_containers = active_containers)
-	containers_with_position_count 	= len(active_containers) - len(containers_with_no_position)
-	new_containers_to_create_count 	= args.jobs - containers_with_position_count
+	for _ in message_pubsub.listen():
+		jobs_to_run 		= job_ranker_client.fetch_jobs_ranked(exchange = args.exchange, asset_type = args.asset_type, top_N = args.jobs)
+		active_containers	= docker_client.containers.list(filters = {"label" : [	f"user_id={args.user_id}",
+																					f"exchange={args.exchange}",
+																					f"asset_type={args.asset_type}"]})
 
-	for each_conainer_with_no_position in containers_with_no_position:
-		kill(each_conainer_with_no_position)
+		containers_with_no_position 	= get_containers_with_no_position(all_containers = active_containers)
+		containers_with_position_count 	= len(active_containers) - len(containers_with_no_position)
+		new_containers_to_create_count 	= args.jobs - containers_with_position_count
 
-	while len(jobs_to_run) > 0 and new_containers_to_create_count > 0:
-		next_job_to_run 	= jobs_to_run.pop(0)
-		docker_image_name 	= docker_image_client.get_img_name(exchange = args.exchange, asset_pair = args.asset_type)
-		
-		docker_args 		= job_config_client.get_job_config(user_id = args.user_id, exchange = args.exchange, asset_type = args.asset_type, 
-															   first_asset = next_job_to_run.first_asset, second_asset = next_job_to_run.second_asset)
+		for each_conainer_with_no_position in containers_with_no_position:
+			kill(each_conainer_with_no_position)
 
-		client_secrets 		= secrets_client.get_secrets(user_id = args.user_id, exchange = args.exchange)
-		
-		labels = {	"user_id" : args.user_id, "exchange" : args.exchange, "asset_type" : args.asset_type, 
-					"first_asset" : next_job_to_run.first_asset, "second_asset" : next_job_to_run.second_asset}
-		
-		run(container_name = docker_image_name, container_args = {**docker_args, **client_secrets}, labels = labels)
-		new_containers_to_create_count -= 1
+		while len(jobs_to_run) > 0 and new_containers_to_create_count > 0:
+			next_job_to_run 	= jobs_to_run.pop(0)
+			docker_image_name 	= docker_image_client.get_img_name(exchange = args.exchange, asset_pair = args.asset_type)
+			
+			docker_args 		= job_config_client.get_job_config(user_id = args.user_id, exchange = args.exchange, asset_type = args.asset_type, 
+																   first_asset = next_job_to_run.first_asset, second_asset = next_job_to_run.second_asset)
+
+			client_secrets 		= secrets_client.get_secrets(user_id = args.user_id, exchange = args.exchange)
+			
+			labels = {	"user_id" : args.user_id, "exchange" : args.exchange, "asset_type" : args.asset_type, 
+						"first_asset" : next_job_to_run.first_asset, "second_asset" : next_job_to_run.second_asset}
+			
+			run(container_name = docker_image_name, container_args = {**docker_args, **client_secrets}, labels = labels)
+			new_containers_to_create_count -= 1
