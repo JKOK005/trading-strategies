@@ -41,7 +41,7 @@ def kill(container):
 def get_containers_with_no_position(all_containers):
 	containers_with_no_position = []
 	for each_container in all_containers:
-		each_container_logs = each_container.logs(tail = 100).decode("utf-8")
+		each_container_logs = each_container.logs(tail = 1000).decode("utf-8")
 		last_held_position 	= re.findall("TradePosition.[a-zA-Z_]+", each_container_logs)[-1]
 		if "no_position_taken" in last_held_position.lower():
 			containers_with_no_position.append(each_container)
