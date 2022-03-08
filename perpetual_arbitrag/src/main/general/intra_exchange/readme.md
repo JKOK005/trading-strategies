@@ -1,11 +1,16 @@
-## Arbitrag Bot manager
+## Arbitrag Bot manager--poll_interval_s 3600 \
+
 
 ### Example of execution
 ```python
-python3 main/intra_exchange/manager/arbitrag_manager.py \
+python3 ./main/general/intra_exchange/arbitrag_manager.py \
 --user_id 1 \
+--exchange okx \
+--asset_type spot-perp \
+--jobs 3 \
 --db_url xxx \
---poll_interval_s 3600
+--message_url xxx \
+--message_port xxx
 ```
 
 Flag / description pairs are explained below.
@@ -13,8 +18,12 @@ Flag / description pairs are explained below.
 | Flag | Description | Example |
 | --- | --- | --- |
 | user_id | User assigned ID | 1 |
+| exchange | Exchange for trading currency pair | kucoin |
+| asset_type | Asset pair traded | spot-perp |
+| jobs | Maximum jobs allowed to be run | 1 |
 | db_url | URL pointing to database | - |
-| poll_interval_s | Checks evern N seconds to create new jobs or close existing ones | 3600 |
+| message_url | URL pointing to queuing system (possibly Redis) | - |
+| message_port | Port pointing to queuing system (possible Redis) | - |
 
 ### Tips on running docker file
 In the event that the script encounters the error:

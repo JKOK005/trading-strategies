@@ -6,7 +6,8 @@ from sqlalchemy.orm import declarative_base
 BASE = declarative_base()
 
 class FutureInfoTable(AssetInfoTable, BASE):
-	__tablename__ 		= "future_info"
+	__tablename__ 	= "future_info"
+	__table_args__ 	= {'extend_existing': True} 
 
 class FutureClients(AssetClient):
 	logger 		= logging.getLogger('FutureClients')

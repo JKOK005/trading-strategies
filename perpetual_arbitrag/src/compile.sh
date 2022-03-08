@@ -9,4 +9,7 @@ echo "Compiling Okx bot"
 docker build -t jkok005/okx-spot-perp-arb:$version -f ./main/intra_exchange/okx/spot_perp/Dockerfile .
 
 echo "Compiling arbitrag bot manager"
-docker build -t jkok005/arb-bot-manager:$version -f ./main/intra_exchange/manager/Dockerfile .
+docker build -t jkok005/arb-bot-manager:$version -f ./main/general/intra_exchange/Dockerfile .
+
+echo "Compiling arbitrag bot scanner"
+docker build -t jkok005/arb-bot-scanner:$version -f ./main/general/scanner/Dockerfile .
