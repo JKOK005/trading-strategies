@@ -52,6 +52,41 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
 		return
 
+	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
+		"""
+		We will read pricing - qty data from the first entry of the list. 
+
+		This logic will differ, depending on whether we want to go long / short on the asset. 
+		As such, the ordering of the price-qty pairs in the list has to be handled properly by the user. 
+		"""
+		all_trade_qty 		= size
+		trade_amt 			= 0
+		executed_trade_qty 	= 0
+		for each_price_qty_pairs in price_qty_pairs_ordered:
+			if all_trade_qty < 0:
+				break
+			else:
+				[price, qty] 	=  each_price_qty_pairs
+				trade_qty 		=  min(all_trade_qty, qty)
+				trade_amt 	 	+= price * trade_qty
+				all_trade_qty 	-= trade_qty
+				executed_trade_qty += trade_qty
+		return trade_amt / executed_trade_qty
+
+	def _compute_average_bid_price(self, bids: [[float, float]], size: float):
+		# Sell into bids starting from the highest to the lowest.
+		_bids 	= sorted(bids, key = lambda x: x[0], reverse = True)
+		if len(_bids) > 0:
+			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
+		return 0
+
+	def _compute_average_ask_price(self, asks: [[float, float]], size: float):
+		# Buy into asks starting from the lowest to the highest.
+		_asks 	= sorted(asks, key = lambda x: x[0], reverse = False)
+		if len(_asks) > 0:
+			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
+		return sys.maxsize
+
 	def get_spot_trading_account_details(self, currency: str):
 		"""
 		Retrieves spot trading details
@@ -108,41 +143,6 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		asset_resp = self.public_client.get_instruments(instType = "SWAP", instId = symbol)
 		asset_info = asset_resp["data"][0]
 		return float(asset_info["minSz"])
-
-	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
-		"""
-		We will read pricing - qty data from the first entry of the list. 
-
-		This logic will differ, depending on whether we want to go long / short on the asset. 
-		As such, the ordering of the price-qty pairs in the list has to be handled properly by the user. 
-		"""
-		all_trade_qty 		= size
-		trade_amt 			= 0
-		executed_trade_qty 	= 0
-		for each_price_qty_pairs in price_qty_pairs_ordered:
-			if all_trade_qty < 0:
-				break
-			else:
-				[price, qty] 	=  each_price_qty_pairs
-				trade_qty 		=  min(all_trade_qty, qty)
-				trade_amt 	 	+= price * trade_qty
-				all_trade_qty 	-= trade_qty
-				executed_trade_qty += trade_qty
-		return trade_amt / executed_trade_qty
-
-	def _compute_average_bid_price(self, bids: [[float, float]], size: float):
-		# Sell into bids starting from the highest to the lowest.
-		_bids 	= sorted(bids, key = lambda x: x[0], reverse = True)
-		if len(_bids) > 0:
-			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
-		return 0
-
-	def _compute_average_ask_price(self, asks: [[float, float]], size: float):
-		# Buy into asks starting from the lowest to the highest.
-		_asks 	= sorted(asks, key = lambda x: x[0], reverse = False)
-		if len(_asks) > 0:
-			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
-		return sys.maxsize
 
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
 		"""

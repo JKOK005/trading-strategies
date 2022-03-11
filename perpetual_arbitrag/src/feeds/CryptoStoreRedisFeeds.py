@@ -8,13 +8,17 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 	Class reads real time feeds from Crypto Store (ref: https://github.com/bmoscon/cryptostore).
 	Realtime feeds are expected to be stored in Redis.
 	"""
-	redis_cli 	= None
+	redis_cli = None
+	permissible_latency_s = 0
 
 	def __init__(self, 	redis_url: str, 
-						redis_port: int, 
+						redis_port: int,
+						permissible_latency_s: int,
 						*args, **kwargs):
-		super(self, CryptoStoreRedisFeeds).__init__(*args, **kwargs)
+
+		super(CryptoStoreRedisFeeds, self).__init__(*args, **kwargs)
 		self.redis_cli = redis.Redis(host = redis_url, port = redis_port)
+		self.permissible_latency_s = permissible_latency_s
 		return
 
 	def symbol_to_key_mapping(self, symbol: str, exchange: str):
@@ -24,14 +28,19 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 			new_symbol = new_symbol.replace("SWAP", "PERP").replace("swap", "PERP")
 		return new_symbol
 
-	def order_book_relevance(self, order_book, latency_s: int):
+	def assert_latency(func):
 		"""
 		Asserts if order_book is within latency ms from current time
 		"""
-		order_book_dt 	= datetime.utcfromtimestamp(order_book["updated"])
-		now_dt 			= datetime.utcnow()
-		return now_dt - order_book_dt <= timedelta(seconds = latency_s)
-
+		def wrapper(*args, **kwargs):
+			resp 	= func(*args, **kwargs)
+			resp_df = datetime.utcfromtimestamp(resp["updated"])
+			now_dt 	= datetime.utcnow()
+			assert now_dt - resp_df <= timedelta(seconds = args[0].permissible_latency_s), "latency too large"
+			return resp
+		return wrapper
+			
+	@assert_latency
 	def sorted_order_book(self, symbol: str, exchange: str, *args, **kwargs):
 		new_symbol 	= self.symbol_to_key_mapping(symbol = symbol, exchange = exchange)
 		redis_key 	= f"book-{exchange}-{new_symbol}" 		# Exchange and symbols are all UPPER case
