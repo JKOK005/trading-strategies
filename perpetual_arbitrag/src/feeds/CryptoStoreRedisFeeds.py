@@ -30,13 +30,14 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 
 	def assert_latency(func):
 		"""
-		Asserts if order_book is within latency ms from current time
+		Asserts if response is within latency ms from current time.
+		response needs an `updated` field denoting the latest time of the information.
 		"""
 		def wrapper(*args, **kwargs):
 			resp 	= func(*args, **kwargs)
 			resp_df = datetime.utcfromtimestamp(resp["updated"])
 			now_dt 	= datetime.utcnow()
-			assert now_dt - resp_df <= timedelta(seconds = args[0].permissible_latency_s), "latency too large"
+			assert now_dt - resp_df <= timedelta(milliseconds = args[0].permissible_latency_s * 1000), "latency too large"
 			return resp
 		return wrapper
 			
@@ -46,7 +47,7 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 		redis_key 	= f"book-{exchange}-{new_symbol}" 		# Exchange and symbols are all UPPER case
 		resp 		= self.redis_cli.zrange(redis_key, -1, -1)[0]
 		resp_dict 	= json.loads(resp)
-		bids 		= [(k, v) for (k, v) in resp_dict["book"]["bid"].items()]
-		asks 		= [(k, v) for (k, v) in resp_dict["book"]["ask"].items()]
+		bids 		= [(float(k), float(v)) for (k, v) in resp_dict["book"]["bid"].items()]
+		asks 		= [(float(k), float(v)) for (k, v) in resp_dict["book"]["ask"].items()]
 		timestamp 	= resp_dict["timestamp"]
 		return {"bids" : bids, "asks" : asks, "updated" : timestamp}
