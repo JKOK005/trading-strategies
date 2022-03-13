@@ -7,7 +7,7 @@ import hmac
 import logging
 import sys
 import websockets
-from datetime import timedelta
+from datetime import datetime, timedelta
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 
@@ -23,39 +23,49 @@ class OkxApiClientV2(ExchangeSpotClients, ExchangePerpetualClients):
 						funding_rate_enable: bool,
 						is_simulated: bool = False,
 				):
+		self.api_key = api_key
+		self.api_secret_key = api_secret_key
+		self.passphrase = passphrase
 		self.feed_client = feed_client
 		self.is_simulated = is_simulated
 		self.funding_rate_enable = funding_rate_enable
-		self.ws_private_client = self._login(api_key = api_key, passphrase = passphrase)
 		return
 
 	def __del__(self):
 		self.ws_private_client.close()
+		return
 
-	def _login(self, api_key: str, passphrase: str, api_secret_key: str):
-		epoch_ts 		= datetime.datetime.utcnow().total_seconds()
+	async def connect(self):
+		self.ws_private_client = await self._login(api_key = self.api_key, api_secret_key = self.api_secret_key, passphrase = self.passphrase)
+		return
+
+	def _create_sign(self, timestamp: int, key_secret: str):
+		message = f"{timestamp}" + 'GET' + '/users/self/verify'
+		mac = hmac.new(bytes(key_secret, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256')
+		d 	= mac.digest()
+		sign = base64.b64encode(d)
+		return sign
+
+	async def _login(self, api_key: str, api_secret_key: str, passphrase: str):
+		epoch_ts 		= int(datetime.now().timestamp())
 		login_payload 	= 	{	
 								"op" 	: "login",
 								"args" 	: [
 									{
 								      "apiKey": api_key,
 								      "passphrase": passphrase,
-								      "timestamp": current_time,
+								      "timestamp": epoch_ts,
 								      "sign": self._create_sign(timestamp = epoch_ts, key_secret = api_secret_key).decode("utf-8")
 								    }
 								]
 							}
 
-		ws_private_client = websockets.connect(self.ws_private_url)
+		ws_private_client = await websockets.connect(self.ws_private_url)
 		await ws_private_client.send(json.dumps(login_payload))
+		signed_resp = await ws_private_client.recv()
+		if json.loads(signed_resp)["event"] == "error":
+			raise Exception(signed_resp)
 		return ws_private_client
-
- 	def _create_sign(self, timestamp: str, key_secret: str):
-        message = timestamp + 'GET' + '/users/self/verify'
-        mac = hmac.new(bytes(key_secret, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256')
-        d 	= mac.digest()
-        sign = base64.b64encode(d)
-        return sign
 
 	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
 		"""
@@ -90,13 +100,23 @@ class OkxApiClientV2(ExchangeSpotClients, ExchangePerpetualClients):
 			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = asks, size = size)
 		return sys.maxsize
 
-	def get_spot_trading_account_details(self, currency: str):
+	async def get_spot_trading_account_details(self, currency: str):
 		"""
 		Retrieves spot trading details
 		"""
-		pass
+		payload = 	{	
+						"op" 	: "subscribe",
+						"args" 	: [
+							{
+						      "apiKey": api_key,
+						      "passphrase": passphrase,
+						      "timestamp": epoch_ts,
+						      "sign": self._create_sign(timestamp = epoch_ts, key_secret = api_secret_key).decode("utf-8")
+						    }
+						]
+					}
 
-	def get_spot_trading_price(self, symbol: str):
+	async def get_spot_trading_price(self, symbol: str):
 		"""
 		Retrieves current spot pricing for trading symbol
 		"""
