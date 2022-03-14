@@ -48,6 +48,9 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 										flag = '1' if is_simulated else '0'
 									)
 
+		self.api_key = api_key
+		self.api_secret_key = api_secret_key
+		self.passphrase = passphrase
 		self.funding_rate_enable = funding_rate_enable
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
 		return
