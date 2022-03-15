@@ -114,7 +114,7 @@ class OkxApiClientWS(OkxApiClient):
 		Websocket failed error codes can be referred to here: https://www.okex.com/docs-v5/en/#error-code-websocket-public
 		"""
 		order_resp_code = order_resp["code"]
-		if order_resp_code >= "60000" or order_resp_code <= "63999":
+		if order_resp_code != "0":
 			raise Exception(f"Spot order failed: {order_resp}")
 		return
 
@@ -162,6 +162,6 @@ class OkxApiClientWS(OkxApiClient):
 		Websocket failed error codes can be referred to here: https://www.okex.com/docs-v5/en/#error-code-websocket-public
 		"""
 		order_resp_code = order_resp["code"]
-		if order_resp_code >= "60000" or order_resp_code <= "63999":
+		if order_resp_code != "0":
 			raise Exception(f"Spot order failed: {order_resp}")
 		return
