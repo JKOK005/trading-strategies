@@ -118,7 +118,7 @@ class OkxApiClientWS(OkxApiClient):
 			raise Exception(f"Spot order failed: {order_resp}")
 		return
 
-	async def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
+	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""

@@ -13,7 +13,7 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 
 	def __init__(self, 	redis_url: str, 
 						redis_port: int,
-						permissible_latency_s: int,
+						permissible_latency_s: float,
 						*args, **kwargs):
 
 		super(CryptoStoreRedisFeeds, self).__init__(*args, **kwargs)
@@ -36,13 +36,13 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 		def wrapper(*args, **kwargs):
 			resp 	= func(*args, **kwargs)
 			resp_df = datetime.utcfromtimestamp(resp["updated"])
-			now_dt 	= datetime.utcnow()
-			assert now_dt - resp_df <= timedelta(milliseconds = args[0].permissible_latency_s * 1000), "latency too large"
+			assert datetime.utcnow() - resp_df <= timedelta(milliseconds = args[0].permissible_latency_s * 1000), "latency too large"
 			return resp
 		return wrapper
 			
 	@assert_latency
 	def sorted_order_book(self, symbol: str, exchange: str, *args, **kwargs):
+		start 		= datetime.utcnow()
 		new_symbol 	= self.symbol_to_key_mapping(symbol = symbol, exchange = exchange)
 		redis_key 	= f"book-{exchange}-{new_symbol}" 		# Exchange and symbols are all UPPER case
 		resp 		= self.redis_cli.zrange(redis_key, -1, -1)[0]
