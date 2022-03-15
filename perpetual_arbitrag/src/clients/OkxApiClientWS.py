@@ -18,17 +18,16 @@ class OkxApiClientWS(OkxApiClient):
 		self.feed_client = feed_client
 		return
 
-	def __del__(self):
-		self.ws_private_client.close()
+	async def _connect(self):
+		self.ws_private_client = await self._login(api_key = self.api_key, api_secret_key = self.api_secret_key, passphrase = self.passphrase)
 		return
 
-	def _create_sign(self, timestamp: int, key_secret: str):
-		message = f"{timestamp}" + 'GET' + '/users/self/verify'
-		mac = hmac.new(bytes(key_secret, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256')
-		d 	= mac.digest()
-		sign = base64.b64encode(d)
-		return sign
-
+	async def _maintain(self):
+		await self.ws_private_client.send("ping")
+		resp = await self.ws_private_client.recv()
+		self.logger.info(f"Ping server with resp: {resp}")
+		return
+					
 	async def _login(self, api_key: str, api_secret_key: str, passphrase: str):
 		epoch_ts 		= int(datetime.now().timestamp())
 		login_payload 	= 	{	
@@ -52,8 +51,19 @@ class OkxApiClientWS(OkxApiClient):
 		else:
 			return ws_private_client
 
-	async def connect(self):
-		self.ws_private_client = await self._login(api_key = self.api_key, api_secret_key = self.api_secret_key, passphrase = self.passphrase)
+	def _create_sign(self, timestamp: int, key_secret: str):
+		message = f"{timestamp}" + 'GET' + '/users/self/verify'
+		mac = hmac.new(bytes(key_secret, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256')
+		d 	= mac.digest()
+		sign = base64.b64encode(d)
+		return sign
+
+	def make_connection(self):
+		asyncio.get_event_loop().run_until_complete(self._connect())
+		return
+
+	def maintain_connection(self):
+		asyncio.get_event_loop().run_until_complete(self._maintain())
 		return
 
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
