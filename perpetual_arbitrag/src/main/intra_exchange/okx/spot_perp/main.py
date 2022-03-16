@@ -31,8 +31,8 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --funding_rate_disable 0 \
 --retry_timeout_s 30 \
 --db_url xxx \
---feeds_url xxx \
---feeds_port xxx \
+--feed_url xxx \
+--feed_port xxx \
 --feed_latency_s 0.05 \
 --fake_orders
 """
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only')
 	args 	= parser.parse_args()
 
-	logging.basicConfig(format='%(asctime)s %(levelname)-8s %(module)s.%(funcName)s - %(message)s',
+	logging.basicConfig(format='%(asctime)s %(levelname)-8s %(module)s.%(funcName)s %(lineno)d - %(message)s',
     					level=logging.INFO,
     					datefmt='%Y-%m-%d %H:%M:%S')
 
