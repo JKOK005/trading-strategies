@@ -1,13 +1,13 @@
 import argparse
 import os
 import logging
-from time import sleep
 from clients.OkxApiClientWS import OkxApiClientWS
-from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
 from db.SpotClients import SpotClients
 from db.PerpetualClients import PerpetualClients
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotPerpetualSimulatedBotExecution
+from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
+from time import sleep
 
 """
 python3 main/intra_exchange/okx/spot_perp/main.py \
@@ -66,7 +66,10 @@ if __name__ == "__main__":
 	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only')
 	args 	= parser.parse_args()
 
-	logging.basicConfig(level = logging.INFO)
+	logging.basicConfig(format='%(asctime)s %(levelname)-8s %(module)s.%(funcName)s - %(message)s',
+    					level=logging.INFO,
+    					datefmt='%Y-%m-%d %H:%M:%S')
+
 	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
 
 	feed_client = CryptoStoreRedisFeeds(redis_url 	= args.feed_url,
@@ -123,7 +126,7 @@ if __name__ == "__main__":
 				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
 																															seconds_before_current = args.current_funding_interval_s,
 																															seconds_before_estimated = args.estimated_funding_interval_s)
-				spot_price 	= client.get_spot_trading_price(symbol = args.spot_trading_pair)
+				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
 				perpetual_price = client.get_perpetual_trading_price(symbol = args.perpetual_trading_pair)
 				
 				decision 		= trade_strategy.trade_decision(spot_price 						= spot_price, 
@@ -133,7 +136,7 @@ if __name__ == "__main__":
 																entry_threshold 				= args.entry_gap_frac,
 																take_profit_threshold 			= args.profit_taking_frac
 															)
-				logging.info(f"Spot price: {spot_price}, perpetual price: {perpetual_price}")			
+				price_str 		= f"Spot price: {spot_price}, perpetual price: {perpetual_price}"		
 
 			elif args.order_type == "market":
 				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair,
@@ -151,8 +154,10 @@ if __name__ == "__main__":
 																		entry_threshold 		= args.entry_gap_frac,
 																		take_profit_threshold 	= args.profit_taking_frac
 																	)
-				logging.info(f"Avg spot bid: {avg_spot_bid}, asks: {avg_spot_ask} / Perpetuals bid: {avg_perpetual_bid}, asks: {avg_perpetual_ask}")
-			logging.info(f"Executing trade decision: {decision}")
+				price_str 		= f"Spot bid/ask: {(avg_spot_bid, avg_spot_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
+			
+			funding_str = f"Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
+			logging.info(f"{decision} - {price_str} - {funding_str}")
 
 			# Execute orders
 			new_order_execution = False
