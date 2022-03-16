@@ -5,7 +5,7 @@
 python3 main/intra_exchange/okx/spot_perp/main.py \
 --client_id 123asd \
 --spot_trading_pair BTC-USDT \
---perpetual_trading_pair BTC-USDT-SWAP \
+--perpetual_trading_pair XBTUSDTM \
 --api_key xxx \
 --api_secret_key xxx \
 --api_passphrase xxx \
@@ -15,16 +15,18 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --perpetual_entry_lot_size 10 \
 --max_perpetual_lot_size 100 \
 --perpetual_leverage 1 \
---entry_gap_frac 0 \
---profit_taking_frac -0.02 \
---poll_interval_s 1 \
+--entry_gap_frac 0.01 \
+--profit_taking_frac 0.005 \
+--poll_interval_s 60 \
 --current_funding_interval_s 1800 \
 --estimated_funding_interval_s 1800 \
 --funding_rate_disable 0 \
 --retry_timeout_s 30 \
 --db_url xxx \
---fake_orders \
---funding_rate_disable
+--feed_url xxx \
+--feed_port xxx \
+--feed_latency_s 0.05 \
+--fake_orders
 ```
 
 Flag / description pairs are explained below.
@@ -51,6 +53,9 @@ Flag / description pairs are explained below.
 | fake_orders | If present, we execute fake trades. Remove if we want to place REAL trades | - |
 | db_url | If present, trading bot state will be managed by the database under the URL specified. If None, we will revert to zero state execution (with no DB) | postgresql://user:pass@localhost:5432/schema |
 | db_reset | If present, we will reset the state of the spot - trading pair in the DB. This means all will be set to 0 and written to the DB | - |
+| feed_url | Price feed URL | - |
+| feed_port | Price feed port | - |
+| feed_latency_s | Permissible latency between retriving price feeds and computation in seconds | 0.08 |
 | current_funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account current funding rate | 1800 |
 | estimated_funding_interval_s | Seconds before funding rate snapshot timing which we consider valid for taking into account estimated funding rate | 1800 |
 | retry_timeout_s | Wait seconds before retrying main loop | 30 |
@@ -88,6 +93,8 @@ docker run \
 --env FUNDING_RATE_DISABLE=0 \
 --env RETRY_TIMEOUT_S=30 \
 --env DB_URL=xxx \
+--env FEEDS_URL=xxx \
+--env FEEDS_PORT=xxx \
 <image>:<label>
 ```
 

@@ -48,9 +48,47 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 										flag = '1' if is_simulated else '0'
 									)
 
+		self.api_key = api_key
+		self.api_secret_key = api_secret_key
+		self.passphrase = passphrase
 		self.funding_rate_enable = funding_rate_enable
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
 		return
+
+	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
+		"""
+		We will read pricing - qty data from the first entry of the list. 
+
+		This logic will differ, depending on whether we want to go long / short on the asset. 
+		As such, the ordering of the price-qty pairs in the list has to be handled properly by the user. 
+		"""
+		all_trade_qty 		= size
+		trade_amt 			= 0
+		executed_trade_qty 	= 0
+		for each_price_qty_pairs in price_qty_pairs_ordered:
+			if all_trade_qty < 0:
+				break
+			else:
+				[price, qty] 	=  each_price_qty_pairs
+				trade_qty 		=  min(all_trade_qty, qty)
+				trade_amt 	 	+= price * trade_qty
+				all_trade_qty 	-= trade_qty
+				executed_trade_qty += trade_qty
+		return trade_amt / executed_trade_qty
+
+	def _compute_average_bid_price(self, bids: [[float, float]], size: float):
+		# Sell into bids starting from the highest to the lowest.
+		_bids 	= sorted(bids, key = lambda x: x[0], reverse = True)
+		if len(_bids) > 0:
+			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
+		return 0
+
+	def _compute_average_ask_price(self, asks: [[float, float]], size: float):
+		# Buy into asks starting from the lowest to the highest.
+		_asks 	= sorted(asks, key = lambda x: x[0], reverse = False)
+		if len(_asks) > 0:
+			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
+		return sys.maxsize
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""
@@ -108,41 +146,6 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		asset_resp = self.public_client.get_instruments(instType = "SWAP", instId = symbol)
 		asset_info = asset_resp["data"][0]
 		return float(asset_info["minSz"])
-
-	def _compute_average_margin_purchase_price(self, price_qty_pairs_ordered: [float, float], size: float):
-		"""
-		We will read pricing - qty data from the first entry of the list. 
-
-		This logic will differ, depending on whether we want to go long / short on the asset. 
-		As such, the ordering of the price-qty pairs in the list has to be handled properly by the user. 
-		"""
-		all_trade_qty 		= size
-		trade_amt 			= 0
-		executed_trade_qty 	= 0
-		for each_price_qty_pairs in price_qty_pairs_ordered:
-			if all_trade_qty < 0:
-				break
-			else:
-				[price, qty] 	=  each_price_qty_pairs
-				trade_qty 		=  min(all_trade_qty, qty)
-				trade_amt 	 	+= price * trade_qty
-				all_trade_qty 	-= trade_qty
-				executed_trade_qty += trade_qty
-		return trade_amt / executed_trade_qty
-
-	def _compute_average_bid_price(self, bids: [[float, float]], size: float):
-		# Sell into bids starting from the highest to the lowest.
-		_bids 	= sorted(bids, key = lambda x: x[0], reverse = True)
-		if len(_bids) > 0:
-			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _bids, size = size)
-		return 0
-
-	def _compute_average_ask_price(self, asks: [[float, float]], size: float):
-		# Buy into asks starting from the lowest to the highest.
-		_asks 	= sorted(asks, key = lambda x: x[0], reverse = False)
-		if len(_asks) > 0:
-			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
-		return sys.maxsize
 
 	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
 		"""
@@ -275,7 +278,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 			(_funding_rate, _estimated_funding_rate) = self.get_perpetual_funding_rate(symbol = symbol)
 			funding_rate 			= _funding_rate if self.funding_rate_valid_interval(seconds_before = seconds_before_current) else 0
 			estimated_funding_rate 	= _estimated_funding_rate if self.funding_rate_valid_interval(seconds_before = seconds_before_estimated) else 0
-		self.logger.info(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
+		self.logger.debug(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
 		return (funding_rate, estimated_funding_rate)
  
 	def place_spot_order(self, 	symbol: str, 
@@ -290,7 +293,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		order_side 	- Either buy or sell
 		size 		- VOLUME of asset to purchase
 		"""
-		self.logger.info(f"Sport order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
+		self.logger.debug(f"Sport order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
 		if order_type == "limit":
 			return self.trade_client.place_order(instId 	= symbol,
 												 side 		= order_side,
@@ -326,7 +329,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		position_side = short, order_side = buy 	-> Close short on asset
 		position_side = short, order_side = sell 	-> Open short on asset
 		"""
-		self.logger.info(f"Open perpetual order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
+		self.logger.debug(f"Open perpetual order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
 		if order_type == "limit":
 			return self.trade_client.place_order(instId 	= symbol,
 												 tdMode		= "cross",
@@ -348,11 +351,11 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 											)
 
 	def revert_spot_order(self, order_resp, revert_params):
-		self.logger.info(f"Reverting spot order")
+		self.logger.debug(f"Reverting spot order")
 		return self.place_spot_order(**revert_params)
 
 	def revert_perpetual_order(self, order_resp, revert_params):
-		self.logger.info(f"Reverting perpetual order")
+		self.logger.debug(f"Reverting perpetual order")
 		return self.place_perpetual_order(**revert_params)
 
 	def assert_spot_resp_error(self, order_resp):
@@ -368,6 +371,6 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		return
 
 	def set_perpetual_leverage(self, symbol: str, leverage: int):
-		self.logger.info(f"Set leverage {leverage}")
+		self.logger.debug(f"Set leverage {leverage}")
 		self.account_client.set_leverage(instId = symbol, lever = leverage, mgnMode = "cross")
 		return
