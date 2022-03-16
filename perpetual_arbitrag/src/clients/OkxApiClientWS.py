@@ -25,7 +25,7 @@ class OkxApiClientWS(OkxApiClient):
 	async def _maintain(self):
 		await self.ws_private_client.send("ping")
 		resp = await self.ws_private_client.recv()
-		self.logger.info(f"Ping server with resp: {resp}")
+		self.logger.debug(f"Ping server with resp: {resp}")
 		return
 					
 	async def _login(self, api_key: str, api_secret_key: str, passphrase: str):
