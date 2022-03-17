@@ -75,7 +75,7 @@ if __name__ == "__main__":
 	feed_client = CryptoStoreRedisFeeds(redis_url 	= args.feed_url,
 										redis_port 	= args.feed_port,
 										permissible_latency_s = args.feed_latency_s
-									)
+									).connect()
 
 	client 	= OkxApiClientWS(api_key 				= args.api_key, 
 							 api_secret_key 		= args.api_secret_key, 
