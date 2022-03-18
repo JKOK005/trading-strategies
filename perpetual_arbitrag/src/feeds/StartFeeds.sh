@@ -73,7 +73,7 @@ done
 
 while true; do
 	for CUR in $(redis-cli -h $REDIS_HOST -p $REDIS_PORT --scan --pattern book-$EXCHANGE-*); do
-		up_to_time=$(date --date='-10 seconds' '+%s')
+		up_to_time=$(date --date='-1 seconds' '+%s')
 		cmd="redis-cli -h $REDIS_HOST -p $REDIS_PORT ZREMRANGEBYSCORE $CUR 0 $up_to_time"
 		echo $cmd
 		eval $cmd
