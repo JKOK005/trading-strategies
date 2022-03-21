@@ -8,7 +8,7 @@ import websockets
 from datetime import datetime
 from clients.KucoinApiClient import KucoinApiClient
 
-class KucoinApiClientWS(OkxApiClient):
+class KucoinApiClientWS(KucoinApiClient):
 	logger 				= logging.getLogger('KucoinApiClientWS')
 
 	def __init__(self, feed_client, *args, **kwargs):
@@ -27,7 +27,7 @@ class KucoinApiClientWS(OkxApiClient):
 		average_ask_price 	= self._compute_average_ask_price(asks = asks, size = size)
 		return (average_bid_price, average_ask_price)
 
-	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
+	def get_futures_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""

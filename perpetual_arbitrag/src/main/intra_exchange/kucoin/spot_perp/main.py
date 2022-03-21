@@ -1,10 +1,11 @@
 import argparse
 import logging
 import os
-from clients.KucoinApiClient import KucoinApiClient
+from clients.KucoinApiClientWS import KucoinApiClientWS
 from db.FutureClients import FutureClients
 from db.SpotClients import SpotClients
 from execution.SpotFutureBotExecution import SpotFutureBotExecution, SpotFutureSimulatedBotExecution
+from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
 from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
 from time import sleep
 
@@ -33,6 +34,9 @@ python3 main/intra_exchange/kucoin/spot_perp/main.py \
 --retry_timeout_s 30 \
 --funding_rate_disable 0 \
 --db_url xxx \
+--feed_url xxx \
+--feed_port xxx \
+--feed_latency_s 0.05 \
 --use_sandbox \
 --fake_orders
 """
@@ -60,9 +64,12 @@ if __name__ == "__main__":
 	parser.add_argument('--current_funding_interval_s', type=int, nargs='?', default=os.environ.get("CURRENT_FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for current funding rate P/L')
 	parser.add_argument('--estimated_funding_interval_s', type=int, nargs='?', default=os.environ.get("ESTIMATED_FUNDING_INTERVAL_S"), help='Seconds before funding snapshot timings which we consider valid to account for estimated funding rate P/L')
 	parser.add_argument('--retry_timeout_s', type=int, nargs='?', default=os.environ.get("RETRY_TIMEOUT_S"), help='Retry main loop after specified seconds')
-	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
 	parser.add_argument('--funding_rate_disable', type=int, nargs='?', choices={0, 1}, default=os.environ.get("FUNDING_RATE_DISABLE"), help='If 1, disable the effects of funding rate in the trade decision. If 0, otherwise')
+	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
 	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / futures lot sizes are set to 0')
+	parser.add_argument('--feed_url', type=str, nargs='?', default=os.environ.get("FEED_URL"), help="URL pointing to price feed channel")
+	parser.add_argument('--feed_port', type=str, nargs='?', default=os.environ.get("FEED_PORT"), help="Port pointing to price feed channel")
+	parser.add_argument('--feed_latency_s', type=float, nargs='?', default=os.environ.get("FEED_LATENCY_S"), help="Permissible latency between fetches of data from price feed")
 	parser.add_argument('--use_sandbox', action='store_true', help='If present, trades in Sandbox env. Else, trades in REAL env')
 	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only')
 	args 	= parser.parse_args()
@@ -70,15 +77,21 @@ if __name__ == "__main__":
 	logging.basicConfig(level = logging.INFO)
 	logging.info(f"Starting Arbitrag bot with the following params: {args}")
 
-	client 			= KucoinApiClient(	spot_client_api_key 			= args.spot_api_key, 
-										spot_client_api_secret_key 		= args.spot_api_secret_key, 
-										spot_client_pass_phrase 		= args.spot_api_passphrase, 
-										futures_client_api_key 			= args.futures_api_key, 
-										futures_client_api_secret_key 	= args.futures_api_secret_key, 
-										futures_client_pass_phrase 		= args.futures_api_passphrase,
-										sandbox 						= args.use_sandbox,
-										funding_rate_enable 			= args.funding_rate_disable == 0
-									)
+	feed_client = CryptoStoreRedisFeeds(redis_url 	= args.feed_url,
+										redis_port 	= args.feed_port,
+										permissible_latency_s = args.feed_latency_s
+									).connect()
+
+	client 		= KucoinApiClient(	spot_client_api_key 			= args.spot_api_key, 
+									spot_client_api_secret_key 		= args.spot_api_secret_key, 
+									spot_client_pass_phrase 		= args.spot_api_passphrase, 
+									futures_client_api_key 			= args.futures_api_key, 
+									futures_client_api_secret_key 	= args.futures_api_secret_key, 
+									futures_client_pass_phrase 		= args.futures_api_passphrase,
+									feed_client 					= feed_client,
+									sandbox 						= args.use_sandbox,
+									funding_rate_enable 			= args.funding_rate_disable == 0
+								)
 
 	assert 	args.spot_entry_vol >= client.get_spot_min_volume(symbol = args.spot_trading_pair), "Minimum spot entry size not satisfied."
 	assert 	args.futures_entry_lot_size >= client.get_futures_min_lot_size(symbol = args.futures_trading_pair), "Minimum futures entry size not satisfied."
@@ -116,11 +129,11 @@ if __name__ == "__main__":
 	while True:
 		try:
 			if 	args.order_type == "limit":
-				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
-				futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
 				(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair, 
 																													seconds_before_current = args.current_funding_interval_s,
 																													seconds_before_estimated = args.estimated_funding_interval_s)
+				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
+				futures_price 	= client.get_futures_trading_price(symbol = args.futures_trading_pair)
 				
 				decision 		= trade_strategy.trade_decision(spot_price 				= spot_price, 
 																futures_price 			= futures_price,
@@ -132,11 +145,11 @@ if __name__ == "__main__":
 				logging.info(f"Spot price: {spot_price}, Futures price: {futures_price}")			
 
 			elif args.order_type == "market":
-				(avg_spot_bid, avg_spot_ask) 		= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
-				(avg_futures_bid, avg_futures_ask) 	= client.get_futures_average_bid_ask_price(symbol = args.futures_trading_pair, size = args.futures_entry_lot_size)
 				(futures_funding_rate, futures_estimated_funding_rate) = client.get_futures_effective_funding_rate(	symbol = args.futures_trading_pair,
 																													seconds_before_current = args.current_funding_interval_s,
 																													seconds_before_estimated = args.estimated_funding_interval_s)
+				(avg_spot_bid, avg_spot_ask) 		= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
+				(avg_futures_bid, avg_futures_ask) 	= client.get_futures_average_bid_ask_price(symbol = args.futures_trading_pair, size = args.futures_entry_lot_size)
 
 				decision 							= trade_strategy.bid_ask_trade_decision(spot_bid_price 			= avg_spot_bid,
 																							spot_ask_price 			= avg_spot_ask,
