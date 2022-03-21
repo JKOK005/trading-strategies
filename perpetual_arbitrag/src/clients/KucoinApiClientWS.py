@@ -20,7 +20,7 @@ class KucoinApiClientWS(KucoinApiClient):
 		"""
 		Returns the average bid / ask price of the spot asset, assuming that we intend to trade at a given volume. 
 		"""
-		order_book 			= self.feed_client.sorted_order_book(exchange = "OKX", symbol = symbol)
+		order_book 			= self.feed_client.sorted_order_book(exchange = "KUCOIN", symbol = symbol)
 		bids 				= order_book["bids"]
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
 		asks 				= order_book["asks"]
@@ -31,7 +31,7 @@ class KucoinApiClientWS(KucoinApiClient):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""
-		order_book 			= self.feed_client.sorted_order_book(exchange = "OKX", symbol = symbol)
+		order_book 			= self.feed_client.sorted_order_book(exchange = "KUCOIN", symbol = symbol)
 		bids 				= order_book["bids"]
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
 		asks 				= order_book["asks"]
