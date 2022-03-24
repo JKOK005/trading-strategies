@@ -47,6 +47,32 @@ def get_containers_with_no_position(all_containers):
 			containers_with_no_position.append(each_container)
 	return containers_with_no_position
 
+def get_containers_to_kill(jobs, all_containers):
+	to_kill = []
+	for each_container in all_containers:
+		_is_kill = True
+		for each_job in jobs:
+			if 	each_container.first_asset == each_job.first_asset and \
+				each_container.second_asset == each_job.second_asset:
+				_is_kill = False
+				break
+		
+		to_kill.append(each_container) if _is_kill else None
+	return to_kill
+
+def get_jobs_to_create(jobs, all_containers):
+	to_create = []
+	for each_job in jobs:
+		_to_create = True
+		for each_container in all_containers:
+			if 	each_container.first_asset == each_job.first_asset and \
+				each_container.second_asset == each_job.second_asset:
+				_to_create = False
+				break
+		
+		to_create.append(each_job) if _to_create else None
+	return to_create
+
 """
 python3 ./main/general/intra_exchange/arbitrag_manager.py \
 --user_id 1 \
@@ -88,13 +114,17 @@ if __name__ == "__main__":
 																					f"asset_type={args.asset_type}"]})
 
 		containers_with_no_position 	= get_containers_with_no_position(all_containers = active_containers)
-		containers_with_position_count 	= len(active_containers) - len(containers_with_no_position)
-		new_containers_to_create_count 	= args.jobs - containers_with_position_count
+		containers_to_kill 				= get_containers_to_kill(jobs = jobs_to_run, all_containers = containers_with_no_position)
+		jobs_to_create 					= get_jobs_to_create(jobs = jobs_to_run, all_containers = active_containers)
+		
+		containers_with_position_count 					= len(active_containers) - len(containers_with_no_position)
+		containers_with_no_position_and_active_count 	= len(containers_with_no_position) - len(containers_to_kill)
+		new_containers_to_create_count 					= args.jobs - containers_with_position_count - containers_with_no_position_and_active_count
 
-		for each_conainer_with_no_position in containers_with_no_position:
-			kill(each_conainer_with_no_position)
+		for each_container_to_kill in containers_to_kill:
+			kill(each_container_to_kill)
 
-		while len(jobs_to_run) > 0 and new_containers_to_create_count > 0:
+		while len(jobs_to_create) > 0 and new_containers_to_create_count > 0:
 			next_job_to_run 	= jobs_to_run.pop(0)
 			docker_image_name 	= docker_image_client.get_img_name(exchange = args.exchange, asset_pair = args.asset_type)
 			
