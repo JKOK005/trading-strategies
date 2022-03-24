@@ -259,4 +259,8 @@ if __name__ == "__main__":
 			sleep(args.retry_timeout_s)
 
 		finally:
-			client.maintain_connection()
+			try:
+				client.maintain_connection()
+			except Exception as ex:
+				logging.error("Restoring connection to WS server")
+				client.make_connection()
