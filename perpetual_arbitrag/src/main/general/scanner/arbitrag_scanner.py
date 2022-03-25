@@ -57,14 +57,14 @@ def compute_arb_score(job_to_rank):
 
 """
 python3 ./main/general/scanner/arbitrag_scanner.py \
---exchange okx \
+--exchange test-okx \
 --asset_type spot-perp \
 --db_url postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag \
 --message_url localhost \
 --message_port 6379 \
---poll_interval_s 3600 \
+--poll_interval_s 5 \
 --processors 4 \
---samples 120
+--samples 1
 """
 if __name__ == "__main__":
 	parser 	= argparse.ArgumentParser(description='Arbitrag Scanner')
@@ -98,9 +98,11 @@ if __name__ == "__main__":
 
 		# Write rank to db
 		rank_counter = itertools.count()
+		max_score = 0
 		for (each_job, score) in collective_rank:
 			db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
 			db_client.set_arb_score(job_ranking_id = each_job.ID, new_score = score)
+			max_score = score if score >= max_score else max_score
 
 		payload 	= {"update_time" : datetime.utcnow().timestamp()}
 		messaging_client.publish(messaging_channel, json.dumps(payload))
