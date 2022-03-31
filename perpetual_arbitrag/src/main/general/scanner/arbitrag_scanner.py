@@ -88,22 +88,26 @@ if __name__ == "__main__":
 	jobs_to_rank 		= db_client.fetch_jobs(exchange = args.exchange, asset_type = args.asset_type)
 
 	while True:
-		with Pool(processes = args.processors) as pool:
-			collective_rank = pool.map(compute_arb_score, jobs_to_rank)
+		try:
+			with Pool(processes = args.processors) as pool:
+				collective_rank = pool.map(compute_arb_score, jobs_to_rank)
 
-		logging.info(f"{collective_rank}")
+			logging.info(f"{collective_rank}")
 
-		# Rank job scoring
-		collective_rank.sort(key = lambda x: x[-1], reverse = True)
+			# Rank job scoring
+			collective_rank.sort(key = lambda x: x[-1], reverse = True)
 
-		# Write rank to db
-		rank_counter = itertools.count()
-		max_score = 0
-		for (each_job, score) in collective_rank:
-			db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
-			db_client.set_arb_score(job_ranking_id = each_job.ID, new_score = score)
-			max_score = score if score >= max_score else max_score
+			# Write rank to db
+			rank_counter = itertools.count()
+			max_score = 0
+			for (each_job, score) in collective_rank:
+				db_client.set_rank(job_ranking_id = each_job.ID, new_rank = next(rank_counter))
+				db_client.set_arb_score(job_ranking_id = each_job.ID, new_score = score)
+				max_score = score if score >= max_score else max_score
 
-		payload 	= {"update_time" : datetime.utcnow().timestamp()}
-		messaging_client.publish(messaging_channel, json.dumps(payload))
-		sleep(args.poll_interval_s)
+			payload 	= {"update_time" : datetime.utcnow().timestamp()}
+			messaging_client.publish(messaging_channel, json.dumps(payload))
+			sleep(args.poll_interval_s)
+
+		except Exception as ex:
+			logging.error(ex)
