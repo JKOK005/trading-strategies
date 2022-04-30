@@ -11,9 +11,9 @@ if __name__ == "__main__":
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database")
 	args 	= parser.parse_args()
 	
-	client = OkxApiClient(	api_key = "eddce8fd-fd44-4084-ab82-74a3b9ccfc9e", 
-							api_secret_key = "9D849D285068F24BB9FCDD5F9A3F2354", 
-							passphrase = "Mldkk1982", 
+	client = OkxApiClient(	api_key = "", 
+							api_secret_key = "", 
+							passphrase = "", 
 							funding_rate_enable = False
 						)
 
