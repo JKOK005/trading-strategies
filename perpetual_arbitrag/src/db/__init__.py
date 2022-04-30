@@ -6,3 +6,4 @@ from db.JobConfigClient import JobConfigClient
 from db.JobRankerClient import JobRanking
 from db.SecretsClient import SecretsClient
 from db.UsersClient import UsersClient
+from db.TradeLogsClient import TradeLogsClient
