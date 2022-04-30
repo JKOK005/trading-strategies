@@ -179,6 +179,15 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		average_sell_price 	= self._compute_average_ask_price(asks = asks, size = size)
 		return (average_bid_price, average_sell_price)
 
+	def get_all_filled_transactions_days(self):
+		"""
+		Past 3 days of filled transaction data fetched for the user.
+
+		Based on https://www.okx.com/docs-v5/en/#rest-api-trade-get-transaction-details-last-3-days
+		"""
+		resp = self.trade_client.get_fills()
+		return resp["data"]
+
 	def get_spot_open_orders(self, symbol: str):
 		"""
 		Gets information of all open spot orders by the user
