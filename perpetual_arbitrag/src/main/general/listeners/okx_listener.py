@@ -11,18 +11,18 @@ if __name__ == "__main__":
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database")
 	args 	= parser.parse_args()
 	
-	client = OkxApiClient(	api_key = "", 
-							api_secret_key = "", 
-							passphrase = "", 
-							funding_rate_enable = False
-						)
+	client = OkxApiClient(	
+				api_key = "", 
+				api_secret_key = "", 
+				passphrase = "", 
+				funding_rate_enable = False
+			)
 
 	recent_transactions = client.get_all_filled_transactions_days(before = 0)
 	db_client = TradeLogsClient(db_url = "postgresql://arbitrag_bot:arbitrag@localhost:5432/arbitrag").create_session()
 
 	for each_transactions in recent_transactions:
-		print(each_transactions)
-		db_client.insert(params = {	
+		db_client.insert(	params = {	
 									"exchange"  	: "okx",
 									"client_id" 	: "123",
 									"page_id" 		: each_transactions["billId"],

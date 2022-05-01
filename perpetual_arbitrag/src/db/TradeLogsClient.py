@@ -37,4 +37,4 @@ class TradeLogsClient(DbClient):
 
 	@DbClient._with_session_context
 	def insert(self, conn, params):
-		return self.insert_table(conn = conn, params = params)
+		return self.insert_table(conn = conn, params = params, on_conflict_ignore = True, on_conflict_rule = 'tradeid_exchange_constraint')
