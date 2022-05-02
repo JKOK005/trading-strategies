@@ -350,3 +350,10 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.account_client 	= patch_account
 		_okx_api_client.set_perpetual_leverage(symbol = "ETH-USDT", leverage = 5)
 		assert patch_account.set_leverage.called
+
+	@patch("okx.Trade_api.TradeAPI")
+	def test_get_recent_transactions_days_invoked(self, patch_trade):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.trade_client 	= patch_trade
+		_okx_api_client.get_all_filled_transactions_days(before = 0)
+		assert patch_trade.get_fills.called
