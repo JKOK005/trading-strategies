@@ -15,4 +15,4 @@ echo "Compiling arbitrag bot scanner"
 docker build -t jkok005/arb-bot-scanner:$version -f ./main/general/scanner/Dockerfile .
 
 echo "Compiling Okx log listener"
-docker build -t jkok005/okx-log-listener:$version -f ./main/general/listeners/Dockerfile .
+docker build -t jkok005/log-listener:$version -f ./main/general/listeners/Dockerfile .
