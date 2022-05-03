@@ -3,6 +3,7 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 from sqlalchemy import *
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 BASE = declarative_base()
@@ -48,7 +49,9 @@ class DbClient(metaclass = ABCMeta):
 	def get_entries(self, conn, **filters):
 		return conn.query(self.table_ref()).filter_by(**filters).all()
 
-	def insert_table(self, conn, params):
+	def insert_table(self, conn, params, on_conflict_ignore = False, on_conflict_rule = ''):
 		# params can either be a dictionary or a list of dictionaries
-	 	res = conn.execute(insert(self.table_ref()).values(params))
-	 	return res
+		statement = insert(self.table_ref()).values(params)
+		statement = statement.on_conflict_do_nothing(constraint = on_conflict_rule) if on_conflict_ignore else statement
+		res = conn.execute(statement)
+		return res

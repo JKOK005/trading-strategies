@@ -38,3 +38,9 @@ class SecretsClient(DbClient):
 										)
 
 		return secret_info.client_id
+
+	@DbClient._with_session_context
+	def get_all_secrets(self, conn, exchange):
+		all_secrets = self.get_entries(conn = conn, exchange = exchange)
+		conn.expunge_all()
+		return all_secrets

@@ -6,6 +6,7 @@ from DockerImageClient import ArbitragDockerImages
 from JobConfigClient import JobConfig
 from JobRankerClient import JobRanking
 from UsersClient import Users
+from TradeLogsClient import TradeLogs
 from SecretsClient import SecretKeys
 from sqlalchemy import create_engine
 
@@ -29,3 +30,4 @@ if __name__ == "__main__":
 	ArbitragDockerImages.__table__.create(engine, checkfirst=True)
 	JobConfig.__table__.create(engine, checkfirst=True)
 	JobRanking.__table__.create(engine, checkfirst=True)
+	TradeLogs.__table__.create(engine, checkfirst=True)
