@@ -9,7 +9,10 @@ class JobConfig(BASE):
 	# For example, a spot asset will be first and a futures asset will be second
 	 
 	__tablename__ 	= "job_config"
-	__table_args__ 	= {'extend_existing': True} 
+	__table_args__ 	= (
+						UniqueConstraint('user_id', 'exchange', 'asset_type', 'first_asset' , 'second_asset', name = 'jobconfig_constraint'),
+						{'extend_existing': True} 
+					)
 
 	ID 				= Column(Integer, primary_key = True)
 	user_id 		= Column(Integer, ForeignKey('users.ID'))
