@@ -4,6 +4,13 @@ from abc import abstractmethod
 
 class ExchangeSpotClients(metaclass = ABCMeta):
 	@abstractmethod
+	def get_spot_symbols(self):
+		"""
+		Fetches all spot instrument symbols
+		"""
+		pass
+
+	@abstractmethod
 	def get_spot_trading_account_details(self, currency: str):
 		"""
 		Retrieves spot trading details
