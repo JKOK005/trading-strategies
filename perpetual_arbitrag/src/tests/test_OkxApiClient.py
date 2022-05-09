@@ -15,6 +15,20 @@ class TestOkxApiClient(TestCase):
 											funding_rate_enable = True,
 										)
 
+	@patch("okx.Public_api.PublicAPI")
+	def test_get_spot_symbols_called(self, patch_public):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 	= patch_public
+		_okx_api_client.get_spot_symbols()
+		patch_public.get_instruments.assert_called_with(instType = "SPOT")
+
+	@patch("okx.Public_api.PublicAPI")
+	def test_get_perpetual_symbols_called(self, patch_public):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 	= patch_public
+		_okx_api_client.get_perpetual_symbols()
+		patch_public.get_instruments.assert_called_with(instType = "SWAP")
+
 	@patch("okx.Account_api.AccountAPI")
 	def test_spot_account_api_call(self, patch_account):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)

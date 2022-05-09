@@ -67,6 +67,12 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 		self.logger.info(f"Enable for funding rate computation set to {funding_rate_enable}")
 		return
 
+	def get_spot_symbols(self):
+		pass
+
+	def get_futures_symbols(self):
+		pass
+
 	def get_spot_trading_account_details(self, currency: str):
 		"""
 		Retrieves spot trading details
