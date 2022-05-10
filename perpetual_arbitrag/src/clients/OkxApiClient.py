@@ -93,12 +93,12 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	def get_spot_symbols(self):
 		asset_resp = self.public_client.get_instruments(instType = "SPOT")
 		asset_info = asset_resp["data"]
-		return list(map(lambda x: x["instId"], asset_info))
+		return list(map(lambda x: (x["instId"], x["baseCcy"]), asset_info))
 
 	def get_perpetual_symbols(self):
 		asset_resp = self.public_client.get_instruments(instType = "SWAP")
 		asset_info = asset_resp["data"]
-		return list(map(lambda x: x["instId"], asset_info))
+		return list(map(lambda x: (x["instId"], x["uly"].split("-")[0]), asset_info))
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""

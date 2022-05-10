@@ -69,11 +69,11 @@ class KucoinApiClient(ExchangeSpotClients, ExchangeFutureClients):
 
 	def get_spot_symbols(self):
 		all_spot_info = self.spot_client.get_symbol_list()
-		return list(map(lambda x: x["symbol"], all_spot_info))
+		return list(map(lambda x: (x["symbol"], x["baseCurrency"]), all_spot_info))
 
 	def get_futures_symbols(self):
 		all_futures_info = self.futures_client.get_contracts_list()
-		return list(map(lambda x: x["symbol"], all_futures_info))
+		return list(map(lambda x: (x["symbol"], x["baseCurrency"]), all_futures_info))
 
 	def get_spot_trading_account_details(self, currency: str):
 		"""

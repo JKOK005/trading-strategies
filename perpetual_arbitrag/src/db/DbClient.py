@@ -55,3 +55,6 @@ class DbClient(metaclass = ABCMeta):
 		statement = statement.on_conflict_do_nothing(constraint = on_conflict_rule) if on_conflict_ignore else statement
 		res = conn.execute(statement)
 		return res
+
+	def delete_table(self, conn, **filters):
+		return conn.query(self.table_ref()).filter_by(**filters).delete()
