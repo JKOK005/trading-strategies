@@ -14,5 +14,8 @@ docker build -t jkok005/arb-bot-manager:$version -f ./main/general/intra_exchang
 echo "Compiling arbitrag bot scanner"
 docker build -t jkok005/arb-bot-scanner:$version -f ./main/general/scanner/Dockerfile .
 
-echo "Compiling Okx log listener"
+echo "Compiling log listener"
 docker build -t jkok005/log-listener:$version -f ./main/general/listeners/Dockerfile .
+
+echo "Compiling asset names listing"
+docker build -t jkok005/asset-names-listing:$version -f ./main/general/listings/Dockerfile .
