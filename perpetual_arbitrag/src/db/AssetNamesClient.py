@@ -4,7 +4,7 @@ import json
 from db.DbClient import DbClient, BASE
 from sqlalchemy import *
 
-class AssetNames(object):
+class AssetNames(BASE):
 	__tablename__ 	= "asset_names"
 	__table_args__	= (	
 						UniqueConstraint("exchange", "symbol", name = "exchange_symbol_constraint"),
