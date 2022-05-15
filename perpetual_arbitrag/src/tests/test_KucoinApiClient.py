@@ -19,6 +19,20 @@ class TestKucoinApiClient(TestCase):
 													funding_rate_enable = True,
 												)
 
+	@patch("kucoin.client.Market")
+	def test_get_spot_symbols(self, patch_client):
+		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.spot_client 	= patch_client
+		_kucoin_api_client.get_spot_symbols()
+		assert(patch_client.get_instruments.called)
+
+	@patch("kucoin_futures.client.Market")
+	def test_get_spot_symbols(self, patch_client):
+		_kucoin_api_client 					= copy.deepcopy(self.kucoin_api_client)
+		_kucoin_api_client.futures_client 	= patch_client
+		_kucoin_api_client.get_futures_symbols()
+		assert(patch_client.get_contracts_list.called)
+
 	@patch("kucoin.client.User")
 	def test_spot_trading_account_details_filters_correct_symbol(self, patch_user):
 		_kucoin_api_client 				= copy.deepcopy(self.kucoin_api_client)

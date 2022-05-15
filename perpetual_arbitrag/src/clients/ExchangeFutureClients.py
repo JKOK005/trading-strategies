@@ -4,6 +4,13 @@ from abc import abstractmethod
 
 class ExchangeFutureClients(metaclass = ABCMeta):
 	@abstractmethod
+	def get_futures_symbols(self):
+		"""
+		Fetches all futures instrument symbols
+		"""
+		pass
+
+	@abstractmethod
 	def get_futures_trading_account_details(self, currency: str):
 		"""
 		Retrieves futures trading account details

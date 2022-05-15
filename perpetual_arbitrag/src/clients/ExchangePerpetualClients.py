@@ -4,6 +4,13 @@ from abc import abstractmethod
 
 class ExchangePerpetualClients(metaclass = ABCMeta):
 	@abstractmethod
+	def get_perpetual_symbols(self):
+		"""
+		Fetches all perpetual instrument symbols
+		"""
+		pass
+
+	@abstractmethod
 	def get_perpetual_trading_account_details(self, currency: str):
 		"""
 		Retrieves perpetual trading account details

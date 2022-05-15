@@ -1,4 +1,5 @@
 import argparse
+from AssetNamesClient import AssetNames
 from SpotClients import SpotInfoTable
 from FutureClients import FutureInfoTable
 from PerpetualClients import PerpetualInfoTable
@@ -25,6 +26,7 @@ if __name__ == "__main__":
 	FutureInfoTable.__table__.create(engine, checkfirst=True)
 	PerpetualInfoTable.__table__.create(engine, checkfirst=True)
 
+	AssetNames.__table__.create(engine, checkfirst=True)
 	Users.__table__.create(engine, checkfirst=True)
 	SecretKeys.__table__.create(engine, checkfirst=True)
 	ArbitragDockerImages.__table__.create(engine, checkfirst=True)
