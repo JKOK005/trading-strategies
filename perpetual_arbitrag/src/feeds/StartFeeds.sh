@@ -68,7 +68,7 @@ for CUR in "${CURRENCY[@]}"; do
 	-e SNAPSHOT_ONLY=True \
 	-e SNAPSHOT_INTERVAL=1 \
 	-l cryptostore.exchange=$EXCHANGE \
-	ghcr.io/bmoscon/cryptostore:latest
+	jkok005/cryptostore-fork:latest
 done
 
 while true; do
