@@ -13,6 +13,7 @@ class Users(BASE):
 	ID 				= Column(Integer, primary_key = True)
 	name 			= Column(String, nullable = False)
 	password 		= Column(String, nullable = False)
+	salt			= Column(String, nullable = False)
 
 	def __repr__(self):
 		return f"{self.ID}-{self.name}"
