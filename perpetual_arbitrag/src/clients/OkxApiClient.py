@@ -8,6 +8,7 @@ from okx.Public_api import PublicAPI
 from okx.Trade_api import TradeAPI
 from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
+from clients.ExchangeMarginClients import ExchangeMarginClients
 
 class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	account_client 	= None
@@ -100,6 +101,11 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		asset_info = asset_resp["data"]
 		return list(map(lambda x: (x["instId"], x["uly"].split("-")[0]), asset_info))
 
+	def get_margin_symbols(self):
+		asset_resp = self.public_client.get_instruments(instType = "MARGIN")
+		asset_info = asset_resp["data"]
+		return list(map(lambda x: (x["instId"], x["baseCcy"]), asset_info))
+
 	def get_spot_trading_account_details(self, currency: str):
 		"""
 		Retrieves spot trading details
@@ -117,12 +123,21 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		Retrieves perpetual trading account details
 		"""
 		perpetual_info = self.account_client.get_positions(instType = "SWAP", instId = currency)
-		positions = list(map(lambda x: (x["availPos"], x["posSide"]), perpetual_info["data"]))
+		positions = perpetual_info["data"]
 		net_position = 0
 		for each_position in positions:
+			if each_position["availPos"] != '':
+				pos_multiplier = -1 if each_position["posSide"] == "short" else 1
+				net_position += pos_multiplier * float(each_position["availPos"]) 
+		return net_position
+
+	def get_margin_trading_account_details(self, currency: str):
+		margin_info = self.account_client.get_positions(instType = "MARGIN", instId = currency)
+		positions = margin_info["data"]
+		for each_position in positions:
 			if each_position[0] != '':
-				pos_multiplier = -1 if each_position[-1] == "short" else 1
-				net_position += pos_multiplier * float(each_position[0]) 
+				pos_multiplier = -1 if each_position["ccy"] == each_position["posCcy"] else 1
+				net_position += pos_multiplier * float(each_position["pos"]) 
 		return net_position
 
 	def get_spot_trading_price(self, symbol: str):

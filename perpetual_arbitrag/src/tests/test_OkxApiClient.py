@@ -29,6 +29,9 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.get_perpetual_symbols()
 		patch_public.get_instruments.assert_called_with(instType = "SWAP")
 
+	def test_get_margin_symbols_called(self):
+		pass
+
 	@patch("okx.Account_api.AccountAPI")
 	def test_spot_account_api_call(self, patch_account):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
@@ -52,6 +55,9 @@ class TestOkxApiClient(TestCase):
 													}
 		perpetual_position 	= _okx_api_client.get_perpetual_trading_account_details(currency = "ETH-USDT-SWAP")
 		assert(perpetual_position == 5)
+
+	def test_compute_correct_margin_amt(self, patch_account):
+		pass
 
 	@patch("okx.Market_api.MarketAPI")
 	def test_spot_trading_price_api_call(self, patch_market):
