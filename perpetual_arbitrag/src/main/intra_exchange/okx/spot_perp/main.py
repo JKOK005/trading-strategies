@@ -84,6 +84,9 @@ if __name__ == "__main__":
 							 funding_rate_enable 	= args.funding_rate_disable == 0
 							)
 
+	import IPython
+	IPython.embed()
+
 	client.make_connection()
 	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
 

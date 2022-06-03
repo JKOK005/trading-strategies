@@ -132,12 +132,15 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		return net_position
 
 	def get_margin_trading_account_details(self, currency: str):
+		"""
+		Retrieves margin trading account details
+		"""
 		margin_info = self.account_client.get_positions(instType = "MARGIN", instId = currency)
 		positions = margin_info["data"]
+		net_position = 0
 		for each_position in positions:
-			if each_position[0] != '':
-				pos_multiplier = -1 if each_position["ccy"] == each_position["posCcy"] else 1
-				net_position += pos_multiplier * float(each_position["pos"]) 
+			if each_position["availPos"] != '':
+				net_position += float(each_position["liab"]) if each_position["ccy"] == each_position["posCcy"] else float(each_position["pos"])
 		return net_position
 
 	def get_spot_trading_price(self, symbol: str):
@@ -156,6 +159,14 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		asset_info = asset_resp["data"][0]
 		return float(asset_info["last"])
 
+	def get_margin_trading_price(self, symbol: str):
+		"""
+		Retrieves current margin price for trading symbol
+		"""
+		asset_resp = self.market_client.get_ticker(instId = symbol)
+		asset_info = asset_resp["data"][0]
+		return float(asset_info["last"])
+
 	def get_spot_min_volume(self, symbol: str):
 		"""
 		Retrieves minimum order volume for spot trading symbol
@@ -169,6 +180,14 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		Retrieves minimum order lot size for perpetual trading symbol
 		"""
 		asset_resp = self.public_client.get_instruments(instType = "SWAP", instId = symbol)
+		asset_info = asset_resp["data"][0]
+		return float(asset_info["minSz"])
+
+	def get_margin_min_volume(self, symbol: str):
+		"""
+		Retrieves minimum order volume for margin trading symbol
+		"""
+		asset_resp = self.public_client.get_instruments(instType = "MARGIN", instId = symbol)
 		asset_info = asset_resp["data"][0]
 		return float(asset_info["minSz"])
 
@@ -204,6 +223,12 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		average_sell_price 	= self._compute_average_ask_price(asks = asks, size = size)
 		return (average_bid_price, average_sell_price)
 
+	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
+		"""
+		Returns the average bid / ask price of the margin asset, assuming that we intend to trade at a given size. 
+		"""
+		return self.get_spot_average_bid_ask_price(symbol = symbol, size = size)
+
 	def get_all_filled_transactions_days(self, before: int):
 		"""
 		Past 3 days of filled transaction data fetched for the user.
@@ -227,6 +252,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		resp = self.trade_client.get_order_list(instType = "SWAP", instId = symbol, limit = 50)
 		return resp["data"]
 
+	def get_margin_open_orders(self, symbol: str):
+		"""
+		Gets information of all open margin orders by the user
+		"""
+		resp = self.trade_client.get_order_list(instType = "MARGIN", instId = symbol, limit = 50)
+		return resp["data"]
+
 	def get_spot_most_recent_open_order(self, symbol: str):
 		"""
 		Gets the most recent open orders for spot
@@ -247,6 +279,15 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		most_recent_open_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_open_order
 
+	def get_margin_most_recent_open_order(self, symbol: str):
+		"""
+		Gets the most recent open orders for margin
+		"""
+		open_orders 	= self.get_margin_open_orders(symbol = symbol)
+		sorted_orders 	= sorted(open_orders, key = lambda d: d['uTime'], reverse = True) 
+		most_recent_open_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
+		return most_recent_open_order
+
 	def get_spot_fulfilled_orders(self, symbol: str):
 		"""
 		Gets information for all fulfilled spot orders by the user
@@ -259,6 +300,13 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		Gets information of all fulfilled future orders by the user
 		"""
 		resp = self.trade_client.get_orders_history(instType = "SWAP", instId = symbol, state = "filled", limit = 50)
+		return resp["data"]
+
+	def get_margin_fulfilled_orders(self, symbol: str):
+		"""
+		Gets information of all fulfilled margin orders by the user
+		"""
+		resp = self.trade_client.get_orders_history(instType = "MARGIN", instId = symbol, state = "filled", limit = 50)
 		return resp["data"]
 
 	def get_spot_most_recent_fulfilled_order(self, symbol: str):
@@ -275,6 +323,15 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		Gets information of the most recent perpetual trade that have been fulfilled
 		"""
 		fulfilled_orders 	= self.get_perpetual_fulfilled_orders(symbol = symbol)
+		sorted_orders 		= sorted(fulfilled_orders, key = lambda d: int(d['uTime']), reverse = True) 
+		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
+		return most_recent_fulfilled_order
+
+	def get_margin_most_recent_fulfilled_order(self, symbol: str):
+		"""
+		Gets information of the most recent margin trade that have been fulfilled
+		"""
+		fulfilled_orders 	= self.get_margin_fulfilled_orders(symbol = symbol)
 		sorted_orders 		= sorted(fulfilled_orders, key = lambda d: int(d['uTime']), reverse = True) 
 		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order

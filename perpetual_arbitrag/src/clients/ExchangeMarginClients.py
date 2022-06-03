@@ -25,16 +25,16 @@ class ExchangeMarginClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def get_margin_min_lot_size(self, symbol: str):
+	def get_margin_min_volume(self, symbol: str):
 		"""
-		Retrieves minimum order lot size for margin trading symbol
+		Retrieves minimum order volume for margin trading symbol
 		"""
 		pass
 
 	@abstractmethod
 	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
 		"""
-		Returns the average bid / ask price of the margin asset, assuming that we intend to trade at a given lot size. 
+		Returns the average bid / ask price of the margin asset, assuming that we intend to trade at a given size. 
 		"""
 		pass
 
@@ -67,7 +67,7 @@ class ExchangeMarginClients(metaclass = ABCMeta):
 		pass
 
 	@abstractmethod
-	def get_margin_effective_funding_rate(self, symbol: str, seconds_before_current: int, seconds_before_estimated: int):
+	def get_margin_effective_funding_rate(self, symbol: str):
 		"""
 		Gets the effective funding rate for margin contract.
 
