@@ -387,7 +387,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 			interest_rate_resp 			= self.public_client.get_interest_loan()
 			interest_rate_basic_resp 	= interest_rate_resp["data"][0]["basic"]
 			interest_rate_for_ccy 		= next(filter(lambda x: x["ccy"] == ccy, interest_rate_basic_resp))
-			funding_rate 				= self._compounded_interest_rate(interest = interest_rate_for_ccy["rate"] / 24, cycles = loan_period_hrs)
+			funding_rate 				= self._compounded_interest_rate(interest = float(interest_rate_for_ccy["rate"]) / 24, cycles = loan_period_hrs)
 		return funding_rate
  
 	def place_spot_order(self, 	symbol: str, 
@@ -531,5 +531,7 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 		self.account_client.set_leverage(instId = symbol, lever = leverage, mgnMode = "cross")
 		return
 
-	def set_margin_leverage(self, symbol: str, leverage: int):
-		pass
+	def set_margin_leverage(self, symbol: str, ccy: str, leverage: int):
+		self.logger.debug(f"Set leverage {leverage}")
+		self.account_client.set_leverage(instId = symbol, ccy = ccy, lever = leverage, mgnMode = "cross")
+		return
