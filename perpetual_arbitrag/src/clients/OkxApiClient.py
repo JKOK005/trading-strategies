@@ -371,6 +371,24 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 			estimated_funding_rate 	= _estimated_funding_rate if self.funding_rate_valid_interval(seconds_before = seconds_before_estimated) else 0
 		self.logger.debug(f"Funding rate: {funding_rate}, Estimated funding rate: {estimated_funding_rate}")
 		return (funding_rate, estimated_funding_rate)
+
+	def _compounded_interest_rate(self, interest: float, cycles: int):
+		return (1 + interest) ** cycles - 1
+
+	def get_margin_effective_funding_rate(self, ccy: str, loan_period_hrs: int):
+		"""
+		ccy 			- Currency to borrow
+		loan_period_hrs - Expected duration of the loan 
+
+		Rates are quoted daily and compounded hourly: https://support.okexcn.com/hc/en-us/articles/360019908352--OKX-Margin-Trading-Rules
+		"""
+		funding_rate = 0
+		if self.funding_rate_enable:
+			interest_rate_resp 			= self.public_client.get_interest_loan()
+			interest_rate_basic_resp 	= interest_rate_resp["data"][0]["basic"]
+			interest_rate_for_ccy 		= next(filter(lambda x: x["ccy"] == ccy, interest_rate_basic_resp))
+			funding_rate 				= self._compounded_interest_rate(interest = interest_rate_for_ccy["rate"] / 24, cycles = loan_period_hrs)
+		return funding_rate
  
 	def place_spot_order(self, 	symbol: str, 
 								order_type: str, 
@@ -441,6 +459,43 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 												 reduceOnly = "true",
 											)
 
+	def place_margin_order(self, 	symbol: str,
+									ccy: str,
+									trade_mode: str, 
+									order_type: str, 
+									order_side: str, 
+									price: int,
+									size: float,
+									*args, **kwargs):
+		"""
+		order_type 	- Either limit or market
+		order_side 	- Either buy or sell
+		size 		- VOLUME of asset to purchase
+		"""
+		self.logger.debug(f"Open margin order - asset: {symbol}, side: {order_side}, type: {order_type}, price: {price}, size: {size}")
+		if order_type == "limit":
+			return self.trade_client.place_order(
+				instId 		= symbol, 
+				ccy 		= ccy,
+				tdMode 		= trade_mode,
+				side 		= order_side,
+				ordType 	= order_type, 
+				px 			= price,
+				sz 			= size,
+				reduceOnly 	= False,
+			)
+
+		elif order_type == "market":
+			return self.trade_client.place_order(
+				instId 		= symbol, 
+				ccy 		= ccy,
+				tdMode 		= trade_mode,
+				side 		= order_side,
+				ordType 	= order_type, 
+				sz 			= size,
+				reduceOnly 	= False,
+			)
+
 	def revert_spot_order(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting spot order")
 		return self.place_spot_order(**revert_params)
@@ -448,6 +503,10 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 	def revert_perpetual_order(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting perpetual order")
 		return self.place_perpetual_order(**revert_params)
+
+	def revert_margin_order(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting margin order")
+		return self.place_margin_order(**revert_params)
 
 	def assert_spot_resp_error(self, order_resp):
 		if order_resp["data"][0]["sCode"] != "0":
@@ -461,7 +520,16 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 			raise Exception(f"Perpetual order failed: {error_msg}")
 		return
 
+	def assert_margin_resp_error(self, order_resp, revert_params):
+		if order_resp["data"][0]["sCode"] != "0":
+			error_msg = order_resp["data"][0]["sMsg"]
+			raise Exception(f"Margin order failed: {error_msg}")
+		return
+
 	def set_perpetual_leverage(self, symbol: str, leverage: int):
 		self.logger.debug(f"Set leverage {leverage}")
 		self.account_client.set_leverage(instId = symbol, lever = leverage, mgnMode = "cross")
 		return
+
+	def set_margin_leverage(self, symbol: str, leverage: int):
+		pass

@@ -29,9 +29,6 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.get_perpetual_symbols()
 		patch_public.get_instruments.assert_called_with(instType = "SWAP")
 
-	def test_get_margin_symbols_called(self):
-		pass
-
 	@patch("okx.Account_api.AccountAPI")
 	def test_spot_account_api_call(self, patch_account):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
@@ -56,8 +53,7 @@ class TestOkxApiClient(TestCase):
 		perpetual_position 	= _okx_api_client.get_perpetual_trading_account_details(currency = "ETH-USDT-SWAP")
 		assert(perpetual_position == 5)
 
-	def test_compute_correct_margin_amt(self, patch_account):
-		pass
+
 
 	@patch("okx.Market_api.MarketAPI")
 	def test_spot_trading_price_api_call(self, patch_market):
@@ -73,9 +69,6 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.get_perpetual_trading_price(symbol = "ETH-USDT-SWAP")
 		assert(patch_market.get_ticker.called)
 
-	def test_margin_trading_price_api_call(self, patch_market):
-		pass
-
 	@patch("okx.Public_api.PublicAPI")
 	def test_spot_min_volume_api_call(self, patch_public):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
@@ -89,9 +82,6 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.public_client 	= patch_public
 		_okx_api_client.get_perpetual_min_lot_size(symbol = "ETH-USDT-SWAP")
 		assert(patch_public.get_instruments.called)
-
-	def test_margin_min_volume_api_call(self, patch_public):
-		pass
 
 	def test_average_margin_purchase_price_computation_exact_order(self):
 		price_qty_pairs_ordered = [[100, 100], [200, 100], [300, 50]]
@@ -157,9 +147,6 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.get_perpetual_open_orders(symbol = "ETH-USDT-SWAP")
 		assert(patch_trade.get_order_list.called)
 
-	def test_open_margin_orders_api_call(self, patch_trade):
-		pass
-
 	def test_most_recent_open_spot_order_retrieved(self):
 		_okx_api_client = copy.deepcopy(self.okx_api_client)
 
@@ -177,9 +164,6 @@ class TestOkxApiClient(TestCase):
 															{"symbol" : "ETH-USDT-SWAP", "orderId" : 2, "uTime" : 5},
 															{"symbol" : "ETH-USDT-SWAP", "orderId" : 3, "uTime" : 3}]
 			assert(_okx_api_client.get_perpetual_most_recent_open_order(symbol = "ETH-USDT-SWAP")["orderId"] == 2)
-
-	def test_most_recent_open_margin_order_retrieved(self):
-		pass
 	
 	def test_no_open_spot_orders(self):
 		_okx_api_client = copy.deepcopy(self.okx_api_client)
@@ -195,9 +179,6 @@ class TestOkxApiClient(TestCase):
 			mock_get_perpetual_open_orders.return_value = []
 			assert(_okx_api_client.get_perpetual_most_recent_open_order(symbol = "ETH-USDT-SWAP") == [])
 
-	def test_no_open_margin_orders(self):
-		pass
-
 	@patch("okx.Trade_api.TradeAPI")
 	def test_fulfilled_spot_orders_api_call(self, patch_trade):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
@@ -211,9 +192,6 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.trade_client 	= patch_trade
 		_okx_api_client.get_perpetual_fulfilled_orders(symbol = "ETH-USDT-SWAP")
 		assert(patch_trade.get_orders_history.called)
-
-	def test_fulfilled_margin_orders_api_call(self, patch_trade):
-		pass
 
 	def test_fulfilled_spot_order_retrieved(self):
 		_okx_api_client = copy.deepcopy(self.okx_api_client)
@@ -235,9 +213,6 @@ class TestOkxApiClient(TestCase):
 
 			assert(_okx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "ETH-USDT")["orderId"] == 2)
 
-	def test_fulfilled_margin_order_retrieved(self):
-		pass
-
 	def test_no_fulfilled_spot_orders(self):
 		_okx_api_client = copy.deepcopy(self.okx_api_client)
 
@@ -252,8 +227,6 @@ class TestOkxApiClient(TestCase):
 			mock_get_perpetual_fulfilled_orders.return_value = []
 			assert(_okx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "ETH-USDT-SWAP") == [])
 
-	def test_no_fulfilled_margin_orders(self):
-		pass
 
 	@patch("okx.Trade_api.TradeAPI")
 	def test_spot_order_call_invoked(self, patch_trade):
@@ -401,3 +374,51 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.trade_client 	= patch_trade
 		_okx_api_client.get_all_filled_transactions_days(before = 0)
 		assert patch_trade.get_fills.called
+
+	def test_get_margin_symbols_called(self):
+		pass
+
+	def test_compute_correct_margin_amt(self, patch_account):
+		pass
+
+	def test_margin_trading_price_api_call(self, patch_market):
+		pass
+
+	def test_margin_min_volume_api_call(self, patch_public):
+		pass
+
+	def test_open_margin_orders_api_call(self, patch_trade):
+		pass
+
+	def test_most_recent_open_margin_order_retrieved(self):
+		pass
+
+	def test_no_open_margin_orders(self):
+		pass
+
+	def test_fulfilled_margin_orders_api_call(self, patch_trade):
+		pass
+
+	def test_no_fulfilled_margin_orders(self):
+		pass
+
+	def test_fulfilled_margin_order_retrieved(self):
+		pass
+
+	def test_compound_interest_rate_calculation(self):
+		pass
+
+	def test_margin_effective_funding_rate(self):
+		pass
+
+	def test_margin_effective_funding_rate_is_zero_when_flag_is_disabled(self):
+		pass
+
+	def test_margin_order_call_invoked(self):
+		pass
+
+	def test_margin_order_revertion(self):
+		pass
+
+	def test_margin_leverage_set(self, patch_account):
+		pass
