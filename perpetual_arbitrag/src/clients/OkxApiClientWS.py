@@ -51,6 +51,11 @@ class OkxApiClientWS(OkxApiClient):
 		else:
 			return ws_private_client
 
+	async def _place_order_async(self, order: dict):
+		await self.ws_private_client.send(json.dumps(order))
+		signed_resp = await self.ws_private_client.recv()
+		return json.loads(signed_resp)
+
 	def _create_sign(self, timestamp: int, key_secret: str):
 		message = f"{timestamp}" + 'GET' + '/users/self/verify'
 		mac = hmac.new(bytes(key_secret, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256')
@@ -76,11 +81,6 @@ class OkxApiClientWS(OkxApiClient):
 		asks 				= order_book["asks"]
 		average_ask_price 	= self._compute_average_ask_price(asks = asks, size = size)
 		return (average_bid_price, average_ask_price)
-
-	async def _place_order_async(self, order: dict):
-		await self.ws_private_client.send(json.dumps(order))
-		signed_resp = await self.ws_private_client.recv()
-		return json.loads(signed_resp)
 
 	def place_spot_order(self, 	symbol: str, 
 								order_type: str, 
@@ -163,5 +163,46 @@ class OkxApiClientWS(OkxApiClient):
 		"""
 		order_resp_code = order_resp["code"]
 		if order_resp_code != "0":
-			raise Exception(f"Spot order failed: {order_resp}")
+			raise Exception(f"Perpetual order failed: {order_resp}")
 		return
+
+	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
+		"""
+		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
+		"""
+		return self.get_spot_average_bid_ask_price(symbol = symbol, size = size)
+
+	def place_margin_order(self, symbol: str,
+								 ccy: str,
+								 trade_mode: str, 
+								 order_type: str, 
+								 order_side: str, 
+								 price: int,
+								 size: float,
+								 *args, **kwargs):
+		order 	= {
+			"id" 	: f"12345",
+			"op" 	: "order",
+			"args" 	: [
+				{
+					"instId" 	 : symbol,
+					"ccy" 		 : ccy,
+					"tdMode" 	 : trade_mode,
+					"side" 		 : order_side,
+					"ordType" 	 : order_type,
+					"sz" 		 : size,
+					"px" 		 : str(price),
+					"reduceOnly" : False
+				}
+			]
+		}
+		return asyncio.get_event_loop().run_until_complete(self._place_order_async(order = order))
+
+	def assert_margin_resp_error(self, order_resp):
+		"""
+		Function looks at an order response created after placing an order and decides if we should raise an error.
+
+		A raised error indicates a failed order attempt.
+		Websocket failed error codes can be referred to here: https://www.okex.com/docs-v5/en/#error-code-websocket-public
+		"""
+		return self.assert_spot_resp_error(order_resp = order_resp)

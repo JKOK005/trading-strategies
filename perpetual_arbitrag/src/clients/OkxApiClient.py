@@ -459,14 +459,14 @@ class OkxApiClient(ExchangeSpotClients, ExchangePerpetualClients):
 												 reduceOnly = "true",
 											)
 
-	def place_margin_order(self, 	symbol: str,
-									ccy: str,
-									trade_mode: str, 
-									order_type: str, 
-									order_side: str, 
-									price: int,
-									size: float,
-									*args, **kwargs):
+	def place_margin_order(self, symbol: str,
+								 ccy: str,
+								 trade_mode: str, 
+								 order_type: str, 
+								 order_side: str, 
+								 price: int,
+								 size: float,
+								 *args, **kwargs):
 		"""
 		order_type 	- Either limit or market
 		order_side 	- Either buy or sell

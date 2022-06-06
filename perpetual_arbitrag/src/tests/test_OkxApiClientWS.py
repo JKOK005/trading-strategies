@@ -28,6 +28,10 @@ class TestOkxApiClientWS(TestCase):
 		(avg_bids, avg_asks) = self.okx_api_client.get_spot_average_bid_ask_price(symbol = "None", size = 30)
 		assert(avg_bids == 20 and avg_asks == 50)
 
+	def test_get_margin_average_bid_ask_price(self):
+		(avg_bids, avg_asks) = self.okx_api_client.get_margin_average_bid_ask_price(symbol = "None", size = 30)
+		assert(avg_bids == 20 and avg_asks == 50)
+
 	def test_assert_spot_resp_no_error(self):
 		order_resp = {"code" : "0"}
 		self.okx_api_client.assert_spot_resp_error(order_resp = order_resp)
@@ -48,4 +52,15 @@ class TestOkxApiClientWS(TestCase):
 		order_resp = {"code" : "1"}
 		with self.assertRaises(Exception):
 			self.okx_api_client.assert_perpetual_resp_error(order_resp = order_resp)
+		return
+
+	def test_assert_margin_resp_no_error(self):
+		order_resp = {"code" : "0"}
+		self.okx_api_client.assert_margin_resp_error(order_resp = order_resp)
+		return
+
+	def test_assert_margin_resp_error(self):
+		order_resp = {"code" : "1"}
+		with self.assertRaises(Exception):
+			self.okx_api_client.assert_margin_resp_error(order_resp = order_resp)
 		return
