@@ -2,7 +2,7 @@ import deprecation
 import hashlib
 import logging
 from enum import Enum
-from strategies.Strategies import Strategies
+from strategies.StrategiesV2 import StrategiesV2
 
 class TradePosition(Enum):
 	# Current position that the bot has taken up
@@ -18,7 +18,7 @@ class ExecutionDecision(Enum):
 	TAKE_PROFIT_LONG_A_SHORT_B 	= 4
 	TAKE_PROFIT_LONG_B_SHORT_A 	= 5
 
-class SingleTradeArbitragV2(Strategies):
+class SingleTradeArbitragV2(StrategiesV2):
 	logger 				= logging.getLogger('SingleTradeArbitragV2')
 	A_symbol 			= None
 	current_A_position	= 0
@@ -86,17 +86,17 @@ class SingleTradeArbitragV2(Strategies):
 		Returns a decision on which asset to buy / sell or do nothing
 		"""
 		decision 			= ExecutionDecision.NO_DECISION
-		current_position 	= self.current_position()
+		current_position 	= self._current_position()
 
 		profit_from_long_A_short_B 	= asset_B_effective_bid_price - asset_A_effective_ask_price
 		profit_from_short_A_long_B 	= asset_A_effective_bid_price - asset_B_effective_ask_price
 
 		if 	(current_position is TradePosition.LONG_A_SHORT_B) \
-			and (asset_A_effective_bid_price - asset_B_effective_ask_price >= take_profit_threshold * (asset_A_bid_price + asset_B_ask_price)):
+			and (profit_from_short_A_long_B >= take_profit_threshold * (asset_A_bid_price + asset_B_ask_price)):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_A_SHORT_B
 
 		elif (current_position is TradePosition.LONG_B_SHORT_A) \
-			 and (asset_B_effective_bid_price - asset_A_effective_ask_price >= take_profit_threshold * (asset_A_bid_price + asset_B_ask_price)):
+			 and (profit_from_long_A_short_B >= take_profit_threshold * (asset_A_ask_price + asset_B_bid_price)):
 			decision = ExecutionDecision.TAKE_PROFIT_LONG_B_SHORT_A
 
 		else:
@@ -105,11 +105,13 @@ class SingleTradeArbitragV2(Strategies):
 			 	decision = ExecutionDecision.NO_DECISION
 
 			elif (profit_from_long_A_short_B > profit_from_short_A_long_B) \
-				 and (profit_from_long_A_short_B >= entry_threshold * (asset_A_ask_price + asset_B_bid_price)):
+				 and (profit_from_long_A_short_B >= entry_threshold * (asset_A_ask_price + asset_B_bid_price)) \
+				 and (current_position is not TradePosition.LONG_B_SHORT_A):
 				decision = ExecutionDecision.GO_LONG_A_SHORT_B
 
 			elif (profit_from_short_A_long_B > profit_from_long_A_short_B) \
-				 and (profit_from_short_A_long_B >= entry_threshold * (asset_A_bid_price + asset_B_ask_price)):
+				 and (profit_from_short_A_long_B >= entry_threshold * (asset_A_bid_price + asset_B_ask_price)) \
+				 and (current_position is not TradePosition.LONG_A_SHORT_B):
 				decision = ExecutionDecision.GO_LONG_B_SHORT_A
 
 		return decision
