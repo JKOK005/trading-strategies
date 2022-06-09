@@ -31,7 +31,6 @@ class TestSingleTradeArbitrag(TestCase):
 												)
 
 	def test_do_not_enter_when_threshold_not_met_on_market_case_A(self):
-		# Do not enter on long spot short future
 		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 200,
@@ -48,7 +47,6 @@ class TestSingleTradeArbitrag(TestCase):
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_enter_when_threshold_not_met_on_market_case_B(self):
-		# Do not enter on long future short spot
 		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
 			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 150,
@@ -64,8 +62,71 @@ class TestSingleTradeArbitrag(TestCase):
 													)
 			assert(decision == ExecutionDecision.NO_DECISION)
 
+	def test_do_not_enter_when_threshold_not_met_for_effective_A_bid_price_case_A(self):
+		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 150,
+														asset_A_effective_bid_price = 0,
+														asset_A_ask_price 			= 1000,
+														asset_A_effective_ask_price = 1000,
+														asset_B_bid_price 			= 200,
+														asset_B_effective_bid_price = 200,
+														asset_B_ask_price 			= 50,
+														asset_B_effective_ask_price = 50,
+														entry_threshold 			= 0.1,
+														take_profit_threshold 		= 1,
+													)
+			assert(decision == ExecutionDecision.NO_DECISION)
+
+	def test_do_not_enter_when_threshold_not_met_for_effective_A_ask_price_case_B(self):
+		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 200,
+														asset_A_effective_bid_price = 200,
+														asset_A_ask_price 			= 50,
+														asset_A_effective_ask_price = 1000,
+														asset_B_bid_price 			= 150,
+														asset_B_effective_bid_price = 150,
+														asset_B_ask_price 			= 1000,
+														asset_B_effective_ask_price = 1000,
+														entry_threshold 			= 0.1,
+														take_profit_threshold 		= 1,
+													)
+			assert(decision == ExecutionDecision.NO_DECISION)
+
+	def test_do_not_enter_when_threshold_not_met_for_effective_B_bid_price_case_A(self):
+		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 50,
+														asset_A_effective_bid_price = 50,
+														asset_A_ask_price 			= 100,
+														asset_A_effective_ask_price = 100,
+														asset_B_bid_price 			= 200,
+														asset_B_effective_bid_price = 0,
+														asset_B_ask_price 			= 150,
+														asset_B_effective_ask_price = 150,
+														entry_threshold 			= 0.1,
+														take_profit_threshold 		= 1,
+													)
+			assert(decision == ExecutionDecision.NO_DECISION)
+
+	def test_do_not_enter_when_threshold_not_met_for_effective_B_ask_price_case_A(self):
+		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
+			mock_current_position.return_value = TradePosition.NO_POSITION_TAKEN
+			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 200,
+														asset_A_effective_bid_price = 200,
+														asset_A_ask_price 			= 150,
+														asset_A_effective_ask_price = 150,
+														asset_B_bid_price 			= 50,
+														asset_B_effective_bid_price = 50,
+														asset_B_ask_price 			= 100,
+														asset_B_effective_ask_price = 1000,
+														entry_threshold 			= 0.1,
+														take_profit_threshold 		= 1,
+													)
+			assert(decision == ExecutionDecision.NO_DECISION)
+
 	def test_do_not_take_profit_when_take_profit_threshold_not_met_on_market_case_A(self):
-		# Do not take profit on long spot short future
 		with patch.object(SingleTradeArbitragV2Mock, "_current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.LONG_A_SHORT_B
 			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 150,
@@ -82,7 +143,6 @@ class TestSingleTradeArbitrag(TestCase):
 			assert(decision == ExecutionDecision.NO_DECISION)
 
 	def test_do_not_take_profit_when_take_profit_threshold_not_met_on_market_case_B(self):
-		# Do not take profit on long future short spot
 		with patch.object(SingleTradeArbitragV2, "_current_position") as mock_current_position:
 			mock_current_position.return_value = TradePosition.LONG_B_SHORT_A
 			decision 	= self.strategy._trade_decision(asset_A_bid_price 			= 200,
