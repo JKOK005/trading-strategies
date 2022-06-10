@@ -6,7 +6,7 @@ from db.MarginClients import MarginClients
 from db.PerpetualClients import PerpetualClients
 from execution.MarginPerpetualBotExecution import MarginPerpetualBotExecution
 from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
-from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
+from strategies.MarginPerpArbitrag import MarginPerpArbitrag, MarginPerpExecutionDecision
 from time import sleep
 
 """
@@ -97,8 +97,8 @@ if __name__ == "__main__":
 		strategy_id = SingleTradeArbitrag.get_strategy_id()
 		client_id 	= args.client_id
 
-		db_margin_client 		= MarginClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "okx", symbol = args.margin_trading_pair, units = "vol").create_session()
-		db_perpetual_clients 	= PerpetualClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "okx", symbol = args.perpetual_trading_pair, units = "lot").create_session()
+		db_margin_client 	 = MarginClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "okx", symbol = args.margin_trading_pair, units = "vol").create_session()
+		db_perpetual_clients = PerpetualClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "okx", symbol = args.perpetual_trading_pair, units = "lot").create_session()
 		
 		db_margin_client.create_entry() if not db_margin_client.is_exists() else None
 		db_perpetual_clients.create_entry() if not db_perpetual_clients.is_exists() else None
@@ -106,20 +106,20 @@ if __name__ == "__main__":
 		db_margin_client.set_position(size = 0) if args.db_reset else None
 		db_perpetual_clients.set_position(size = 0) if args.db_reset else None
 
-		(current_spot_vol, current_perpetual_lot_size) = (db_margin_client.get_position(), db_perpetual_clients.get_position())
+		(current_margin_vol, current_perpetual_lot_size) = (db_margin_client.get_position(), db_perpetual_clients.get_position())
 	else:
 		logging.warning(f"Zero state execution as no db_url detected")
 		(current_spot_vol, current_perpetual_lot_size) = (0, 0)
 
-	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 				= args.spot_trading_pair,
-											current_spot_vol 			= current_spot_vol,
-											max_spot_vol 				= args.max_spot_vol,
-											futures_symbol 				= args.perpetual_trading_pair,
-											current_futures_lot_size 	= current_perpetual_lot_size,
-											max_futures_lot_size		= args.max_perpetual_lot_size,
+	trade_strategy 	= MarginPerpArbitrag(spot_symbol 			 = args.margin_trading_pair,
+										 current_margin_position = current_margin_vol,
+										 max_margin_position 	 = args.max_margin_vol,
+										 perp_symbol 			 = args.perpetual_trading_pair,
+										 current_perp_position 	 = current_perpetual_lot_size,
+										 max_perp_position		 = args.max_perpetual_lot_size,
 										)
 
-	bot_executor 	= SpotPerpetualBotExecution(api_client = client)
+	bot_executor 	= MarginPerpetualBotExecution(api_client = client)
 
 	while True:
 		try:

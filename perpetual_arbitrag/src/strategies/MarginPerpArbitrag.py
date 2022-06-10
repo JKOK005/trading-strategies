@@ -32,14 +32,14 @@ class MarginPerpArbitrag(SingleTradeArbitragV2):
 						max_margin_position: float,
 						perp_symbol: str,
 						current_perp_position: int,
-						max_perp_lot_size: int,
+						max_perp_position: int,
 				):
 		super(MarginPerpArbitrag, self).__init__(A_symbol = margin_symbol,
 												 current_A_position = current_margin_position,
 												 max_A_position = max_margin_position,
 												 B_symbol = perp_symbol,
 												 current_B_position = current_perp_position,
-												 max_B_position = max_perp_lot_size)
+												 max_B_position = max_perp_position)
 
 	def change_asset_holdings(self, delta_margin: float, delta_perp: float):
 		return self._change_asset_holdings(delta_A_position = delta_margin, delta_B_position = delta_perp)
