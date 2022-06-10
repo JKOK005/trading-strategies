@@ -1,4 +1,3 @@
-import deprecation
 import hashlib
 import logging
 from enum import Enum
