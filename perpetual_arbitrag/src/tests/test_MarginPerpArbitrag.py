@@ -11,7 +11,7 @@ class TestMarginPerpArbitrag(TestCase):
 											 max_margin_position 		= 10,
 											 perp_symbol				= "XBTUSDTM",
 											 current_perp_position 		= 0,
-											 max_perp_lot_size 			= 10,
+											 max_perp_position 			= 10,
 										)
 
 	def test_get_current_position_no_position(self):

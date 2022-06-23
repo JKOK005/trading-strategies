@@ -10,7 +10,8 @@ from strategies.MarginPerpArbitrag import MarginPerpArbitrag, MarginPerpExecutio
 from time import sleep
 
 """
-python3 main/intra_exchange/okx/spot_perp/main.py \
+python3 main/intra_exchange/okx/margin_p
+erp/main.py \
 --client_id 123asd \
 --margin_trading_pair BTC-USDT \
 --perpetual_trading_pair XBTUSDTM \
@@ -47,6 +48,7 @@ if __name__ == "__main__":
 	parser.add_argument('--margin_entry_vol', type=float, nargs='?', default=os.environ.get("MARGIN_ENTRY_VOL"), help='Volume of margin assets for each entry')
 	parser.add_argument('--max_margin_vol', type=float, nargs='?', default=os.environ.get("MAX_MARGIN_VOL"), help='Max volume of margin assets to long / short')
 	parser.add_argument('--margin_leverage', type=float, nargs='?', default=os.environ.get("MARGIN_LEVERAGE"), help='Leverage for each entry for margin')
+	parser.add_argument('--margin_loan_period_hr', type=int, nargs='?', default=os.environ.get("MARGIN_LOAN_PERIOD_HR"), help='How long are we going to hold the margin position for? This will impact the funding rate for the margined asset.')
 	parser.add_argument('--perpetual_entry_lot_size', type=int, nargs='?', default=os.environ.get("PERPETUAL_ENTRY_LOT_SIZE"), help='Lot size for each entry for perpetual')
 	parser.add_argument('--max_perpetual_lot_size', type=int, nargs='?', default=os.environ.get("MAX_PERPETUAL_LOT_SIZE"), help='Max lot size to long / short perpetual')
 	parser.add_argument('--perpetual_leverage', type=int, nargs='?', default=os.environ.get("PERPETUAL_LEVERAGE"), help='Leverage for each entry for perpetual')
@@ -60,7 +62,7 @@ if __name__ == "__main__":
 	parser.add_argument('--retry_timeout_s', type=float, nargs='?', default=os.environ.get("RETRY_TIMEOUT_S"), help='Retry main loop after specified seconds')
 	parser.add_argument('--funding_rate_disable', type=int, nargs='?', choices={0, 1}, default=os.environ.get("FUNDING_RATE_DISABLE"), help='If 1, disable the effects of funding rate in the trade decision. If 0, otherwise')
 	parser.add_argument('--db_url', type=str, nargs='?', default=os.environ.get("DB_URL"), help="URL pointing to the database. If None, the program will not connect to a DB and zero-state execution is assumed")
-	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all spot / perpetual lot sizes are set to 0')
+	parser.add_argument('--db_reset', action='store_true', help='Resets the state in the database to zero-state. This means all margin / perpetual lot sizes are set to 0')
 	parser.add_argument('--feed_url', type=str, nargs='?', default=os.environ.get("FEED_URL"), help="URL pointing to price feed channel")
 	parser.add_argument('--feed_port', type=str, nargs='?', default=os.environ.get("FEED_PORT"), help="Port pointing to price feed channel")
 	parser.add_argument('--feed_latency_s', type=float, nargs='?', default=os.environ.get("FEED_LATENCY_S"), help="Permissible latency between fetches of data from price feed")
@@ -94,7 +96,7 @@ if __name__ == "__main__":
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 
-		strategy_id = SingleTradeArbitrag.get_strategy_id()
+		strategy_id = MarginPerpArbitrag.get_strategy_id()
 		client_id 	= args.client_id
 
 		db_margin_client 	 = MarginClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "okx", symbol = args.margin_trading_pair, units = "vol").create_session()
@@ -109,9 +111,9 @@ if __name__ == "__main__":
 		(current_margin_vol, current_perpetual_lot_size) = (db_margin_client.get_position(), db_perpetual_clients.get_position())
 	else:
 		logging.warning(f"Zero state execution as no db_url detected")
-		(current_spot_vol, current_perpetual_lot_size) = (0, 0)
+		(current_margin_vol, current_perpetual_lot_size) = (0, 0)
 
-	trade_strategy 	= MarginPerpArbitrag(spot_symbol 			 = args.margin_trading_pair,
+	trade_strategy 	= MarginPerpArbitrag(margin_symbol 			 = args.margin_trading_pair,
 										 current_margin_position = current_margin_vol,
 										 max_margin_position 	 = args.max_margin_vol,
 										 perp_symbol 			 = args.perpetual_trading_pair,
@@ -124,72 +126,96 @@ if __name__ == "__main__":
 	while True:
 		try:
 			if 	args.order_type == "limit":
+				margin_funding_rate = client.get_margin_effective_funding_rate(	ccy = args.margin_trading_pair, 
+																				loan_period_hrs = args.margin_loan_period_hr)
+
 				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
 																															seconds_before_current = args.current_funding_interval_s,
 																															seconds_before_estimated = args.estimated_funding_interval_s)
-				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
+				
+				margin_price 	= client.get_margin_trading_price(symbol = args.margin_trading_pair)
 				perpetual_price = client.get_perpetual_trading_price(symbol = args.perpetual_trading_pair)
 				
-				decision 		= trade_strategy.trade_decision(spot_price 						= spot_price, 
-																futures_price 					= perpetual_price,
-																futures_funding_rate 			= perpetual_funding_rate,
-																futures_estimated_funding_rate 	= perpetual_estimated_funding_rate,
-																entry_threshold 				= args.entry_gap_frac,
-																take_profit_threshold 			= args.profit_taking_frac
-															)
-				price_str 		= f"Spot price: {spot_price}, perpetual price: {perpetual_price}"		
+				decision 		= trade_strategy.trade_decision(
+									margin_bid_price = margin_price,
+									margin_ask_price = margin_price,
+									margin_interest_rate = margin_funding_rate,
+									perp_bid_price = perpetual_price,
+									perp_ask_price = perpetual_price,
+									perp_funding_rate = perpetual_funding_rate,
+									perp_estimated_funding_rate = perpetual_estimated_funding_rate,
+									entry_threshold = args.entry_gap_frac,
+									take_profit_threshold = args.profit_taking_frac
+							 	)
+
+				price_str 			= f"Margin price: {margin_price}, perpetual price: {perpetual_price}"		
+				margin_long_size 	= args.margin_entry_vol * margin_price
 
 			elif args.order_type == "market":
+				margin_funding_rate = client.get_margin_effective_funding_rate(	ccy = args.margin_trading_pair, 
+																				loan_period_hrs = args.margin_loan_period_hr)
+
 				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair,
 																															seconds_before_current = args.current_funding_interval_s,
 																															seconds_before_estimated = args.estimated_funding_interval_s)
-				(avg_spot_bid, avg_spot_ask) = client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
+				
+				(avg_margin_bid, avg_margin_ask) 		= client.get_margin_average_bid_ask_price(symbol = args.margin_trading_pair, size = args.margin_entry_vol)
 				(avg_perpetual_bid, avg_perpetual_ask) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
 				
-				decision 		= trade_strategy.bid_ask_trade_decision(spot_bid_price 			= avg_spot_bid,
-																		spot_ask_price 			= avg_spot_ask,
-																		futures_bid_price 		= avg_perpetual_bid,
-																		futures_ask_price 		= avg_perpetual_ask,
-																		futures_funding_rate 	= perpetual_funding_rate,
-																		futures_estimated_funding_rate = perpetual_estimated_funding_rate,
-																		entry_threshold 		= args.entry_gap_frac,
-																		take_profit_threshold 	= args.profit_taking_frac
-																	)
-				price_str 		= f"Spot bid/ask: {(avg_spot_bid, avg_spot_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
+				decision 		= trade_strategy.trade_decision(
+									margin_bid_price = avg_margin_bid,
+									margin_ask_price = avg_margin_ask,
+									margin_interest_rate = margin_funding_rate,
+									perp_bid_price = avg_perpetual_bid,
+									perp_ask_price = avg_perpetual_ask,
+									perp_funding_rate = perpetual_funding_rate,
+									perp_estimated_funding_rate = perpetual_estimated_funding_rate,
+									entry_threshold = args.entry_gap_frac,
+									take_profit_threshold = args.profit_taking_frac
+							 	)
+				price_str 			= f"Margin bid/ask: {(avg_margin_bid, avg_margin_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
+				margin_long_size 	= args.margin_entry_vol * avg_margin_ask
 			
-			funding_str = f"Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
+			funding_str = f"Margin interest: {margin_funding_rate} - Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
 			logging.info(f"{decision} - {price_str} - {funding_str}")
+
+			if args.order_type == "limit":
+				margin_
 
 			# Execute orders
 			new_order_execution = False
 
-			if decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT:
-				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
+			if decision == MarginPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_MARGIN:
+				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params = {
+																					"symbol" 	 		: args.margin_trading_pair,
+																					"ccy" 				: "USDT",
+																					"trade_mode" 		: "cross",
 																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy",
+																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
+																					"entry_size" 		: margin_long_size,
+																					"revert_size" 		: args.margin_entry_vol,
 																				},
 																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "long",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
+																					"symbol" 	 		: args.perpetual_trading_pair,
+																					"position_side" 	: "long",
+																					"order_type" 		: args.order_type, 
+																					"price" 	 		: perpetual_price if args.order_type == "limit" else 1,
+																					"size" 		 		: args.perpetual_entry_lot_size,
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_margin = args.margin_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE:
-				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
+			elif decision == MarginPerpExecutionDecision.TAKE_PROFIT_LONG_MARGIN_SHORT_PERP:
+				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params = {
+																					"symbol" 	 		: args.margin_trading_pair,
+																					"ccy" 				: "USDT",
+																					"trade_mode" 		: "cross",
 																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy" 
+																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
+																					"entry_size" 		: args.margin_entry_vol,
+																					"revert_size" 		: margin_long_size,
 																				},
 																				perpetual_params = {
 																					"symbol" 	 	: args.perpetual_trading_pair,
@@ -200,16 +226,18 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_margin = -1 * args.margin_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
-				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
+			elif decision == MarginPerpExecutionDecision.GO_LONG_MARGIN_SHORT_PERP:
+				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params = {
+																					"symbol" 	 		: args.margin_trading_pair,
+																					"ccy" 				: "USDT",
+																					"trade_mode" 		: "cross",
 																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy" 
+																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
+																					"entry_size" 		: margin_long_size,
+																					"revert_size" 		: args.margin_entry_vol,
 																				},
 																				perpetual_params = {
 																					"symbol" 	 	: args.perpetual_trading_pair,
@@ -220,16 +248,18 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_margin = args.margin_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
-				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
+			elif decision == MarginPerpExecutionDecision.GO_LONG_PERP_SHORT_MARGIN:
+				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params = {
+																					"symbol" 	 		: args.margin_trading_pair,
+																					"ccy" 				: "USDT",
+																					"trade_mode" 		: "cross",
 																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy" 
+																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
+																					"entry_size" 		: args.margin_entry_vol,
+																					"revert_size" 		: margin_long_size,
 																				},
 																				perpetual_params = {
 																					"symbol" 	 	: args.perpetual_trading_pair,
@@ -240,12 +270,12 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_margin = -1 * args.margin_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
-				(current_spot_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
-				db_spot_client.set_position(size = current_spot_vol)
+				(current_margin_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
+				db_margin_client.set_position(size = current_margin_vol)
 				db_perpetual_clients.set_position(size = current_perpetual_lot_size)
 
 			if 	(new_order_execution) or \
