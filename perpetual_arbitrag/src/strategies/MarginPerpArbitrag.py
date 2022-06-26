@@ -53,7 +53,8 @@ class MarginPerpArbitrag(SingleTradeArbitragV2):
 
 	def trade_decision(self, margin_bid_price: float,
 							 margin_ask_price: float,
-							 margin_interest_rate: float,
+							 margin_quote_interest_rate: float,
+							 margin_base_interest_rate: float,
 							 perp_bid_price: float,
 							 perp_ask_price: float,
 							 perp_funding_rate: float,
@@ -62,8 +63,8 @@ class MarginPerpArbitrag(SingleTradeArbitragV2):
 							 take_profit_threshold: float,
 					):
 		
-		effective_margin_bid_price 	= (1 - margin_interest_rate) * margin_bid_price
-		effective_margin_ask_price 	= (1 + margin_interest_rate) * margin_ask_price
+		effective_margin_bid_price 	= margin_bid_price * (1 - margin_quote_interest_rate)
+		effective_margin_ask_price 	= margin_ask_price * (1 + margin_base_interest_rate)
 		effective_perp_bid_price 	= perp_bid_price * (1 + perp_funding_rate + perp_estimated_funding_rate)
 		effective_perp_ask_price 	= perp_ask_price * (1 + perp_funding_rate + perp_estimated_funding_rate)
 

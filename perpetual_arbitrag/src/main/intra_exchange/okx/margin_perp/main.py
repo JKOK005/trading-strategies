@@ -10,11 +10,10 @@ from strategies.MarginPerpArbitrag import MarginPerpArbitrag, MarginPerpExecutio
 from time import sleep
 
 """
-python3 main/intra_exchange/okx/margin_p
-erp/main.py \
+python3 main/intra_exchange/okx/margin_perp/main.py \
 --client_id 123asd \
 --margin_trading_pair BTC-USDT \
---perpetual_trading_pair XBTUSDTM \
+--perpetual_trading_pair BTC-USDT-SWAP \
 --api_key xxx \
 --api_secret_key xxx \
 --api_passphrase xxx \
@@ -22,6 +21,7 @@ erp/main.py \
 --margin_entry_vol 0.01 \
 --max_margin_vol 0.1 \
 --margin_leverage 1 \
+--margin_loan_period_hr 24 \
 --perpetual_entry_lot_size 10 \
 --max_perpetual_lot_size 100 \
 --perpetual_leverage 1 \
@@ -86,8 +86,9 @@ if __name__ == "__main__":
 							 funding_rate_enable 	= args.funding_rate_disable == 0
 							)
 
+	(quote_ccy, base_ccy) = args.margin_trading_pair.split("-")
 	client.make_connection()
-	client.set_margin_leverage(symbol = args.margin_trading_pair, leverage = args.margin_leverage)
+	client.set_margin_leverage(symbol = args.margin_trading_pair, ccy = base_ccy, leverage = args.margin_leverage)
 	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
 
 	assert 	args.margin_entry_vol >= client.get_margin_min_volume(symbol = args.margin_trading_pair), "Minimum margin entry size not satisfied."
@@ -125,14 +126,17 @@ if __name__ == "__main__":
 
 	while True:
 		try:
-			if 	args.order_type == "limit":
-				margin_funding_rate = client.get_margin_effective_funding_rate(	ccy = args.margin_trading_pair, 
+			margin_quote_funding_rate = client.get_margin_effective_funding_rate(ccy = quote_ccy, 
+																				 loan_period_hrs = args.margin_loan_period_hr)
+
+			margin_base_funding_rate = client.get_margin_effective_funding_rate(ccy = base_ccy, 
 																				loan_period_hrs = args.margin_loan_period_hr)
 
-				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
-																															seconds_before_current = args.current_funding_interval_s,
-																															seconds_before_estimated = args.estimated_funding_interval_s)
-				
+			(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
+																														seconds_before_current = args.current_funding_interval_s,
+																														seconds_before_estimated = args.estimated_funding_interval_s)
+
+			if 	args.order_type == "limit":
 				margin_price 	= client.get_margin_trading_price(symbol = args.margin_trading_pair)
 				perpetual_price = client.get_perpetual_trading_price(symbol = args.perpetual_trading_pair)
 				
@@ -151,14 +155,7 @@ if __name__ == "__main__":
 				price_str 			= f"Margin price: {margin_price}, perpetual price: {perpetual_price}"		
 				margin_long_size 	= args.margin_entry_vol * margin_price
 
-			elif args.order_type == "market":
-				margin_funding_rate = client.get_margin_effective_funding_rate(	ccy = args.margin_trading_pair, 
-																				loan_period_hrs = args.margin_loan_period_hr)
-
-				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair,
-																															seconds_before_current = args.current_funding_interval_s,
-																															seconds_before_estimated = args.estimated_funding_interval_s)
-				
+			elif args.order_type == "market":				
 				(avg_margin_bid, avg_margin_ask) 		= client.get_margin_average_bid_ask_price(symbol = args.margin_trading_pair, size = args.margin_entry_vol)
 				(avg_perpetual_bid, avg_perpetual_ask) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
 				

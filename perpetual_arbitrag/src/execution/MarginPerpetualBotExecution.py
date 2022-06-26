@@ -74,10 +74,10 @@ class MarginPerpetualBotExecution(BotExecutionV2):
 												asset_B_revert_params 			= perpetual_revert_params
 											)
 
-class marginPerpetualSimulatedBotExecution(marginPerpetualBotExecution):
+class MarginPerpetualSimulatedBotExecution(MarginPerpetualBotExecution):
 	def __init__(self, *args, **kwargs):
 		self.logger.warning("Order execution is simulated.")
-		super(marginPerpetualSimulatedBotExecution, self).__init__(*args, *kwargs)
+		super(MarginPerpetualSimulatedBotExecution, self).__init__(*args, *kwargs)
 
 	def long_margin_short_perpetual(self, *args, **kwargs):
 		return True
