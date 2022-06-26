@@ -42,7 +42,8 @@ class TestMarginPerpArbitrag(TestCase):
 			mock_trade_decision.return_value = ExecutionDecision.NO_DECISION
 			assert(self.strategy.trade_decision(margin_bid_price = 0,
 												margin_ask_price = 0,
-												margin_interest_rate = 0,
+												margin_quote_interest_rate = 0,
+												margin_base_interest_rate = 0,
 												perp_bid_price = 0,
 												perp_ask_price = 0,
 												perp_funding_rate = 0,
@@ -55,7 +56,8 @@ class TestMarginPerpArbitrag(TestCase):
 			mock_trade_decision.return_value = ExecutionDecision.GO_LONG_A_SHORT_B
 			assert(self.strategy.trade_decision(margin_bid_price = 0,
 												margin_ask_price = 0,
-												margin_interest_rate = 0,
+												margin_quote_interest_rate = 0,
+												margin_base_interest_rate = 0,
 												perp_bid_price = 0,
 												perp_ask_price = 0,
 												perp_funding_rate = 0,
@@ -68,7 +70,8 @@ class TestMarginPerpArbitrag(TestCase):
 			mock_trade_decision.return_value = ExecutionDecision.GO_LONG_B_SHORT_A
 			assert(self.strategy.trade_decision(margin_bid_price = 0,
 												margin_ask_price = 0,
-												margin_interest_rate = 0,
+												margin_quote_interest_rate = 0,
+												margin_base_interest_rate = 0,
 												perp_bid_price = 0,
 												perp_ask_price = 0,
 												perp_funding_rate = 0,
@@ -81,7 +84,8 @@ class TestMarginPerpArbitrag(TestCase):
 			mock_trade_decision.return_value = ExecutionDecision.TAKE_PROFIT_LONG_A_SHORT_B
 			assert(self.strategy.trade_decision(margin_bid_price = 0,
 												margin_ask_price = 0,
-												margin_interest_rate = 0,
+												margin_quote_interest_rate = 0,
+												margin_base_interest_rate = 0,
 												perp_bid_price = 0,
 												perp_ask_price = 0,
 												perp_funding_rate = 0,
@@ -94,7 +98,8 @@ class TestMarginPerpArbitrag(TestCase):
 			mock_trade_decision.return_value = ExecutionDecision.TAKE_PROFIT_LONG_B_SHORT_A
 			assert(self.strategy.trade_decision(margin_bid_price = 0,
 												margin_ask_price = 0,
-												margin_interest_rate = 0,
+												margin_quote_interest_rate = 0,
+												margin_base_interest_rate = 0,
 												perp_bid_price = 0,
 												perp_ask_price = 0,
 												perp_funding_rate = 0,
