@@ -124,14 +124,15 @@ if __name__ == "__main__":
 
 	bot_executor 	= MarginPerpetualBotExecution(api_client = client)
 
+	#TODO: @JKOK005 Implement interest rate refresh feature
+	margin_quote_funding_rate = client.get_margin_effective_funding_rate( ccy = quote_ccy, 
+																		 loan_period_hrs = args.margin_loan_period_hr)
+
+	margin_base_funding_rate = client.get_margin_effective_funding_rate(ccy = base_ccy, 
+																		loan_period_hrs = args.margin_loan_period_hr)
+
 	while True:
 		try:
-			margin_quote_funding_rate = client.get_margin_effective_funding_rate(ccy = quote_ccy, 
-																				 loan_period_hrs = args.margin_loan_period_hr)
-
-			margin_base_funding_rate = client.get_margin_effective_funding_rate(ccy = base_ccy, 
-																				loan_period_hrs = args.margin_loan_period_hr)
-
 			(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
 																														seconds_before_current = args.current_funding_interval_s,
 																														seconds_before_estimated = args.estimated_funding_interval_s)
@@ -143,7 +144,8 @@ if __name__ == "__main__":
 				decision 		= trade_strategy.trade_decision(
 									margin_bid_price = margin_price,
 									margin_ask_price = margin_price,
-									margin_interest_rate = margin_funding_rate,
+									margin_quote_interest_rate = margin_quote_funding_rate,
+									margin_base_interest_rate = margin_base_funding_rate,
 									perp_bid_price = perpetual_price,
 									perp_ask_price = perpetual_price,
 									perp_funding_rate = perpetual_funding_rate,
@@ -162,7 +164,8 @@ if __name__ == "__main__":
 				decision 		= trade_strategy.trade_decision(
 									margin_bid_price = avg_margin_bid,
 									margin_ask_price = avg_margin_ask,
-									margin_interest_rate = margin_funding_rate,
+									margin_quote_interest_rate = margin_quote_funding_rate,
+									margin_base_interest_rate = margin_base_funding_rate,
 									perp_bid_price = avg_perpetual_bid,
 									perp_ask_price = avg_perpetual_ask,
 									perp_funding_rate = perpetual_funding_rate,
@@ -173,7 +176,7 @@ if __name__ == "__main__":
 				price_str 			= f"Margin bid/ask: {(avg_margin_bid, avg_margin_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
 				margin_long_size 	= args.margin_entry_vol * avg_margin_ask
 			
-			funding_str = f"Margin interest: {margin_funding_rate} - Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
+			funding_str = f"Margin quote - base interests: {margin_quote_funding_rate} / {margin_base_funding_rate} - Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
 			logging.info(f"{decision} - {price_str} - {funding_str}")
 
 			if args.order_type == "limit":
@@ -276,7 +279,7 @@ if __name__ == "__main__":
 				db_perpetual_clients.set_position(size = current_perpetual_lot_size)
 
 			if 	(new_order_execution) or \
-				(decision == ExecutionDecision.NO_DECISION):
+				(decision == MarginPerpExecutionDecision.NO_DECISION):
 				sleep(args.poll_interval_s)
 			
 			else:

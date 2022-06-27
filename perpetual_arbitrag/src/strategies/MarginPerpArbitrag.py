@@ -79,4 +79,5 @@ class MarginPerpArbitrag(SingleTradeArbitragV2):
 										  	entry_threshold = entry_threshold,
 										  	take_profit_threshold = take_profit_threshold,
 									  	)
+
 		return mapping[decision]

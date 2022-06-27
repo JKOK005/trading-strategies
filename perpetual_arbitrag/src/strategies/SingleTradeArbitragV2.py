@@ -90,6 +90,8 @@ class SingleTradeArbitragV2(StrategiesV2):
 
 		profit_from_long_A_short_B 	= asset_B_effective_bid_price - asset_A_effective_ask_price
 		profit_from_short_A_long_B 	= asset_A_effective_bid_price - asset_B_effective_ask_price
+		
+		self.logger.info(f"""Position: {current_position}. Profits long_A_short_B: {profit_from_long_A_short_B}, short_A_long_B: {profit_from_short_A_long_B}""")
 
 		if 	(current_position is TradePosition.LONG_A_SHORT_B) \
 			and (profit_from_short_A_long_B >= take_profit_threshold * (asset_A_bid_price + asset_B_ask_price)):
