@@ -38,6 +38,15 @@ python3 main/intra_exchange/okx/margin_perp/main.py \
 --feed_latency_s 0.05
 """
 
+"""
+TODO:
+
+Okx imposes 0.1% trading fee. When we sell 10 eth, we are effectively selling 9.99 eth. 
+This creates a slight impalance when we sell margin position.
+
+Consider taking into effect this tax rate when we calculate the amt of margin to sell
+"""
+
 if __name__ == "__main__":
 	parser 	= argparse.ArgumentParser(description='margin - perpetual arbitrag trading')
 	parser.add_argument('--client_id', type=str, nargs='?', default=os.environ.get("CLIENT_ID"), help='Client ID registered on the exchange')
