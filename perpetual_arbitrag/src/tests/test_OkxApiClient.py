@@ -53,6 +53,8 @@ class TestOkxApiClient(TestCase):
 		perpetual_position 	= _okx_api_client.get_perpetual_trading_account_details(currency = "ETH-USDT-SWAP")
 		assert(perpetual_position == 5)
 
+
+
 	@patch("okx.Market_api.MarketAPI")
 	def test_spot_trading_price_api_call(self, patch_market):
 		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
@@ -225,6 +227,7 @@ class TestOkxApiClient(TestCase):
 			mock_get_perpetual_fulfilled_orders.return_value = []
 			assert(_okx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "ETH-USDT-SWAP") == [])
 
+
 	@patch("okx.Trade_api.TradeAPI")
 	def test_spot_order_call_invoked(self, patch_trade):
 		_okx_api_client 					 = copy.deepcopy(self.okx_api_client)
@@ -371,3 +374,209 @@ class TestOkxApiClient(TestCase):
 		_okx_api_client.trade_client 	= patch_trade
 		_okx_api_client.get_all_filled_transactions_days(before = 0)
 		assert patch_trade.get_fills.called
+
+	@patch("okx.Public_api.PublicAPI")
+	def test_get_margin_symbols_called(self, patch_public):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 	= patch_public
+		_okx_api_client.get_margin_symbols()
+		patch_public.get_instruments.assert_called_with(instType = "MARGIN")
+		return
+
+	@patch("okx.Account_api.AccountAPI")
+	def test_compute_correct_margin_amt(self, patch_account):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.account_client 	= patch_account
+		patch_account.get_positions.return_value = {"code": "0",
+													 "msg": "",
+													 "data": [
+													    {"availPos":"1", "ccy":"ETH-USDT", "ccy":"USDT", "posCcy":"ETH",  "pos":"1", "liab":"-10"},
+													    {"availPos":"1", "ccy":"ETH-USDT", "ccy":"USDT", "posCcy":"USDT", "pos":"10", "liab":"-1"},
+													    {"availPos":"1", "ccy":"ETH-USDT", "ccy":"USDT", "posCcy":"USDT", "pos":"30", "liab":"-3"},
+													    {"availPos":"1", "ccy":"ETH-USDT", "ccy":"USDT", "posCcy":"ETH",  "pos":"3", "liab":"-30"},
+													    {"availPos":"1", "ccy":"ETH-USDT", "ccy":"USDT", "posCcy":"ETH",  "pos":"5", "liab":"-50"},
+													  ]
+													}
+		perpetual_position 	= _okx_api_client.get_margin_trading_account_details(currency = "ETH-USDT")
+		assert(perpetual_position == 5)
+
+	@patch("okx.Market_api.MarketAPI")
+	def test_margin_trading_price_api_call(self, patch_market):	
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.market_client 	= patch_market
+		_okx_api_client.get_margin_trading_price(symbol = "ETH-USDT")
+		assert(patch_market.get_ticker.called)
+
+	@patch("okx.Public_api.PublicAPI")
+	def test_margin_min_volume_api_call(self, patch_public):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 	= patch_public
+		_okx_api_client.get_margin_min_volume(symbol = "ETH-USDT")
+		assert(patch_public.get_instruments.called)
+
+	@patch("okx.Trade_api.TradeAPI")
+	def test_open_margin_orders_api_call(self, patch_trade):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.trade_client 	= patch_trade
+		_okx_api_client.get_spot_open_orders(symbol = "ETH-USDT")
+		assert(patch_trade.get_order_list.called)
+
+	def test_most_recent_open_margin_order_retrieved(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+
+		with patch.object(_okx_api_client, "get_margin_open_orders") as mock_get_margin_open_orders:
+			mock_get_margin_open_orders.return_value = [ 	{"symbol" : "ETH-USDT", "orderId" : 1, "uTime" : 1},
+															{"symbol" : "ETH-USDT", "orderId" : 2, "uTime" : 5},
+															{"symbol" : "ETH-USDT", "orderId" : 3, "uTime" : 3}]
+			assert(_okx_api_client.get_margin_most_recent_open_order(symbol = "ETH-USDT")["orderId"] == 2)
+
+	def test_no_open_margin_orders(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+
+		with patch.object(_okx_api_client, "get_margin_open_orders") as mock_get_margin_open_orders:
+			mock_get_margin_open_orders.return_value = []
+			assert(_okx_api_client.get_margin_most_recent_open_order(symbol = "ETH-USDT") == [])
+
+	@patch("okx.Trade_api.TradeAPI")
+	def test_fulfilled_margin_orders_api_call(self, patch_trade):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.trade_client 	= patch_trade
+		_okx_api_client.get_margin_fulfilled_orders(symbol = "ETH-USDT")
+		assert(patch_trade.get_orders_history.called)
+
+	def test_no_fulfilled_margin_orders(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+
+		with patch.object(_okx_api_client, "get_margin_fulfilled_orders") as mock_get_margin_fulfilled_orders:
+			mock_get_margin_fulfilled_orders.return_value 	= []
+			assert(_okx_api_client.get_margin_most_recent_fulfilled_order(symbol = "ETH-USDT") == [])
+
+	def test_fulfilled_margin_order_retrieved(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+
+		with patch.object(_okx_api_client, "get_margin_fulfilled_orders") as mock_get_margin_fulfilled_orders:
+			mock_get_margin_fulfilled_orders.return_value 	=	[{"symbol" : "ETH-USDT", "orderId" : 1, "uTime" : 1200},
+														 		 {"symbol" : "ETH-USDT", "orderId" : 2, "uTime" : 2000},
+														 		 {"symbol" : "ETH-USDT", "orderId" : 3, "uTime" : 1600}]
+
+			assert(_okx_api_client.get_margin_most_recent_fulfilled_order(symbol = "ETH-USDT")["orderId"] == 2)
+
+	def test_compound_interest_rate_calculation(self):
+		assert(abs(self.okx_api_client._compounded_interest_rate(interest = 0.01, cycles = 48) - 0.6122) <= 1e-4)
+
+	@patch("okx.Public_api.PublicAPI")
+	def test_margin_effective_funding_rate(self, patch_public):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 	= patch_public
+		patch_public.get_interest_loan.return_value = {
+													    "code": "0",
+													    "data": [
+													        {
+													            "basic": [
+													                {
+													                    "ccy": "USDT",
+													                    "quota": "500000",
+													                    "rate": "0.00043728"
+													                }
+													            ],
+													            "vip": [
+													                {
+													                    "irDiscount": "0.7",
+													                    "loanQuotaCoef": "6",
+													                    "level": "VIP1"
+													                }
+													            ],
+													            "regular": [
+													                {
+													                    "irDiscount": "1",
+													                    "loanQuotaCoef": "1",
+													                    "level": "Lv1"
+													                }
+													            ]
+													        }
+													    ],
+													    "msg": ""
+													}
+
+		with patch.object(_okx_api_client, "_compounded_interest_rate") as mock_compounded_interest_rate:
+			mock_compounded_interest_rate.return_value 	= 0.35
+			assert(_okx_api_client.get_margin_effective_funding_rate(ccy = "USDT", loan_period_hrs = 10) == 0.35)
+
+	@patch("okx.Public_api.PublicAPI")
+	def test_margin_effective_funding_rate_is_zero_when_flag_is_disabled(self, patch_public):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+		_okx_api_client.public_client 		= patch_public
+		_okx_api_client.funding_rate_enable = False
+
+		patch_public.get_interest_loan.return_value = {
+													    "code": "0",
+													    "data": [
+													        {
+													            "basic": [
+													                {
+													                    "ccy": "USDT",
+													                    "quota": "500000",
+													                    "rate": "0.00043728"
+													                }
+													            ],
+													            "vip": [
+													                {
+													                    "irDiscount": "0.7",
+													                    "loanQuotaCoef": "6",
+													                    "level": "VIP1"
+													                }
+													            ],
+													            "regular": [
+													                {
+													                    "irDiscount": "1",
+													                    "loanQuotaCoef": "1",
+													                    "level": "Lv1"
+													                }
+													            ]
+													        }
+													    ],
+													    "msg": ""
+													}
+
+		with patch.object(_okx_api_client, "_compounded_interest_rate") as mock_compounded_interest_rate:
+			mock_compounded_interest_rate.return_value 	= 0.35
+			assert(_okx_api_client.get_margin_effective_funding_rate(ccy = "USDT", loan_period_hrs = 10) == 0)
+
+	@patch("okx.Trade_api.TradeAPI")
+	def test_margin_order_call_invoked(self, patch_trade):
+		_okx_api_client 					 = copy.deepcopy(self.okx_api_client)
+		_okx_api_client.trade_client 		 = patch_trade
+		patch_trade.place_order.return_value = {"orderId" : "0001"}
+
+		_okx_api_client.place_margin_order(	symbol 		= "BTC-USDT",
+											ccy 		= "USDT",
+											trade_mode 	= "cross",
+										 	order_type 	= "market", 
+										 	order_side 	= "sell", 
+										 	price 		= 1,
+										 	size 		= 1,
+										)
+		assert(patch_trade.place_order.called)
+
+	def test_margin_order_revertion(self):
+		_okx_api_client = copy.deepcopy(self.okx_api_client)
+		with patch.object(_okx_api_client, "place_margin_order") as mock_place_margin_order:
+			_okx_api_client.revert_margin_order(order_resp = { 
+																"data" : [
+																		    {
+																		      "ordId": "312269865356374016",
+																		      "sCode": "0",
+																		      "sMsg": ""
+																	    	}
+															  			]
+												  			},
+												revert_params = {}
+							  				)
+			assert(mock_place_margin_order.called)
+
+	@patch("okx.Account_api.AccountAPI")
+	def test_margin_leverage_set(self, patch_account):
+		_okx_api_client 				= copy.deepcopy(self.okx_api_client)
+		_okx_api_client.account_client 	= patch_account
+		_okx_api_client.set_margin_leverage(symbol = "ETH-USDT", ccy = "USDT", leverage = 5)
+		assert patch_account.set_leverage.called
