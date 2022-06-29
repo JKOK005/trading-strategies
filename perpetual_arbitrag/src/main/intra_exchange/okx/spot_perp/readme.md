@@ -95,6 +95,7 @@ docker run \
 --env DB_URL=xxx \
 --env FEEDS_URL=xxx \
 --env FEEDS_PORT=xxx \
+--env FEED_LATENCY_S=0.1 \
 <image>:<label>
 ```
 
