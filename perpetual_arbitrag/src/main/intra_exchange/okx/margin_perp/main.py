@@ -21,6 +21,7 @@ python3 main/intra_exchange/okx/margin_perp/main.py \
 --margin_entry_vol 0.01 \
 --max_margin_vol 0.1 \
 --margin_leverage 1 \
+--margin_tax_rate 0.001 \
 --margin_loan_period_hr 24 \
 --perpetual_entry_lot_size 10 \
 --max_perpetual_lot_size 100 \
@@ -38,15 +39,6 @@ python3 main/intra_exchange/okx/margin_perp/main.py \
 --feed_latency_s 0.05
 """
 
-"""
-TODO:
-
-Okx imposes 0.1% trading fee. When we sell 10 eth, we are effectively selling 9.99 eth. 
-This creates a slight impalance when we sell margin position.
-
-Consider taking into effect this tax rate when we calculate the amt of margin to sell
-"""
-
 if __name__ == "__main__":
 	parser 	= argparse.ArgumentParser(description='margin - perpetual arbitrag trading')
 	parser.add_argument('--client_id', type=str, nargs='?', default=os.environ.get("CLIENT_ID"), help='Client ID registered on the exchange')
@@ -57,6 +49,7 @@ if __name__ == "__main__":
 	parser.add_argument('--margin_entry_vol', type=float, nargs='?', default=os.environ.get("MARGIN_ENTRY_VOL"), help='Volume of margin assets for each entry')
 	parser.add_argument('--max_margin_vol', type=float, nargs='?', default=os.environ.get("MAX_MARGIN_VOL"), help='Max volume of margin assets to long / short')
 	parser.add_argument('--margin_leverage', type=float, nargs='?', default=os.environ.get("MARGIN_LEVERAGE"), help='Leverage for each entry for margin')
+	parser.add_argument('--margin_tax_rate', type=float, nargs='?', default=os.environ.get("MARGIN_TAX_RATE"), help='Tax rate by the exchange, needed to offset the entry / exit amount of the asset to maintain a balanced position.')
 	parser.add_argument('--margin_loan_period_hr', type=int, nargs='?', default=os.environ.get("MARGIN_LOAN_PERIOD_HR"), help='How long are we going to hold the margin position for? This will impact the funding rate for the margined asset.')
 	parser.add_argument('--perpetual_entry_lot_size', type=int, nargs='?', default=os.environ.get("PERPETUAL_ENTRY_LOT_SIZE"), help='Lot size for each entry for perpetual')
 	parser.add_argument('--max_perpetual_lot_size', type=int, nargs='?', default=os.environ.get("MAX_PERPETUAL_LOT_SIZE"), help='Max lot size to long / short perpetual')
@@ -223,7 +216,7 @@ if __name__ == "__main__":
 																					"trade_mode" 		: "cross",
 																					"order_type" 		: args.order_type, 
 																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
-																					"entry_size" 		: args.margin_entry_vol,
+																					"entry_size" 		: args.margin_entry_vol * (1 - args.margin_tax_rate),
 																					"revert_size" 		: margin_long_size,
 																				},
 																				perpetual_params = {
@@ -267,7 +260,7 @@ if __name__ == "__main__":
 																					"trade_mode" 		: "cross",
 																					"order_type" 		: args.order_type, 
 																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
-																					"entry_size" 		: args.margin_entry_vol,
+																					"entry_size" 		: args.margin_entry_vol * (1 - args.margin_tax_rate),
 																					"revert_size" 		: margin_long_size,
 																				},
 																				perpetual_params = {
