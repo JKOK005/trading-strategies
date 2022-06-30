@@ -92,8 +92,8 @@ docker run \
 --env RETRY_TIMEOUT_S=0.1 \
 --env FUNDING_RATE_DISABLE=0 \
 --env DB_URL=xxx \
---env FEEDS_URL=xxx \
---env FEEDS_PORT=xxx \
+--env FEED_URL=xxx \
+--env FEED_PORT=xxx \
 --env FEED_LATENCY_S=0.1 \
 <image>:<label>
 ```
