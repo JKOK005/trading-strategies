@@ -6,7 +6,7 @@ from db.SpotClients import SpotClients
 from db.PerpetualClients import PerpetualClients
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotPerpetualSimulatedBotExecution
 from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
-from strategies.SingleTradeArbitrag import SingleTradeArbitrag, ExecutionDecision
+from strategies.SpotPerpArbitrag import SpotPerpArbitrag, SpotPerpTradePosition, SpotPerpExecutionDecision
 from time import sleep
 
 """
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 	if args.db_url is not None:
 		logging.info(f"State management at {args.db_url}")
 
-		strategy_id = SingleTradeArbitrag.get_strategy_id()
+		strategy_id = SpotPerpArbitrag.get_strategy_id()
 		client_id 	= args.client_id
 
 		db_spot_client 			= SpotClients(url = args.db_url, strategy_id = strategy_id, client_id = client_id, exchange = "okx", symbol = args.spot_trading_pair, units = "vol").create_session()
@@ -110,13 +110,13 @@ if __name__ == "__main__":
 		logging.warning(f"Zero state execution as no db_url detected")
 		(current_spot_vol, current_perpetual_lot_size) = (0, 0)
 
-	trade_strategy 	= SingleTradeArbitrag(	spot_symbol 				= args.spot_trading_pair,
-											current_spot_vol 			= current_spot_vol,
-											max_spot_vol 				= args.max_spot_vol,
-											futures_symbol 				= args.perpetual_trading_pair,
-											current_futures_lot_size 	= current_perpetual_lot_size,
-											max_futures_lot_size		= args.max_perpetual_lot_size,
-										)
+	trade_strategy 	= SpotPerpArbitrag(	spot_symbol 			= args.spot_trading_pair,
+										current_spot_vol 		= current_spot_vol,
+										max_spot_vol 			= args.max_spot_vol,
+										perp_symbol 			= args.perpetual_trading_pair,
+										current_perp_lot_size 	= current_perpetual_lot_size,
+										max_perp_lot_size		= args.max_perpetual_lot_size,
+									)
 
 	bot_executor 	= SpotPerpetualSimulatedBotExecution(api_client = client) if args.fake_orders else SpotPerpetualBotExecution(api_client = client)
 
@@ -129,13 +129,16 @@ if __name__ == "__main__":
 				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
 				perpetual_price = client.get_perpetual_trading_price(symbol = args.perpetual_trading_pair)
 				
-				decision 		= trade_strategy.trade_decision(spot_price 						= spot_price, 
-																futures_price 					= perpetual_price,
-																futures_funding_rate 			= perpetual_funding_rate,
-																futures_estimated_funding_rate 	= perpetual_estimated_funding_rate,
-																entry_threshold 				= args.entry_gap_frac,
-																take_profit_threshold 			= args.profit_taking_frac
+				decision 		= trade_strategy.trade_decision(spot_bid_price 				= spot_price,
+																spot_ask_price 				= spot_price, 
+																perp_bid_price 				= perpetual_price,
+																perp_ask_price 				= perpetual_price,
+																perp_funding_rate 			= perpetual_funding_rate,
+																perp_estimated_funding_rate = perpetual_estimated_funding_rate,
+																entry_threshold 			= args.entry_gap_frac,
+																take_profit_threshold 		= args.profit_taking_frac
 															)
+
 				price_str 		= f"Spot price: {spot_price}, perpetual price: {perpetual_price}"		
 
 			elif args.order_type == "market":
@@ -145,15 +148,16 @@ if __name__ == "__main__":
 				(avg_spot_bid, avg_spot_ask) = client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
 				(avg_perpetual_bid, avg_perpetual_ask) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
 				
-				decision 		= trade_strategy.bid_ask_trade_decision(spot_bid_price 			= avg_spot_bid,
-																		spot_ask_price 			= avg_spot_ask,
-																		futures_bid_price 		= avg_perpetual_bid,
-																		futures_ask_price 		= avg_perpetual_ask,
-																		futures_funding_rate 	= perpetual_funding_rate,
-																		futures_estimated_funding_rate = perpetual_estimated_funding_rate,
-																		entry_threshold 		= args.entry_gap_frac,
-																		take_profit_threshold 	= args.profit_taking_frac
-																	)
+				decision 		= trade_strategy.trade_decision(spot_bid_price 				= avg_spot_bid,
+																spot_ask_price 				= avg_spot_ask,
+																perp_bid_price 				= avg_perpetual_bid,
+																perp_ask_price 				= avg_perpetual_ask,
+																perp_funding_rate 			= perpetual_funding_rate,
+																perp_estimated_funding_rate = perpetual_estimated_funding_rate,
+																entry_threshold 			= args.entry_gap_frac,
+																take_profit_threshold 		= args.profit_taking_frac
+															)
+				
 				price_str 		= f"Spot bid/ask: {(avg_spot_bid, avg_spot_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
 			
 			funding_str = f"Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
@@ -162,7 +166,7 @@ if __name__ == "__main__":
 			# Execute orders
 			new_order_execution = False
 
-			if decision == ExecutionDecision.TAKE_PROFIT_LONG_FUTURE_SHORT_SPOT:
+			if decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_SPOT:
 				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
 																					"symbol" 	 		: args.spot_trading_pair, 
 																					"order_type" 		: args.order_type, 
@@ -179,10 +183,10 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif decision == ExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_FUTURE:
+			elif decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_PERP:
 				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
 																					"symbol" 	 		: args.spot_trading_pair, 
 																					"order_type" 		: args.order_type, 
@@ -199,10 +203,10 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif decision == ExecutionDecision.GO_LONG_SPOT_SHORT_FUTURE:
+			elif decision == SpotPerpExecutionDecision.GO_LONG_SPOT_SHORT_PERP:
 				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
 																					"symbol" 	 		: args.spot_trading_pair, 
 																					"order_type" 		: args.order_type, 
@@ -219,10 +223,10 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
-			elif decision == ExecutionDecision.GO_LONG_FUTURE_SHORT_SPOT:
+			elif decision == SpotPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT:
 				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
 																					"symbol" 	 		: args.spot_trading_pair, 
 																					"order_type" 		: args.order_type, 
@@ -239,7 +243,7 @@ if __name__ == "__main__":
 																				}
 																		)
 
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.perpetual_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
@@ -248,7 +252,7 @@ if __name__ == "__main__":
 				db_perpetual_clients.set_position(size = current_perpetual_lot_size)
 
 			if 	(new_order_execution) or \
-				(decision == ExecutionDecision.NO_DECISION):
+				(decision == SpotPerpExecutionDecision.NO_DECISION):
 				sleep(args.poll_interval_s)
 			
 			else:
