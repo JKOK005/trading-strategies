@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from enum import Enum
-from strategies.Strategies import Strategies
+from strategies.SingleTradeArbitragV2 import SingleTradeArbitragV2, TradePosition, ExecutionDecision
 
 class SpotPerpTradePosition(Enum):
 	NO_POSITION_TAKEN 		= 1
@@ -16,17 +16,17 @@ class SpotPerpExecutionDecision(Enum):
 	TAKE_PROFIT_LONG_PERP_SHORT_SPOT 	= 5
 
 mapping = {
-	TradePosition.NO_POSITION_TAKEN 				: SPOTPerpTradePosition.NO_POSITION_TAKEN,
-	TradePosition.LONG_A_SHORT_B 					: SPOTPerpTradePosition.LONG_SPOT_SHORT_PERP,
-	TradePosition.LONG_B_SHORT_A 					: SPOTPerpTradePosition.LONG_PERP_SHORT_SPOT,
-	ExecutionDecision.NO_DECISION 					: SPOTPerpExecutionDecision.NO_DECISION,
-	ExecutionDecision.GO_LONG_A_SHORT_B 			: SPOTPerpExecutionDecision.GO_LONG_SPOT_SHORT_PERP,
-	ExecutionDecision.GO_LONG_B_SHORT_A 			: SPOTPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT,
-	ExecutionDecision.TAKE_PROFIT_LONG_A_SHORT_B 	: SPOTPerpExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_PERP,
-	ExecutionDecision.TAKE_PROFIT_LONG_B_SHORT_A 	: SPOTPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_SPOT,
+	TradePosition.NO_POSITION_TAKEN 				: SpotPerpTradePosition.NO_POSITION_TAKEN,
+	TradePosition.LONG_A_SHORT_B 					: SpotPerpTradePosition.LONG_SPOT_SHORT_PERP,
+	TradePosition.LONG_B_SHORT_A 					: SpotPerpTradePosition.LONG_PERP_SHORT_SPOT,
+	ExecutionDecision.NO_DECISION 					: SpotPerpExecutionDecision.NO_DECISION,
+	ExecutionDecision.GO_LONG_A_SHORT_B 			: SpotPerpExecutionDecision.GO_LONG_SPOT_SHORT_PERP,
+	ExecutionDecision.GO_LONG_B_SHORT_A 			: SpotPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT,
+	ExecutionDecision.TAKE_PROFIT_LONG_A_SHORT_B 	: SpotPerpExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_PERP,
+	ExecutionDecision.TAKE_PROFIT_LONG_B_SHORT_A 	: SpotPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_SPOT,
 }
 
-class SpotPerpArbitrag(StrategiesV2):
+class SpotPerpArbitrag(SingleTradeArbitragV2):
 	logger 						= logging.getLogger('SpotPerpArbitrag')
 	spot_symbol 				= None
 	current_spot_vol			= 0
