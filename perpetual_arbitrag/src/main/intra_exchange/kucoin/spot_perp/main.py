@@ -170,7 +170,7 @@ if __name__ == "__main__":
 																								"lever" 		: args.futures_entry_leverage,
 																							},
 																		)
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_futures = -1 * args.futures_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.futures_entry_lot_size) \
 				if new_order_execution else None
 
 			elif (decision == SpotPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT) \
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 																								"lever" 		: args.futures_entry_leverage,
 																							},
 																		)
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_futures = args.futures_entry_lot_size) \
+				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perp = args.futures_entry_lot_size) \
 				if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
