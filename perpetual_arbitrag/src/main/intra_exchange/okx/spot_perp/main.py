@@ -2,6 +2,7 @@ import argparse
 import os
 import logging
 from clients.OkxApiClientWS import OkxApiClientWS
+from datetime import datetime, timedelta
 from db.SpotClients import SpotClients
 from db.PerpetualClients import PerpetualClients
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotPerpetualSimulatedBotExecution
@@ -120,12 +121,13 @@ if __name__ == "__main__":
 
 	bot_executor 	= SpotPerpetualSimulatedBotExecution(api_client = client) if args.fake_orders else SpotPerpetualBotExecution(api_client = client)
 
+	(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
+																															seconds_before_current = args.current_funding_interval_s,
+																															seconds_before_estimated = args.estimated_funding_interval_s)
+
 	while True:
 		try:
 			if 	args.order_type == "limit":
-				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
-																															seconds_before_current = args.current_funding_interval_s,
-																															seconds_before_estimated = args.estimated_funding_interval_s)
 				spot_price 		= client.get_spot_trading_price(symbol = args.spot_trading_pair)
 				perpetual_price = client.get_perpetual_trading_price(symbol = args.perpetual_trading_pair)
 				
@@ -145,8 +147,8 @@ if __name__ == "__main__":
 				(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair,
 																															seconds_before_current = args.current_funding_interval_s,
 																															seconds_before_estimated = args.estimated_funding_interval_s)
-				(avg_spot_bid, avg_spot_ask) = client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
-				(avg_perpetual_bid, avg_perpetual_ask) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
+				(avg_spot_bid, avg_spot_ask, margin_ts) 				= client.get_spot_average_bid_ask_price(symbol = args.spot_trading_pair, size = args.spot_entry_vol)
+				(avg_perpetual_bid, avg_perpetual_ask, perpetual_ts) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
 				
 				decision 		= trade_strategy.trade_decision(spot_bid_price 				= avg_spot_bid,
 																spot_ask_price 				= avg_spot_ask,
@@ -159,7 +161,8 @@ if __name__ == "__main__":
 															)
 				
 				price_str 		= f"Spot bid/ask: {(avg_spot_bid, avg_spot_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
-			
+				assert datetime.utcnow() - min(datetime.utcfromtimestamp(margin_ts), datetime.utcfromtimestamp(perpetual_ts)) <= timedelta(milliseconds = args.feed_latency_s * 1000), "Trade latency too large" 
+
 			funding_str = f"Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
 			logging.info(f"{decision} - {price_str} - {funding_str}")
 
