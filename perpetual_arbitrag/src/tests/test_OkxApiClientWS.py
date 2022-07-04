@@ -21,16 +21,16 @@ class TestOkxApiClientWS(TestCase):
 		return
 
 	def test_get_spot_average_bid_ask_price(self):
-		(avg_bids, avg_asks) = self.okx_api_client.get_spot_average_bid_ask_price(symbol = "None", size = 20)
-		assert(avg_bids == 25 and avg_asks == 45)
+		(avg_bids, avg_asks, ts) = self.okx_api_client.get_spot_average_bid_ask_price(symbol = "None", size = 20)
+		assert(avg_bids == 25 and avg_asks == 45 and ts == 1647489600)
 
 	def test_get_perpetual_average_bid_ask_price(self):
-		(avg_bids, avg_asks) = self.okx_api_client.get_spot_average_bid_ask_price(symbol = "None", size = 30)
-		assert(avg_bids == 20 and avg_asks == 50)
+		(avg_bids, avg_asks, ts) = self.okx_api_client.get_spot_average_bid_ask_price(symbol = "None", size = 30)
+		assert(avg_bids == 20 and avg_asks == 50 and ts == 1647489600)
 
 	def test_get_margin_average_bid_ask_price(self):
-		(avg_bids, avg_asks) = self.okx_api_client.get_margin_average_bid_ask_price(symbol = "None", size = 30)
-		assert(avg_bids == 20 and avg_asks == 50)
+		(avg_bids, avg_asks, ts) = self.okx_api_client.get_margin_average_bid_ask_price(symbol = "None", size = 30)
+		assert(avg_bids == 20 and avg_asks == 50 and ts == 1647489600)
 
 	def test_assert_spot_resp_no_error(self):
 		order_resp = {"code" : "0"}
