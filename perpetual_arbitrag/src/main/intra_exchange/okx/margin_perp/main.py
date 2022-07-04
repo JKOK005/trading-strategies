@@ -2,6 +2,7 @@ import argparse
 import os
 import logging
 from clients.OkxApiClientWS import OkxApiClientWS
+from datetime import datetime, timedelta
 from db.MarginClients import MarginClients
 from db.PerpetualClients import PerpetualClients
 from execution.MarginPerpetualBotExecution import MarginPerpetualBotExecution
@@ -133,12 +134,12 @@ if __name__ == "__main__":
 	margin_base_funding_rate = client.get_margin_effective_funding_rate(ccy = base_ccy, 
 																		loan_period_hrs = args.margin_loan_period_hr)
 
+	(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(symbol = args.perpetual_trading_pair, 
+																											 seconds_before_current = args.current_funding_interval_s,
+																											 seconds_before_estimated = args.estimated_funding_interval_s)
+
 	while True:
 		try:
-			(perpetual_funding_rate, perpetual_estimated_funding_rate) = client.get_perpetual_effective_funding_rate(	symbol = args.perpetual_trading_pair, 
-																														seconds_before_current = args.current_funding_interval_s,
-																														seconds_before_estimated = args.estimated_funding_interval_s)
-
 			if 	args.order_type == "limit":
 				margin_price 	= client.get_margin_trading_price(symbol = args.margin_trading_pair)
 				perpetual_price = client.get_perpetual_trading_price(symbol = args.perpetual_trading_pair)
@@ -160,8 +161,8 @@ if __name__ == "__main__":
 				margin_long_size 	= args.margin_entry_vol * margin_price
 
 			elif args.order_type == "market":				
-				(avg_margin_bid, avg_margin_ask) 		= client.get_margin_average_bid_ask_price(symbol = args.margin_trading_pair, size = args.margin_entry_vol)
-				(avg_perpetual_bid, avg_perpetual_ask) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
+				(avg_margin_bid, avg_margin_ask, margin_ts) 			= client.get_margin_average_bid_ask_price(symbol = args.margin_trading_pair, size = args.margin_entry_vol)
+				(avg_perpetual_bid, avg_perpetual_ask, perpetual_ts) 	= client.get_perpetual_average_bid_ask_price(symbol = args.perpetual_trading_pair, size = args.perpetual_entry_lot_size)
 				
 				decision 		= trade_strategy.trade_decision(
 									margin_bid_price = avg_margin_bid,
@@ -177,12 +178,10 @@ if __name__ == "__main__":
 							 	)
 				price_str 			= f"Margin bid/ask: {(avg_margin_bid, avg_margin_ask)}, Perpetual bid/ask: {(avg_perpetual_bid, avg_perpetual_ask)}"
 				margin_long_size 	= args.margin_entry_vol * avg_margin_ask
-			
+				assert datetime.utcnow() - min(datetime.utcfromtimestamp(margin_ts), datetime.utcfromtimestamp(perpetual_ts)) <= timedelta(milliseconds = args.feed_latency_s * 1000), "Trade latency too large" 
+
 			funding_str = f"Margin quote - base interests: {margin_quote_funding_rate} / {margin_base_funding_rate} - Current/Est Funding: {(perpetual_funding_rate, perpetual_estimated_funding_rate)}"
 			logging.info(f"{decision} - {price_str} - {funding_str}")
-
-			if args.order_type == "limit":
-				margin_
 
 			# Execute orders
 			new_order_execution = False
