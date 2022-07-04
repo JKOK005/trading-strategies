@@ -20,7 +20,7 @@ class TestCryptoStoreRedisFeeds(TestCase):
 
 		with patch.object(self.cli, "symbol_to_key_mapping") as mock_symbol_to_key_mapping:
 			mock_symbol_to_key_mapping.return_value = "DOT-USDT-PERP"
-			order_book = self.cli.sorted_order_book.__wrapped__(self.cli, symbol = "DOT-USDT-SWAP", exchange = "OKX")
+			order_book = self.cli.sorted_order_book(symbol = "DOT-USDT-SWAP", exchange = "OKX")
 			assert(	
 					order_book["bids"] == sorted(order_book["bids"], key = lambda x: x[0], reverse = True) and
 					order_book["asks"] == sorted(order_book["asks"], key = lambda x: x[0], reverse = False)

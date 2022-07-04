@@ -50,7 +50,6 @@ class CryptoStoreRedisFeeds(PriceFeeds):
 			new_symbol = new_symbol.replace("SWAP", "PERP").replace("swap", "PERP")
 		return new_symbol
 			
-	@assert_latency
 	def sorted_order_book(self, symbol: str, exchange: str, *args, **kwargs):
 		new_symbol 	= self.symbol_to_key_mapping(symbol = symbol, exchange = exchange)
 		redis_key 	= f"book-{exchange}-{new_symbol}" 		# Exchange and symbols are all UPPER case

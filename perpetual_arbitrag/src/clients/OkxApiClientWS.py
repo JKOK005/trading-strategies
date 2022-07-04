@@ -80,7 +80,8 @@ class OkxApiClientWS(OkxApiClient):
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
 		asks 				= order_book["asks"]
 		average_ask_price 	= self._compute_average_ask_price(asks = asks, size = size)
-		return (average_bid_price, average_ask_price)
+		updated_ts 			= order_book["updated"]
+		return (average_bid_price, average_ask_price, updated_ts)
 
 	def place_spot_order(self, 	symbol: str, 
 								order_type: str, 
@@ -127,7 +128,8 @@ class OkxApiClientWS(OkxApiClient):
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
 		asks 				= order_book["asks"]
 		average_ask_price 	= self._compute_average_ask_price(asks = asks, size = size)
-		return (average_bid_price, average_ask_price)
+		updated_ts 			= order_book["updated"]
+		return (average_bid_price, average_ask_price, updated_ts)
 
 	def place_perpetual_order(self, symbol: str, 
 									position_side: str, 
