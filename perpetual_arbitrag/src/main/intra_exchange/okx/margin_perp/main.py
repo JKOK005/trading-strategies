@@ -186,6 +186,9 @@ if __name__ == "__main__":
 			# Execute orders
 			new_order_execution = False
 
+			import IPython
+			IPython.embed()
+
 			if decision == MarginPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_MARGIN:
 				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params = {
 																					"symbol" 	 		: args.margin_trading_pair,

@@ -4,15 +4,15 @@ import logging
 class BotExecutionV2(object):
 	logger 		= logging.getLogger('BotExecutionV2')
 
-	async def _trade_execution(trade_fnct, trade_params):
+	async def _trade_execution(self, trade_fnct, trade_params):
 		return trade_fnct(**trade_params)
 
-	async def _trade_pair_execution(asset_A_order_fn, asset_A_params, 
-									asset_B_order_fn, asset_B_params):
+	async def _trade_pair_execution(self, 	asset_A_order_fn, asset_A_params, 
+											asset_B_order_fn, asset_B_params):
 
 		return await asyncio.gather(
 							self._trade_execution(trade_fnct = asset_A_order_fn, trade_params = asset_A_params), 
-							self._trade_execution(trade_fnct = sset_B_order_fn, trade_params = asset_B_params)
+							self._trade_execution(trade_fnct = asset_B_order_fn, trade_params = asset_B_params)
 						)
 
 	def idempotent_trade_execution(self, asset_A_order_fn,
