@@ -155,6 +155,10 @@ class OkxApiClientWS(OkxApiClient):
 			raise Exception(f"Spot order failed: {order_resp}")
 		return
 
+	async def revert_spot_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting spot order")
+		return self.place_spot_order_async(**revert_params)
+
 	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
@@ -237,6 +241,10 @@ class OkxApiClientWS(OkxApiClient):
 			raise Exception(f"Perpetual order failed: {order_resp}")
 		return
 
+	async def revert_perpetual_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting perpetual order")
+		return self.place_perpetual_order_async(**revert_params)
+
 	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
@@ -316,3 +324,7 @@ class OkxApiClientWS(OkxApiClient):
 		Websocket failed error codes can be referred to here: https://www.okex.com/docs-v5/en/#error-code-websocket-public
 		"""
 		return self.assert_spot_resp_error(order_resp = order_resp)
+
+	async def revert_margin_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting margin order")
+		return self.place_margin_order_async(**revert_params)
