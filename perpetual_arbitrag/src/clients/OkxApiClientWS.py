@@ -121,9 +121,11 @@ class OkxApiClientWS(OkxApiClient):
 										order_side = order_side,
 										price = price,
 										size = size,
-										target_currency = target_currency)
-
-		return await self._place_order_async(order = order)
+										target_currency = target_currency
+									)
+		await self.ws_private_client.send(json.dumps(order))
+		return self.ws_private_client.recv()
+		# return await self._place_order_async(order = order)
 
 
 	def place_spot_order(self, 	symbol: str, 
@@ -139,8 +141,8 @@ class OkxApiClientWS(OkxApiClient):
 										order_side = order_side,
 										price = price,
 										size = size,
-										target_currency = target_currency)
-
+										target_currency = target_currency
+									)
 		return asyncio.get_event_loop().run_until_complete(self._place_order_async(order = order))
 
 	def assert_spot_resp_error(self, order_resp):
@@ -157,7 +159,7 @@ class OkxApiClientWS(OkxApiClient):
 
 	async def revert_spot_order_async(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting spot order")
-		return self.place_spot_order_async(**revert_params)
+		return await self.place_spot_order_async(**revert_params)
 
 	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
@@ -210,7 +212,9 @@ class OkxApiClientWS(OkxApiClient):
 												price = price, 
 												size = size
 											)
-		return await self._place_order_async(order = order)
+		await self.ws_private_client.send(json.dumps(order))
+		return self.ws_private_client.recv()
+		# return await self._place_order_async(order = order)
 
 	def place_perpetual_order(self, symbol: str, 
 									position_side: str, 
@@ -243,7 +247,7 @@ class OkxApiClientWS(OkxApiClient):
 
 	async def revert_perpetual_order_async(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting perpetual order")
-		return self.place_perpetual_order_async(**revert_params)
+		return await self.place_perpetual_order_async(**revert_params)
 
 	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
 		"""
@@ -293,8 +297,8 @@ class OkxApiClientWS(OkxApiClient):
 											price = price,
 											size = size
 										)
-
-		return await self._place_order_async(order = order)
+		await self.ws_private_client.send(json.dumps(order))
+		return self.ws_private_client.recv()
 
 	def place_margin_order(self, symbol: str,
 								 ccy: str,
@@ -313,7 +317,6 @@ class OkxApiClientWS(OkxApiClient):
 											price = price,
 											size = size
 										)
-
 		return asyncio.get_event_loop().run_until_complete(self._place_order_async(order = order))
 
 	def assert_margin_resp_error(self, order_resp):
@@ -323,8 +326,11 @@ class OkxApiClientWS(OkxApiClient):
 		A raised error indicates a failed order attempt.
 		Websocket failed error codes can be referred to here: https://www.okex.com/docs-v5/en/#error-code-websocket-public
 		"""
-		return self.assert_spot_resp_error(order_resp = order_resp)
+		order_resp_code = order_resp["code"]
+		if order_resp_code != "0":
+			raise Exception(f"Margin order failed: {order_resp}")
+		return
 
 	async def revert_margin_order_async(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting margin order")
-		return self.place_margin_order_async(**revert_params)
+		return await self.place_margin_order_async(**revert_params)
