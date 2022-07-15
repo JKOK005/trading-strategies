@@ -169,27 +169,7 @@ if __name__ == "__main__":
 			# Execute orders
 			new_order_execution = False
 
-			if decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_SPOT:
-				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy",
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "long",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
-																		)
-
-				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
-				if new_order_execution else None
-
-			elif decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_PERP:
+			if decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_PERP:
 				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
 																					"symbol" 	 		: args.spot_trading_pair, 
 																					"order_type" 		: args.order_type, 
@@ -227,26 +207,6 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
-				if new_order_execution else None
-
-			elif decision == SpotPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT:
-				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy" 
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "long",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
-																		)
-
-				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
