@@ -115,18 +115,6 @@ class BotExecutionV2(object):
 										)
 									)
 					
-		elif not asset_A_order_succeed and not asset_B_order_succeed:
-			asset_A_params = {"order_resp" : asset_A_order_resp, "revert_params" : asset_A_revert_params}
-			asset_B_params = {"order_resp" : asset_B_order_resp, "revert_params" : asset_B_revert_params}
-			asyncio.get_event_loop().run_until_complete(
-										self._trade_pair_execution(
-											asset_A_order_fn = asset_A_revert_fn, 
-											asset_A_params = asset_A_params,
-											asset_B_order_fn = asset_B_revert_fn,
-											asset_B_params = asset_B_params
-										)
-									)
-			
 		self.logger.info(f"{asset_A_order_resp}")
 		self.logger.info(f"{asset_B_order_resp}")
 		return asset_A_order_succeed and asset_B_order_succeed
