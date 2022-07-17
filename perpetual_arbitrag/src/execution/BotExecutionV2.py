@@ -55,7 +55,9 @@ class BotExecutionV2(object):
 
 			if asset_B_order_succeed:
 				asset_B_revert_fn(order_resp = asset_B_order_resp, revert_params = asset_B_revert_params)
-					
+		
+		self.logger.info(f"{asset_A_order_resp}")
+		self.logger.info(f"{asset_B_order_resp}")
 		return asset_A_order_succeed and asset_B_order_succeed
 
 	def idempotent_trade_execution_async(self, 	asset_A_order_fn,
@@ -124,6 +126,9 @@ class BotExecutionV2(object):
 											asset_B_params = asset_B_params
 										)
 									)
+			
+		self.logger.info(f"{asset_A_order_resp}")
+		self.logger.info(f"{asset_B_order_resp}")
 		return asset_A_order_succeed and asset_B_order_succeed
 
 	
