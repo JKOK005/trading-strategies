@@ -77,7 +77,7 @@ class BotExecutionV2(object):
 		asset_A_order_succeed 	= False
 		asset_B_order_succeed	= False
 
-		[asset_A_order_resp, asset_B_order_resp] = asyncio.get_event_loop().run_until_complete(
+		[asset_A_order_resp_unordered, asset_B_order_resp_unordered] = asyncio.get_event_loop().run_until_complete(
 																				self._trade_pair_execution(
 																					asset_A_order_fn = asset_A_order_fn, 
 																					asset_A_params = asset_A_params,
@@ -85,6 +85,11 @@ class BotExecutionV2(object):
 																					asset_B_params = asset_B_params
 																				)
 																			)
+
+		# By convention, asset A is the asset we are shorting and asset B is the asset we are going long
+		asset_A_order_resp = asset_A_order_resp_unordered if "sell" in asset_A_order_resp_unordered["id"] else asset_B_order_resp_unordered
+		asset_B_order_resp = asset_B_order_resp_unordered if "buy" 	in asset_B_order_resp_unordered["id"] else asset_A_order_resp_unordered
+
 		try:
 			asset_A_assert_resp_error_fn(asset_A_order_resp)
 			asset_A_order_succeed 	= True

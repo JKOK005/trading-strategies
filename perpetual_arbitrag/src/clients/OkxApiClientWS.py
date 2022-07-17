@@ -101,7 +101,7 @@ class OkxApiClientWS(OkxApiClient):
 		args["px"] = price if order_type == "limit" else None
 
 		order = {
-			"id" 	: f"SPOT-{symbol}-{order_side}",
+			"id" 	: f"SPOT{order_side}",
 			"op" 	: "order",
 			"args" 	: [args]
 		}
@@ -180,7 +180,7 @@ class OkxApiClientWS(OkxApiClient):
 									 price: float,
 									 size: int):
 		order 	= {
-			"id" 	: f"PERP-{symbol}-{order_side}",
+			"id" 	: f"PERP{order_side}",
 			"op" 	: "order",
 			"args" 	: [
 				{
@@ -263,7 +263,7 @@ class OkxApiClientWS(OkxApiClient):
 								  price: int,
 								  size: float):
 		order 	= {
-			"id" 	: f"MARGIN-{symbol}-{order_side}",
+			"id" 	: f"MARGIN{order_side}",
 			"op" 	: "order",
 			"args" 	: [
 				{
