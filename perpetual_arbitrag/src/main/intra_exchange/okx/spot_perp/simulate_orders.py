@@ -2,7 +2,7 @@ import argparse
 import os
 import logging
 from time import sleep
-from clients.OkxApiClient import OkxApiClient
+from clients.OkxApiClientWS import OkxApiClientWS
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution
 
 """
@@ -32,11 +32,14 @@ if __name__ == "__main__":
 	logging.basicConfig(level = logging.INFO)
 	logging.info(f"Simulating orders to Okx with the following params: {args}")
 
-	client 	= 	OkxApiClient(api_key 			 = args.api_key, 
-							 api_secret_key 	 = args.api_secret_key, 
-							 passphrase 		 = args.api_passphrase, 
-							 funding_rate_enable = False
+	client 	= 	OkxApiClientWS(	api_key 			= args.api_key, 
+								api_secret_key 	 	= args.api_secret_key,
+								passphrase 		 	= args.api_passphrase,
+								feed_client 		= None, 
+								funding_rate_enable = False
 							)
+	client.make_connection()
+	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = 1)
 
 	bot_executor = SpotPerpetualBotExecution(api_client = client)
 
@@ -44,7 +47,7 @@ if __name__ == "__main__":
 	bot_executor.long_spot_short_perpetual(	spot_params = {
 															"symbol" 	 		: args.spot_trading_pair, 
 															"order_type" 		: args.order_type, 
-															"price" 	 		: spot_price if args.order_type == "limit" else 0,
+															"price" 	 		: spot_price if args.order_type == "limit" else 1,
 															"size" 		 		: args.spot_entry_vol,
 															"target_currency" 	: "base_ccy",
 														},
@@ -52,7 +55,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "short",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 											)
@@ -62,7 +65,7 @@ if __name__ == "__main__":
 	bot_executor.short_spot_long_perpetual(	spot_params = {
 															"symbol" 	 		: args.spot_trading_pair, 
 															"order_type" 		: args.order_type, 
-															"price" 	 		: spot_price if args.order_type == "limit" else 0,
+															"price" 	 		: spot_price if args.order_type == "limit" else 1,
 															"size" 		 		: args.spot_entry_vol,
 															"target_currency" 	: "base_ccy" 
 														},
@@ -70,7 +73,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "short",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)
@@ -80,7 +83,7 @@ if __name__ == "__main__":
 	bot_executor.short_spot_long_perpetual(	spot_params = {
 															"symbol" 	 		: args.spot_trading_pair, 
 															"order_type" 		: args.order_type, 
-															"price" 	 		: spot_price if args.order_type == "limit" else 0,
+															"price" 	 		: spot_price if args.order_type == "limit" else 1,
 															"size" 		 		: args.spot_entry_vol,
 															"target_currency" 	: "base_ccy" 
 														},
@@ -88,7 +91,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "long",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)
@@ -98,7 +101,7 @@ if __name__ == "__main__":
 	bot_executor.long_spot_short_perpetual(	spot_params = {
 															"symbol" 	 		: args.spot_trading_pair, 
 															"order_type" 		: args.order_type, 
-															"price" 	 		: spot_price if args.order_type == "limit" else 0,
+															"price" 	 		: spot_price if args.order_type == "limit" else 1,
 															"size" 		 		: args.spot_entry_vol,
 															"target_currency" 	: "base_ccy" 
 														},
@@ -106,7 +109,7 @@ if __name__ == "__main__":
 															"symbol" 	 	: args.perpetual_trading_pair,
 															"position_side" : "long",
 															"order_type" 	: args.order_type, 
-															"price" 	 	: perpetual_price if args.order_type == "limit" else 0,
+															"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
 															"size" 		 	: args.perpetual_entry_lot_size,
 														}
 													)

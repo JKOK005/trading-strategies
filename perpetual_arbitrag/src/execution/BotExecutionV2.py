@@ -89,6 +89,9 @@ class BotExecutionV2(object):
 		# By convention, asset A is the asset we are shorting and asset B is the asset we are going long
 		asset_A_order_resp = asset_A_order_resp_unordered if "sell" in asset_A_order_resp_unordered["id"] else asset_B_order_resp_unordered
 		asset_B_order_resp = asset_B_order_resp_unordered if "buy" 	in asset_B_order_resp_unordered["id"] else asset_A_order_resp_unordered
+		
+		self.logger.info(f"{asset_A_order_resp}")
+		self.logger.info(f"{asset_B_order_resp}")
 
 		try:
 			asset_A_assert_resp_error_fn(asset_A_order_resp)
@@ -104,24 +107,24 @@ class BotExecutionV2(object):
 
 		if asset_A_order_succeed and not asset_B_order_succeed:
 			asset_A_params = {"order_resp" : asset_A_order_resp, "revert_params" : asset_A_revert_params}
-			asyncio.get_event_loop().run_until_complete(
-										self._trade_execution(
-											trade_fnct = asset_A_revert_fn, 
-											trade_params = asset_A_params,
-										)
-									)
+			asset_A_revert_resp = asyncio.get_event_loop().run_until_complete(
+												self._trade_execution(
+													trade_fnct = asset_A_revert_fn, 
+													trade_params = asset_A_params,
+												)
+											)
+			self.logger.info(f"{asset_A_params}")
+			self.logger.info(f"{asset_A_revert_resp}")
 
 		elif asset_B_order_succeed and not asset_A_order_succeed:
 			asset_B_params = {"order_resp" : asset_B_order_resp, "revert_params" : asset_B_revert_params}
-			asyncio.get_event_loop().run_until_complete(
-										self._trade_execution(
-											trade_fnct = asset_B_revert_fn, 
-											trade_params = asset_B_params,
-										)
-									)
-					
-		self.logger.info(f"{asset_A_order_resp}")
-		self.logger.info(f"{asset_B_order_resp}")
+			asset_B_revert_resp = asyncio.get_event_loop().run_until_complete(
+												self._trade_execution(
+													trade_fnct = asset_B_revert_fn, 
+													trade_params = asset_B_params,
+												)
+											)
+			self.logger.info(f"{asset_B_params}")
+			self.logger.info(f"{asset_B_revert_resp}")
+		
 		return asset_A_order_succeed and asset_B_order_succeed
-
-	
