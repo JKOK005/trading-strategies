@@ -1,10 +1,12 @@
 import argparse
 import os
 import logging
+import sys
 from clients.OkxApiClientWS import OkxApiClientWS
 from datetime import datetime, timedelta
 from db.MarginClients import MarginClients
 from db.PerpetualClients import PerpetualClients
+from execution.FailSafeTrigger import FailSafeTrigger, FailSafeException
 from execution.MarginPerpetualBotExecution import MarginPerpetualBotExecution
 from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
 from strategies.MarginPerpArbitrag import MarginPerpArbitrag, MarginPerpExecutionDecision
@@ -37,7 +39,8 @@ python3 main/intra_exchange/okx/margin_perp/main.py \
 --db_url xxx \
 --feed_url xxx \
 --feed_port xxx \
---feed_latency_s 0.05
+--feed_latency_s 0.05 \
+--fails_to_exit 3
 """
 
 if __name__ == "__main__":
@@ -69,6 +72,7 @@ if __name__ == "__main__":
 	parser.add_argument('--feed_url', type=str, nargs='?', default=os.environ.get("FEED_URL"), help="URL pointing to price feed channel")
 	parser.add_argument('--feed_port', type=str, nargs='?', default=os.environ.get("FEED_PORT"), help="Port pointing to price feed channel")
 	parser.add_argument('--feed_latency_s', type=float, nargs='?', default=os.environ.get("FEED_LATENCY_S"), help="Permissible latency between fetches of data from price feed")
+	parser.add_argument('--fails_to_exit', type=int, nargs='?', default=os.environ.get("FAILS_TO_EXIT"), help="Allowable failures for trades before programme will be foreced to terminate")
 	args 	= parser.parse_args()
 
 	logging.basicConfig(format='%(asctime)s %(levelname)-8s %(module)s.%(funcName)s %(lineno)d - %(message)s',
@@ -76,6 +80,8 @@ if __name__ == "__main__":
     					datefmt='%Y-%m-%d %H:%M:%S')
 
 	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
+
+	fail_safe_trigger = FailSafeTrigger(counts_to_trigger = args.fails_to_exit)
 
 	feed_client = CryptoStoreRedisFeeds(redis_url 	= args.feed_url,
 										redis_port 	= args.feed_port,
@@ -93,6 +99,7 @@ if __name__ == "__main__":
 	client.make_connection()
 	client.set_margin_leverage(symbol = args.margin_trading_pair, ccy = base_ccy, leverage = args.margin_leverage)
 	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
+
 
 	assert 	args.margin_entry_vol >= client.get_margin_min_volume(symbol = args.margin_trading_pair), "Minimum margin entry size not satisfied."
 	assert 	args.perpetual_entry_lot_size >= client.get_perpetual_min_lot_size(symbol = args.perpetual_trading_pair), "Minimum perpetual entry size not satisfied."
@@ -206,7 +213,7 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = args.margin_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
-				if new_order_execution else None
+				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == MarginPerpExecutionDecision.TAKE_PROFIT_LONG_MARGIN_SHORT_PERP:
 				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params = {
@@ -228,7 +235,7 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = -1 * args.margin_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
-				if new_order_execution else None
+				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == MarginPerpExecutionDecision.GO_LONG_MARGIN_SHORT_PERP:
 				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params = {
@@ -250,7 +257,7 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = args.margin_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
-				if new_order_execution else None
+				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == MarginPerpExecutionDecision.GO_LONG_PERP_SHORT_MARGIN:
 				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params = {
@@ -272,7 +279,9 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = -1 * args.margin_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
-				if new_order_execution else None
+				if new_order_execution else fail_safe_trigger.increment()
+
+			fail_safe_trigger.reset() if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
 				(current_margin_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
@@ -285,6 +294,9 @@ if __name__ == "__main__":
 			
 			else:
 				raise Exception(f"Order execution failed - Status: {new_order_execution}, Decision: {decision}")
+
+		except FailSafeException as ex:
+			sys.exit(ex)
 
 		except Exception as ex:
 			logging.error(ex)
