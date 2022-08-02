@@ -1,10 +1,12 @@
 import argparse
 import os
 import logging
+import sys
 from clients.OkxApiClientWS import OkxApiClientWS
 from datetime import datetime, timedelta
 from db.SpotClients import SpotClients
 from db.PerpetualClients import PerpetualClients
+from execution.FailSafeTrigger import FailSafeTrigger, FailSafeException
 from execution.SpotPerpetualBotExecution import SpotPerpetualBotExecution, SpotPerpetualSimulatedBotExecution
 from feeds.CryptoStoreRedisFeeds import CryptoStoreRedisFeeds
 from strategies.SpotPerpArbitrag import SpotPerpArbitrag, SpotPerpTradePosition, SpotPerpExecutionDecision
@@ -35,6 +37,7 @@ python3 main/intra_exchange/okx/spot_perp/main.py \
 --feed_url xxx \
 --feed_port xxx \
 --feed_latency_s 0.05 \
+--fails_to_exit 3 \
 --fake_orders
 """
 
@@ -65,6 +68,7 @@ if __name__ == "__main__":
 	parser.add_argument('--feed_port', type=str, nargs='?', default=os.environ.get("FEED_PORT"), help="Port pointing to price feed channel")
 	parser.add_argument('--feed_latency_s', type=float, nargs='?', default=os.environ.get("FEED_LATENCY_S"), help="Permissible latency between fetches of data from price feed")
 	parser.add_argument('--fake_orders', action='store_true', help='If present, we fake order placements. This is used for simulation purposes only')
+	parser.add_argument('--fails_to_exit', type=int, nargs='?', default=os.environ.get("FAILS_TO_EXIT"), help="Allowable failures for trades before programme will be foreced to terminate")
 	args 	= parser.parse_args()
 
 	logging.basicConfig(format='%(asctime)s %(levelname)-8s %(module)s.%(funcName)s %(lineno)d - %(message)s',
@@ -72,6 +76,8 @@ if __name__ == "__main__":
     					datefmt='%Y-%m-%d %H:%M:%S')
 
 	logging.info(f"Starting Okx arbitrag bot with the following params: {args}")
+
+	fail_safe_trigger = FailSafeTrigger(counts_to_trigger = args.fails_to_exit)
 
 	feed_client = CryptoStoreRedisFeeds(redis_url 	= args.feed_url,
 										redis_port 	= args.feed_port,
@@ -187,7 +193,7 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
-				if new_order_execution else None
+				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == SpotPerpExecutionDecision.GO_LONG_SPOT_SHORT_PERP:
 				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
@@ -207,7 +213,9 @@ if __name__ == "__main__":
 																		)
 
 				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
-				if new_order_execution else None
+				if new_order_execution else fail_safe_trigger.increment()
+
+			fail_safe_trigger.reset() if new_order_execution else None
 
 			if new_order_execution and args.db_url is not None:
 				(current_spot_vol, current_perpetual_lot_size) = trade_strategy.get_asset_holdings()
@@ -215,11 +223,16 @@ if __name__ == "__main__":
 				db_perpetual_clients.set_position(size = current_perpetual_lot_size)
 
 			if 	(new_order_execution) or \
-				(decision == SpotPerpExecutionDecision.NO_DECISION):
+				(decision == SpotPerpExecutionDecision.NO_DECISION) or \
+				(decision == SpotPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT) or \
+				(decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_SPOT):
 				sleep(args.poll_interval_s)
 			
 			else:
 				raise Exception(f"Order execution failed - Status: {new_order_execution}, Decision: {decision}")
+
+		except FailSafeException as ex:
+			sys.exit(ex)
 
 		except Exception as ex:
 			logging.error(ex)
