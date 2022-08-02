@@ -223,7 +223,9 @@ if __name__ == "__main__":
 				db_perpetual_clients.set_position(size = current_perpetual_lot_size)
 
 			if 	(new_order_execution) or \
-				(decision == SpotPerpExecutionDecision.NO_DECISION):
+				(decision == SpotPerpExecutionDecision.NO_DECISION) or \
+				(decision == SpotPerpExecutionDecision.GO_LONG_PERP_SHORT_SPOT) or \
+				(decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_SPOT):
 				sleep(args.poll_interval_s)
 			
 			else:
