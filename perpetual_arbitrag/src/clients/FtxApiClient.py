@@ -11,8 +11,6 @@ class FtxApiClient(ExchangePerpetualClients):
 	client 	= None
 	logger 	= logging.getLogger('FtxApiClient')
 
-	ftx_funding_rate_snapshot_times = [...]
-
 	def __init__(self, 	api_key: str, 
 						api_secret_key: str,
 						funding_rate_enable: bool,
@@ -155,7 +153,14 @@ class FtxApiClient(ExchangePerpetualClients):
 		current_time 					= datetime.datetime.utcnow()
 		funding_rate, next_funding_time = self.get_perpetual_funding_rate(symbol = symbol)
 		next_funding_time 				= datetime.datetime.strptime(next_funding_time.split("+")[0], "%Y-%m-%dT%H:%M:%S")
-		return funding_rate if next_funding_time - timedelta(seconds = seconds_before_current) <= current_time else 0
+		return funding_rate if (next_funding_time - timedelta(seconds = seconds_before_current) <= current_time) and \
+								self.funding_rate_enable \
+							else 0
+
+	def set_perpetual_leverage(self, symbol: str, leverage: int):
+		self.logger.debug(f"Set leverage {leverage}")
+		self.client.set_leverage(leverage = leverage)
+		return
 
 	def place_perpetual_order(self, *args, **kwargs):
 		# Unimplemented as we will be using WS client for trades
