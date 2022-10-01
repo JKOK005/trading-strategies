@@ -139,19 +139,8 @@ class FtxApiClient(ExchangePerpetualClients):
 		"""
 		Gets the immediate and predicted funding rate for futures contract
 		"""
-		funding_rate_resp = self.public_client.get_funding_rate(instId = symbol)
-		funding_rate_info = funding_rate_resp["data"][0]
-		return (float(funding_rate_info["fundingRate"]), float(funding_rate_info["nextFundingRate"]))
-
-	def funding_rate_valid_interval(self, seconds_before: int):
-		current_time = datetime.datetime.utcnow()
-		for each_snaphsot_time in self.okx_funding_rate_snapshot_times:
-			ts = datetime.datetime.strptime(each_snaphsot_time, "%H:%M")
-			snapshot_timestamp = current_time.replace(hour = ts.hour, minute = ts.minute, second = 0)
-			if 	(snapshot_timestamp - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp) or \
-				(snapshot_timestamp + timedelta(days = 1) - timedelta(seconds = seconds_before) <= current_time and current_time <= snapshot_timestamp + timedelta(days = 1)):
-				return True
-		return False
+		funding_rate_resp = self.public_client.get_future_stats(future_name = symbol)
+		return float(funding_rate_resp["nextFundingRate"]), funding_rate_resp["nextFundingTime"]
 
 	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before_current: int):
 		"""
@@ -163,18 +152,19 @@ class FtxApiClient(ExchangePerpetualClients):
 		2) If we are within the valid funding interval, then the funding rate is non-zero.
 		3) If funding rate computation has been disabled, then all rates are 0.
 		"""
-		pass
+		current_time 					= datetime.datetime.utcnow()
+		funding_rate, next_funding_time = self.get_perpetual_funding_rate(symbol = symbol)
+		next_funding_time 				= datetime.datetime.strptime(next_funding_time.split("+")[0], "%Y-%m-%dT%H:%M:%S")
+		return funding_rate if next_funding_time - timedelta(seconds = seconds_before_current) <= current_time else 0
 
 	def place_perpetual_order(self, *args, **kwargs):
-		pass
+		# Unimplemented as we will be using WS client for trades
+		raise Exception("Function <place_perpetual_order> should not be invoked on REST client")
 
 	def revert_perpetual_order(self, order_resp, *args, **kwargs):
-		pass
+		# Unimplemented as we will be using WS client for trades
+		raise Exception("Function <revert_perpetual_order> should not be invoked on REST client")
 
 	def assert_perpetual_resp_error(self, order_resp):
-		"""
-		Function looks at an order response created after placing an order and decides if we should raise an error.
-
-		A raised error indicates a failed order attempt.
-		"""
-		pass
+		# Unimplemented as we will be using WS client for trades
+		raise Exception("Function <assert_perpetual_resp_error> should not be invoked on REST client")
