@@ -42,61 +42,118 @@ class TestOkxApiClient(TestCase):
 		assert(result == 0.2)
 		return
 
-	# @patch("okx.Market_api.MarketAPI")
-	# def test_perpetual_trading_price_api_call(self, patch_market):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.market_client 	= patch_market
-	# 	_okx_api_client.get_perpetual_trading_price(symbol = "ETH-USDT-SWAP")
-	# 	assert(patch_market.get_ticker.called)
+	@patch("ftx.FtxClient")
+	def test_perpetual_trading_price_api_call(self, mock_ftx_client):
+		ftx_api_client = copy.deepcopy(self.ftx_client)
+		ftx_api_client.client = mock_ftx_client
+		mock_ftx_client.get_market.return_value 	= {	
+														"name": "BTC-PERP", 
+														"type": "future", 
+														"ask": 3949.25,
+												      	"bid": 3949,
+												      	"last": 10579.52,
+												      	"postOnly": False,
+												      	"price": 10579.52,
+											      	}
+		result = ftx_api_client.get_perpetual_trading_price(symbol = "BTC-PERP")
+		mock_ftx_client.get_market.assert_called_with(market = "BTC-PERP")
+		assert(result == 10579.52)
 
-	# @patch("okx.Public_api.PublicAPI")
-	# def test_perpetual_min_volume_api_call(self, patch_public):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.public_client 	= patch_public
-	# 	_okx_api_client.get_perpetual_min_lot_size(symbol = "ETH-USDT-SWAP")
-	# 	assert(patch_public.get_instruments.called)
+	@patch("ftx.FtxClient")
+	def test_perpetual_min_lot_size_api_call(self, mock_ftx_client):
+		ftx_api_client = copy.deepcopy(self.ftx_client)
+		ftx_api_client.client = mock_ftx_client
+		mock_ftx_client.get_future.return_value 	= {
+														"ask": 4196,
+														"bid": 4114.25,
+														"change1h": 0,
+														"change24h": 0,
+														"description": "Bitcoin March 2019 Futures",
+														"enabled": True,
+														"expired": False,
+														"expiry": "2019-03-29T03:00:00+00:00",
+														"index": 3919.58841011,
+														"last": 4196,
+														"lowerBound": 3663.75,
+														"mark": 3854.75,
+														"name": "BTC-0329",
+														"perpetual": False,
+														"postOnly": False,
+														"priceIncrement": 0.25,
+														"sizeIncrement": 0.0001,
+														"underlying": "BTC",
+														"upperBound": 4112.2,
+														"type": "future"
+													}
 
-	# def test_average_margin_purchase_price_computation_exact_order(self):
-	# 	price_qty_pairs_ordered = [[100, 100], [200, 100], [300, 50]]
-	# 	size = 250
-	# 	assert(self.okx_api_client._compute_average_margin_purchase_price(price_qty_pairs_ordered = price_qty_pairs_ordered, size = size) == 180)
+		result = ftx_api_client.get_perpetual_min_lot_size(symbol = "BTC-0329")
+		mock_ftx_client.get_future.assert_called_with(future_name = "BTC-0329")
+		assert(result == 0.0001)
 
-	# def test_bid_price_default_for_no_bids(self):
-	# 	bids 	= []
-	# 	size 	= 100
-	# 	assert(self.okx_api_client._compute_average_bid_price(bids = bids, size = size) == 0)
+	def test_average_margin_purchase_price_computation_exact_order(self):
+		price_qty_pairs_ordered = [[100, 100], [200, 100], [300, 50]]
+		size = 250
+		assert(self.ftx_client._compute_average_margin_purchase_price(price_qty_pairs_ordered = price_qty_pairs_ordered, size = size) == 180)
 
-	# def test_prioritization_of_single_highest_bids(self):
-	# 	bids 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
-	# 	size 	= 50
-	# 	assert(self.okx_api_client._compute_average_bid_price(bids = bids, size = size) == 500)
+	def test_bid_price_default_for_no_bids(self):
+		bids 	= []
+		size 	= 100
+		assert(self.ftx_client._compute_average_bid_price(bids = bids, size = size) == 0)
 
-	# def test_prioritization_of_two_most_highest_bids(self):
-	# 	bids 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
-	# 	size 	= 100
-	# 	assert(self.okx_api_client._compute_average_bid_price(bids = bids, size = size) == 400)
+	def test_prioritization_of_single_highest_bids(self):
+		bids 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
+		size 	= 50
+		assert(self.ftx_client._compute_average_bid_price(bids = bids, size = size) == 500)
 
-	# def test_ask_price_default_for_no_asks(self):
-	# 	asks 	= []
-	# 	size 	= 100
-	# 	assert(self.okx_api_client._compute_average_ask_price(asks = asks, size = size) == sys.maxsize)
+	def test_prioritization_of_two_most_highest_bids(self):
+		bids 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
+		size 	= 100
+		assert(self.ftx_client._compute_average_bid_price(bids = bids, size = size) == 400)
 
-	# def test_prioritization_of_single_lowest_asks(self):
-	# 	asks 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
-	# 	size 	= 50
-	# 	assert(self.okx_api_client._compute_average_ask_price(asks = asks, size = size) == 100)
+	def test_ask_price_default_for_no_asks(self):
+		asks 	= []
+		size 	= 100
+		assert(self.ftx_client._compute_average_ask_price(asks = asks, size = size) == sys.maxsize)
 
-	# def test_prioritization_of_two_most_lowest_asks(self):
-	# 	asks 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
-	# 	size 	= 200
-	# 	assert(self.okx_api_client._compute_average_ask_price(asks = asks, size = size) == 125)
+	def test_prioritization_of_single_lowest_asks(self):
+		asks 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
+		size 	= 50
+		assert(self.ftx_client._compute_average_ask_price(asks = asks, size = size) == 100)
 
-	# @patch("okx.Trade_api.TradeAPI")
-	# def test_open_perpetual_orders_api_call(self, patch_trade):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.trade_client 	= patch_trade
-	# 	_okx_api_client.get_perpetual_open_orders(symbol = "ETH-USDT-SWAP")
-	# 	assert(patch_trade.get_order_list.called)
+	def test_prioritization_of_two_most_lowest_asks(self):
+		asks 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
+		size 	= 200
+		assert(self.ftx_client._compute_average_ask_price(asks = asks, size = size) == 125)
+
+	@patch("ftx.FtxClient")
+	def test_open_perpetual_orders_api_call(self, mock_ftx_client):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.client 	= mock_ftx_client
+		expected_response 		= 	[
+										{
+											"createdAt": "2019-03-05T09:56:55.728933+00:00",
+											"filledSize": 10,
+											"future": "XRP-PERP",
+											"price": 0.306525,
+											"avgFillPrice": 0.306526,
+											"remainingSize": 31421,
+											"side": "sell",
+										},
+										{
+											"createdAt": "2019-03-06T09:56:55.728933+00:00",
+											"filledSize": 10,
+											"future": "XRP-PERP",
+											"price": 0.306525,
+											"avgFillPrice": 0.306526,
+											"remainingSize": 31421,
+											"side": "sell",
+										}
+									]
+		mock_ftx_client.get_open_orders.return_value = expected_response
+
+		result = ftx_api_client.get_perpetual_open_orders(symbol = "XRP-PERP")
+		mock_ftx_client.get_open_orders.assert_called_with(market = "XRP-PERP")
+		assert(result == expected_response)
 
 	# def test_most_recent_open_perpetual_order_retrieved(self):
 	# 	_okx_api_client = copy.deepcopy(self.okx_api_client)
