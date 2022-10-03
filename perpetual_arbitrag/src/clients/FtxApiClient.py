@@ -71,7 +71,7 @@ class FtxApiClient(ExchangePerpetualClients):
 		"""
 		resp = self.client.get_positions()
 		relevant_asset_position = next(filter(lambda x: x["future"] == currency, resp))
-		return resp["netSize"]
+		return relevant_asset_position["netSize"]
 
 	def get_perpetual_trading_price(self, symbol: str):
 		"""
