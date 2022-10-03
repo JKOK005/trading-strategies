@@ -27,22 +27,20 @@ class TestOkxApiClient(TestCase):
 		assert(result == ["BTC-PERP", "SOL-PERP"])
 		return
 
-	# @patch("okx.Account_api.AccountAPI")
-	# def test_compute_correct_perpetual_amt(self, patch_account):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.account_client 	= patch_account
-	# 	patch_account.get_positions.return_value = {"code": "0",
-	# 												 "msg": "",
-	# 												 "data": [
-	# 												    {"availPos":"1", "ccy":"ETH-USDT-SWAP", "posSide":"long"},
-	# 												    {"availPos":"1", "ccy":"ETH-USDT-SWAP", "posSide":"short"},
-	# 												    {"availPos":"3", "ccy":"ETH-USDT-SWAP", "posSide":"short"},
-	# 												    {"availPos":"3", "ccy":"ETH-USDT-SWAP", "posSide":"long"},
-	# 												    {"availPos":"5", "ccy":"ETH-USDT-SWAP", "posSide":"long"},
-	# 												  ]
-	# 												}
-	# 	perpetual_position 	= _okx_api_client.get_perpetual_trading_account_details(currency = "ETH-USDT-SWAP")
-	# 	assert(perpetual_position == 5)
+	@patch("ftx.FtxClient")
+	def test_compute_correct_perpetual_amt(self, mock_ftx_client):
+		ftx_api_client = copy.deepcopy(self.ftx_client)
+		ftx_api_client.client = mock_ftx_client
+		mock_ftx_client.get_positions.return_value 	= [
+													    {"future": "ETH-PERP", "netSize" : 0.1},
+													    {"future": "BTC-PERP", "netSize" : 0.2},
+													    {"future": "SOL-PERP", "netSize" : 0.3},
+													]
+		result = ftx_api_client.get_perpetual_trading_account_details(currency = "BTC-PERP")
+
+		mock_ftx_client.get_positions.assert_called()
+		assert(result == 0.2)
+		return
 
 	# @patch("okx.Market_api.MarketAPI")
 	# def test_perpetual_trading_price_api_call(self, patch_market):
