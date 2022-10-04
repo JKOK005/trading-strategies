@@ -3,6 +3,7 @@ import ftx
 import sys
 import pytest
 from clients.FtxApiClient import FtxApiClient
+from freezegun import freeze_time
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -25,7 +26,6 @@ class TestOkxApiClient(TestCase):
 		
 		mock_ftx_client.get_markets.assert_called() 
 		assert(result == ["BTC-PERP", "SOL-PERP"])
-		return
 
 	@patch("ftx.FtxClient")
 	def test_compute_correct_perpetual_amt(self, mock_ftx_client):
@@ -40,7 +40,6 @@ class TestOkxApiClient(TestCase):
 
 		mock_ftx_client.get_positions.assert_called()
 		assert(result == 0.2)
-		return
 
 	@patch("ftx.FtxClient")
 	def test_perpetual_trading_price_api_call(self, mock_ftx_client):
@@ -155,90 +154,158 @@ class TestOkxApiClient(TestCase):
 		mock_ftx_client.get_open_orders.assert_called_with(market = "XRP-PERP")
 		assert(result == expected_response)
 
-	# def test_most_recent_open_perpetual_order_retrieved(self):
-	# 	_okx_api_client = copy.deepcopy(self.okx_api_client)
+	def test_most_recent_open_perpetual_order_retrieved(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
 
-	# 	with patch.object(_okx_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
-	# 		mock_get_perpetual_open_orders.return_value = [ {"symbol" : "ETH-USDT-SWAP", "orderId" : 1, "uTime" : 1},
-	# 														{"symbol" : "ETH-USDT-SWAP", "orderId" : 2, "uTime" : 5},
-	# 														{"symbol" : "ETH-USDT-SWAP", "orderId" : 3, "uTime" : 3}]
-	# 		assert(_okx_api_client.get_perpetual_most_recent_open_order(symbol = "ETH-USDT-SWAP")["orderId"] == 2)
+		with patch.object(ftx_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
+			mock_get_perpetual_open_orders.return_value = [
+															{
+																"createdAt": "2019-03-05T09:56:55.728933+00:00",
+																"filledSize": 1,
+																"future": "XRP-PERP",
+																"price": 1,
+																"avgFillPrice": 1,
+																"remainingSize": 1,
+																"side": "sell",
+															},
+															{
+																"createdAt": "2019-03-06T09:56:55.728933+00:00",
+																"filledSize": 2,
+																"future": "XRP-PERP",
+																"price": 2,
+																"avgFillPrice": 2,
+																"remainingSize": 2,
+																"side": "sell",
+															},
+															{
+																"createdAt": "2019-03-04T09:56:55.728933+00:00",
+																"filledSize": 3,
+																"future": "XRP-PERP",
+																"price": 3,
+																"avgFillPrice": 3,
+																"remainingSize": 3,
+																"side": "sell",
+															}
+														]
+
+			result	= ftx_api_client.get_perpetual_most_recent_open_order(symbol = "XRP-PERP")
+			assert(result["createdAt"] == "2019-03-06T09:56:55.728933+00:00")
 	
-	# def test_no_open_perpetual_orders(self):
-	# 	_okx_api_client = copy.deepcopy(self.okx_api_client)
+	def test_no_open_perpetual_orders(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
 
-	# 	with patch.object(_okx_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
-	# 		mock_get_perpetual_open_orders.return_value = []
-	# 		assert(_okx_api_client.get_perpetual_most_recent_open_order(symbol = "ETH-USDT-SWAP") == [])
+		with patch.object(ftx_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
+			mock_get_perpetual_open_orders.return_value = []
+			result	= ftx_api_client.get_perpetual_most_recent_open_order(symbol = "XRP-PERP")
+			assert(result == [])
 
-	# @patch("okx.Trade_api.TradeAPI")
-	# def test_fulfilled_perpetual_orders_api_call(self, patch_trade):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.trade_client 	= patch_trade
-	# 	_okx_api_client.get_perpetual_fulfilled_orders(symbol = "ETH-USDT-SWAP")
-	# 	assert(patch_trade.get_orders_history.called)
+	@patch("ftx.FtxClient")
+	def test_fulfilled_perpetual_orders_api_call(self, mock_ftx_client):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.client 	= mock_ftx_client
+		ftx_api_client.get_perpetual_fulfilled_orders(symbol = "XRP-PERP")
+		mock_ftx_client.get_order_history.assert_called()
 
-	# def test_fulfilled_perpetual_order_retrieved(self):
-	# 	_okx_api_client = copy.deepcopy(self.okx_api_client)
+	def test_fulfilled_perpetual_order_retrieved(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
 
-	# 	with patch.object(_okx_api_client, "get_perpetual_fulfilled_orders") as mock_get_spot_open_orders:
-	# 		mock_get_spot_open_orders.return_value 	=	[{"symbol" : "ETH-USDT-SWAP", "orderId" : 1, "uTime" : 1},
-	# 													 {"symbol" : "ETH-USDT-SWAP", "orderId" : 2, "uTime" : 5},
-	# 													 {"symbol" : "ETH-USDT-SWAP", "orderId" : 3, "uTime" : 3}]
+		with patch.object(ftx_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
+			mock_get_perpetual_fulfilled_orders.return_value = [	
+																{
+																	"id": 100,
+																	"createdAt": "2019-03-04T09:56:55.728933+00:00",
+																	"filledSize": 3,
+																	"future": "XRP-PERP",
+																	"price": 3,
+																	"avgFillPrice": 3,
+																	"remainingSize": 3,
+																	"side": "sell",
+																	"status": "closed",
+																},
+																{	
+																	"id": 200,
+																	"createdAt": "2019-03-04T09:56:55.728933+00:00",
+																	"filledSize": 3,
+																	"future": "XRP-PERP",
+																	"price": 3,
+																	"avgFillPrice": 3,
+																	"remainingSize": 3,
+																	"side": "sell",
+																	"status": "open",
+																},
+																{
+																	"id": 300,
+																	"createdAt": "2019-03-04T09:56:55.728933+00:00",
+																	"filledSize": 3,
+																	"future": "XRP-PERP",
+																	"price": 3,
+																	"avgFillPrice": 3,
+																	"remainingSize": 3,
+																	"side": "sell",
+																	"status": "new",
+																}
+															]
+			
+			result = ftx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "XRP-USDT")
+			assert(result["id"] == 100)
 
-	# 		assert(_okx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "ETH-USDT")["orderId"] == 2)
+	def test_no_fulfilled_perpetual_orders(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
 
-	# def test_no_fulfilled_perpetual_orders(self):
-	# 	_okx_api_client = copy.deepcopy(self.okx_api_client)
+		with patch.object(ftx_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
+			mock_get_perpetual_fulfilled_orders.return_value = []
+			result = ftx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "XRP-USDT")
+			assert(result == [])
 
-	# 	with patch.object(_okx_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
-	# 		mock_get_perpetual_fulfilled_orders.return_value = []
-	# 		assert(_okx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "ETH-USDT-SWAP") == [])
+	@patch("ftx.FtxClient")
+	def test_get_perpetual_funding_rates(self, mock_ftx_client):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.client 	= mock_ftx_client
+		mock_ftx_client.get_future_stats.return_value = {
+														    "volume": 1000.23,
+														    "nextFundingRate": 0.00025,
+														    "nextFundingTime": "2019-03-29T03:00:00+00:00",
+														    "expirationPrice": 3992.1,
+														    "predictedExpirationPrice": 3993.6,
+														    "strikePrice": 8182.35,
+														    "openInterest": 21124.583
+														}
 
-	# @patch("okx.Public_api.PublicAPI")
-	# def test_get_perpetual_funding_rates(self, patch_public):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.public_client 	= patch_public
+		(funding_rate, funding_time) = ftx_api_client.get_perpetual_funding_rate(symbol = "XRP-PERP")
+		assert((funding_rate == 0.00025) & (funding_time == "2019-03-29T03:00:00+00:00"))
 
-	# 	patch_public.get_funding_rate.return_value = {"data" : [{"fundingRate" : 0.01, "nextFundingRate" : -0.01}]}
-	# 	(funding_rate, estimated_funding_rate) = _okx_api_client.get_perpetual_funding_rate(symbol = "ETHUSDT")
-	# 	assert (funding_rate == 0.01 and estimated_funding_rate == -0.01)
+	def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.funding_rate_enable = False
 
-	# def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
-	# 	_okx_api_client 	= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.funding_rate_enable = False
+		with patch.object(ftx_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
+			mock_get_perpetual_funding_rate.return_value 	= (-0.02, "2019-03-29T10:00:00+00:00")
+			result 	= ftx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 300)
+			assert result == 0
 
-	# 	with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval, \
-	# 		 patch.object(_okx_api_client, "get_perpetual_funding_rate") as mock_get_futures_funding_rate:
-	# 		mock_funding_rate_valid_interval.return_value = True
-	# 		mock_get_futures_funding_rate.return_value 	  = (0.01, -0.01)
-	# 		assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before_current = 300, seconds_before_estimated = 300) == (0, 0)
-	# 	return
+	@freeze_time("2019-03-29T09:00:00+00:00")
+	def test_effective_funding_rate_is_zero_when_invalid_interval(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.funding_rate_enable = True
 
-	# def test_effective_funding_rate_is_zero_when_invalid_interval(self):
-	# 	_okx_api_client 	= copy.deepcopy(self.okx_api_client)
+		with patch.object(ftx_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
+			mock_get_perpetual_funding_rate.return_value 	= (-0.02, "2019-03-29T10:00:00+00:00")
+			result 	= ftx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 300)
+			assert result == 0
 
-	# 	with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval, \
-	# 		 patch.object(_okx_api_client, "get_perpetual_funding_rate") as mock_get_futures_funding_rate:
-	# 		mock_funding_rate_valid_interval.return_value 	= False
-	# 		mock_get_futures_funding_rate.return_value 		= (0.01, -0.01)
-	# 		assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before_current = 300, seconds_before_estimated = 300) == (0, 0)
-	# 	return
+	@freeze_time("2019-03-29T09:00:00+00:00")
+	def test_effective_funding_rate_is_non_zero(self):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.funding_rate_enable = True
 
-	# @patch("okx.Public_api.PublicAPI")
-	# def test_effective_funding_rate_is_non_zero(self, patch_public):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.public_client 	= patch_public
-	# 	patch_public.get_funding_rate.return_value = {"data" : [{"fundingRate" : 0.01, "nextFundingRate" : -0.01}]}
+		with patch.object(ftx_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
+			mock_get_perpetual_funding_rate.return_value 	= (-0.02, "2019-03-29T10:00:00+00:00")
+			result 	= ftx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 7200)
+			assert result == -0.02
 
-	# 	with patch.object(_okx_api_client, "funding_rate_valid_interval") as mock_funding_rate_valid_interval:
-	# 		mock_funding_rate_valid_interval.return_value = True
-	# 		assert _okx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-USDT", seconds_before_current = 300, seconds_before_estimated = 300) == (0.01, -0.01)
-	# 	return
-
-	# @patch("okx.Account_api.AccountAPI")
-	# def test_perpetual_leverage_set(self, patch_account):
-	# 	_okx_api_client 				= copy.deepcopy(self.okx_api_client)
-	# 	_okx_api_client.account_client 	= patch_account
-	# 	_okx_api_client.set_perpetual_leverage(symbol = "ETH-USDT", leverage = 5)
-	# 	assert patch_account.set_leverage.called
+	@patch("ftx.FtxClient")
+	def test_perpetual_leverage_set(self, mock_ftx_client):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.client 	= mock_ftx_client
+		ftx_api_client.set_perpetual_leverage(leverage = 5)
+		mock_ftx_client.set_leverage.assert_called_with(leverage = 5)

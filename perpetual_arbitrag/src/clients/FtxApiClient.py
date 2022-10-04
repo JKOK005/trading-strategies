@@ -137,7 +137,7 @@ class FtxApiClient(ExchangePerpetualClients):
 		"""
 		Gets the immediate and predicted funding rate for futures contract
 		"""
-		funding_rate_resp = self.public_client.get_future_stats(future_name = symbol)
+		funding_rate_resp = self.client.get_future_stats(future_name = symbol)
 		return float(funding_rate_resp["nextFundingRate"]), funding_rate_resp["nextFundingTime"]
 
 	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before_current: int):
@@ -157,7 +157,7 @@ class FtxApiClient(ExchangePerpetualClients):
 								self.funding_rate_enable \
 							else 0
 
-	def set_perpetual_leverage(self, symbol: str, leverage: int):
+	def set_perpetual_leverage(self, leverage: int):
 		self.logger.debug(f"Set leverage {leverage}")
 		self.client.set_leverage(leverage = leverage)
 		return
