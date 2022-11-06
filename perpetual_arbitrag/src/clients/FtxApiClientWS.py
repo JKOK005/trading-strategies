@@ -5,7 +5,9 @@ import logging
 import time
 import websockets
 from clients.FtxApiClient import FtxApiClient
+from deprecated import deprecated
 
+@deprecated("Deprecate class as FTX WS does not support placing trades via WS")
 class FtxApiClientWS(FtxApiClient):
 	ws_private_client 	= None
 	ws_private_url 		= "wss://ftx.com/ws/"
@@ -25,7 +27,7 @@ class FtxApiClientWS(FtxApiClient):
 		return
 
 	def _login(self, api_key: str, api_secret_key: str):
-		epoch_ts 		= int(time.time() * 1000)
+		epoch_ts 		= 	int(time.time() * 1000)
 		login_payload 	= 	{	
 								"op" 	: 	"login",
 								"args" 	: 	{
@@ -47,3 +49,40 @@ class FtxApiClientWS(FtxApiClient):
 	def make_connection(self):
 		asyncio.get_event_loop().run_until_complete(self._connect())
 		return
+
+	def get_spot_average_bid_ask_price(self, symbol: str, size: float):
+		"""
+		Returns the average bid / ask price of the spot asset, assuming that we intend to trade at a given volume. 
+		"""
+		order_book 			= self.feed_client.sorted_order_book(exchange = "FTX", symbol = symbol)
+		bids 				= order_book["bids"]
+		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
+		asks 				= order_book["asks"]
+		average_ask_price 	= self._compute_average_ask_price(asks = asks, size = size)
+		updated_ts 			= order_book["updated"]
+		return (average_bid_price, average_ask_price, updated_ts)
+
+	def _frame_spot_order(self, symbol: str, 
+								order_type: str, 
+								order_side: str, 
+								price: float,
+								size: float,
+								target_currency: str):
+		args = {
+			"instId" 	: symbol,
+			"tdMode" 	: "cash",
+			"side" 		: order_side,
+			"ordType" 	: order_type,
+			"sz" 		: size,
+			"tgtCcy" 	: target_currency
+		}
+
+		args["px"] = price if order_type == "limit" else None
+
+		order = {
+			"id" 	: f"SPOT{order_side}",
+			"op" 	: "order",
+			"args" 	: [args]
+		}
+
+		return order
