@@ -12,31 +12,18 @@ class MarginPerpetualBotExecution(BotExecutionV2):
 
 	def long_margin_short_perpetual(self, margin_params,
 									  	  perpetual_params,
+									  	  margin_revert_params,
+									  	  perpetual_revert_params,
 								):
-
-		margin_entry_params 	= copy.copy(margin_params)
-		margin_revert_params 	= copy.copy(margin_params)
-		perpetual_revert_params = copy.copy(perpetual_params)
-
-		margin_entry_params["order_side"] 		= "buy"
-		margin_entry_params["size"] 			= margin_params["entry_size"]
-		
-		margin_revert_params["order_side"] 		= "sell"
-		margin_revert_params["size"] 			= margin_params["revert_size"]
-		
-		perpetual_params["order_side"] 			= "sell"
-		perpetual_revert_params["order_side"] 	= "buy"
-
 		self.logger.info(margin_params)
 		self.logger.info(perpetual_params)
-
 		return self.idempotent_trade_execution_async(asset_A_order_fn 				= self.api_client.place_perpetual_order_async,
 													 asset_A_params 				= perpetual_params,
 													 asset_A_assert_resp_error_fn 	= self.api_client.assert_perpetual_resp_error,
 													 asset_A_revert_fn 				= self.api_client.revert_perpetual_order_async,
 													 asset_A_revert_params 			= perpetual_revert_params,
 													 asset_B_order_fn 				= self.api_client.place_margin_order_async,
-													 asset_B_params 				= margin_entry_params,
+													 asset_B_params 				= margin_params,
 													 asset_B_assert_resp_error_fn 	= self.api_client.assert_margin_resp_error,
 													 asset_B_revert_fn 				= self.api_client.revert_margin_order_async,
 													 asset_B_revert_params 			= margin_revert_params
@@ -44,26 +31,13 @@ class MarginPerpetualBotExecution(BotExecutionV2):
 
 	def short_margin_long_perpetual(self, margin_params,
 									  	  perpetual_params,
+									  	  margin_revert_params,
+									  	  perpetual_revert_params,
 								):
-
-		margin_entry_params 	= copy.copy(margin_params)
-		margin_revert_params 	= copy.copy(margin_params)
-		perpetual_revert_params = copy.copy(perpetual_params)
-
-		margin_entry_params["order_side"] 		= "sell"
-		margin_entry_params["size"] 			= margin_params["entry_size"]
-
-		margin_revert_params["order_side"] 		= "buy"
-		margin_revert_params["size"] 			= margin_params["revert_size"]
-		
-		perpetual_params["order_side"] 			= "buy"
-		perpetual_revert_params["order_side"] 	= "sell"
-
 		self.logger.info(margin_params)
 		self.logger.info(perpetual_params)
-
 		return self.idempotent_trade_execution_async(asset_A_order_fn 				= self.api_client.place_margin_order_async,
-													 asset_A_params 				= margin_entry_params,
+													 asset_A_params 				= margin_params,
 													 asset_A_assert_resp_error_fn 	= self.api_client.assert_margin_resp_error,
 													 asset_A_revert_fn 				= self.api_client.revert_margin_order_async,
 													 asset_A_revert_params 			= margin_revert_params,

@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 import logging
 import sys
@@ -194,88 +195,145 @@ if __name__ == "__main__":
 			new_order_execution = False
 
 			if decision == MarginPerpExecutionDecision.TAKE_PROFIT_LONG_PERP_SHORT_MARGIN:
-				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params = {
-																					"symbol" 	 		: args.margin_trading_pair,
-																					"ccy" 				: "USDT",
-																					"trade_mode" 		: "cross",
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
-																					"entry_size" 		: margin_long_size,
-																					"revert_size" 		: args.margin_entry_vol,
-																				},
-																				perpetual_params = {
-																					"symbol" 	 		: args.perpetual_trading_pair,
-																					"position_side" 	: "long",
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.perpetual_entry_lot_size,
-																				}
+				margin_params 	= {
+					"symbol" 	 		: args.margin_trading_pair,
+					"ccy" 				: "USDT",
+					"trade_mode" 		: "cross",
+					"order_type" 		: args.order_type, 
+					"price" 	 		: margin_price if args.order_type == "limit" else 1,
+					"order_side" 		: "buy",
+					"size" 				: margin_long_size,
+				}
+
+				perpetual_params = {
+					"symbol" 	 		: args.perpetual_trading_pair,
+					"position_side" 	: "long",
+					"order_type" 		: args.order_type, 
+					"price" 	 		: perpetual_price if args.order_type == "limit" else 1,
+					"size" 		 		: args.perpetual_entry_lot_size,
+					"order_side" 		: "sell",
+				}
+
+				margin_revert_params 					= copy.copy(margin_params)
+				margin_revert_params["order_side"] 		= "sell"
+				margin_revert_params["size"] 			= args.margin_entry_vol
+
+				perpetual_revert_params 				= copy.copy(perpetual_params)
+				perpetual_revert_params["order_side"] 	= "buy"
+
+				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params 		 	= margin_params,
+																				perpetual_params 	 	= perpetual_params,
+																				margin_revert_params 	= margin_revert_params,
+																				perpetual_revert_params = perpetual_revert_params
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = args.margin_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == MarginPerpExecutionDecision.TAKE_PROFIT_LONG_MARGIN_SHORT_PERP:
-				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params = {
-																					"symbol" 	 		: args.margin_trading_pair,
-																					"ccy" 				: "USDT",
-																					"trade_mode" 		: "cross",
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
-																					"entry_size" 		: args.margin_entry_vol * (1 - args.margin_tax_rate),
-																					"revert_size" 		: margin_long_size,
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "short",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
+				margin_params 	= {
+									"symbol" 	 		: args.margin_trading_pair,
+									"ccy" 				: "USDT",
+									"trade_mode" 		: "cross",
+									"order_type" 		: args.order_type, 
+									"price" 	 		: margin_price if args.order_type == "limit" else 1,
+									"order_side" 		: "sell",
+									"size" 				: args.margin_entry_vol * (1 - args.margin_tax_rate),
+								}
+
+				perpetual_params = {
+									"symbol" 	 	: args.perpetual_trading_pair,
+									"position_side" : "short",
+									"order_type" 	: args.order_type, 
+									"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+									"size" 		 	: args.perpetual_entry_lot_size,
+									"order_side" 	: "buy",
+								}
+
+				margin_revert_params 					= copy.copy(margin_params)
+				margin_revert_params["order_side"] 		= "buy"
+				margin_revert_params["size"] 			= margin_long_size
+
+				perpetual_revert_params 				= copy.copy(perpetual_params)
+				perpetual_revert_params["order_side"] 	= "sell"
+
+				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params 			= margin_params,
+																				perpetual_params 		= perpetual_params,
+																				margin_revert_params 	= margin_revert_params,
+																				perpetual_revert_params = perpetual_revert_params
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = -1 * args.margin_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == MarginPerpExecutionDecision.GO_LONG_MARGIN_SHORT_PERP:
-				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params = {
-																					"symbol" 	 		: args.margin_trading_pair,
-																					"ccy" 				: "USDT",
-																					"trade_mode" 		: "cross",
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
-																					"entry_size" 		: margin_long_size,
-																					"revert_size" 		: args.margin_entry_vol,
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "short",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
+				margin_params 	= {
+					"symbol" 	 		: args.margin_trading_pair,
+					"ccy" 				: "USDT",
+					"trade_mode" 		: "cross",
+					"order_type" 		: args.order_type, 
+					"price" 	 		: margin_price if args.order_type == "limit" else 1,
+					"order_side" 		: "buy",
+					"size" 				: margin_long_size,
+				}
+
+				perpetual_params = {
+					"symbol" 	 		: args.perpetual_trading_pair,
+					"position_side" 	: "short",
+					"order_type" 		: args.order_type, 
+					"price" 	 		: perpetual_price if args.order_type == "limit" else 1,
+					"size" 		 		: args.perpetual_entry_lot_size,
+					"order_side" 		: "sell",
+				}
+
+				margin_revert_params 					= copy.copy(margin_params)
+				margin_revert_params["order_side"] 		= "sell"
+				margin_revert_params["size"] 			= args.margin_entry_vol
+
+				perpetual_revert_params 				= copy.copy(perpetual_params)
+				perpetual_revert_params["order_side"] 	= "buy"
+
+				new_order_execution = bot_executor.long_margin_short_perpetual(	margin_params 			= margin_params,
+																				perpetual_params 		= perpetual_params,
+																				margin_revert_params 	= margin_revert_params,
+																				perpetual_revert_params = perpetual_revert_params
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = args.margin_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
 				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == MarginPerpExecutionDecision.GO_LONG_PERP_SHORT_MARGIN:
-				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params = {
-																					"symbol" 	 		: args.margin_trading_pair,
-																					"ccy" 				: "USDT",
-																					"trade_mode" 		: "cross",
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: margin_price if args.order_type == "limit" else 1,
-																					"entry_size" 		: args.margin_entry_vol * (1 - args.margin_tax_rate),
-																					"revert_size" 		: margin_long_size,
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "long",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
+				margin_params 	= {
+									"symbol" 	 		: args.margin_trading_pair,
+									"ccy" 				: "USDT",
+									"trade_mode" 		: "cross",
+									"order_type" 		: args.order_type, 
+									"price" 	 		: margin_price if args.order_type == "limit" else 1,
+									"order_side" 		: "sell",
+									"size" 				: args.margin_entry_vol * (1 - args.margin_tax_rate),
+								}
+
+				perpetual_params = {
+									"symbol" 	 	: args.perpetual_trading_pair,
+									"position_side" : "long",
+									"order_type" 	: args.order_type, 
+									"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+									"size" 		 	: args.perpetual_entry_lot_size,
+									"order_side" 	: "buy",
+								}
+
+				margin_revert_params 					= copy.copy(margin_params)
+				margin_revert_params["order_side"] 		= "buy"
+				margin_revert_params["size"] 			= margin_long_size
+
+				perpetual_revert_params 				= copy.copy(perpetual_params)
+				perpetual_revert_params["order_side"] 	= "sell"
+
+
+				new_order_execution = bot_executor.short_margin_long_perpetual(	margin_params 			= margin_params,
+																				perpetual_params 		= perpetual_params,
+																				margin_revert_params 	= margin_revert_params,
+																				perpetual_revert_params = perpetual_revert_params
 																		)
 
 				trade_strategy.change_asset_holdings(delta_margin = -1 * args.margin_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
