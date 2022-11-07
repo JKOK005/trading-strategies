@@ -12,19 +12,11 @@ class SpotPerpetualBotExecution(BotExecutionV2):
 
 	def long_spot_short_perpetual(self, spot_params,
 									  	perpetual_params,
+									  	spot_revert_params,
+									  	perpetual_revert_params,
 								):
-
-		spot_revert_params 		= copy.copy(spot_params)
-		perpetual_revert_params = copy.copy(perpetual_params)
-
-		spot_params["order_side"] 				= "buy"
-		spot_revert_params["order_side"] 		= "sell"
-		perpetual_params["order_side"] 			= "sell"
-		perpetual_revert_params["order_side"] 	= "buy"
-
 		self.logger.info(spot_params)
 		self.logger.info(perpetual_params)
-
 		return self.idempotent_trade_execution_async(asset_A_order_fn 				= self.api_client.place_perpetual_order_async,
 													 asset_A_params 				= perpetual_params,
 													 asset_A_assert_resp_error_fn 	= self.api_client.assert_perpetual_resp_error,
@@ -39,19 +31,11 @@ class SpotPerpetualBotExecution(BotExecutionV2):
 
 	def short_spot_long_perpetual(self, spot_params,
 									  	perpetual_params,
+									  	spot_revert_params,
+									  	perpetual_revert_params,
 								):
-
-		spot_revert_params 		= copy.copy(spot_params)
-		perpetual_revert_params = copy.copy(perpetual_params)
-
-		spot_params["order_side"] 				= "sell"
-		spot_revert_params["order_side"] 		= "buy"
-		perpetual_params["order_side"] 			= "buy"
-		perpetual_revert_params["order_side"] 	= "sell"
-
 		self.logger.info(spot_params)
 		self.logger.info(perpetual_params)
-
 		return self.idempotent_trade_execution_async(asset_A_order_fn 				= self.api_client.place_spot_order_async,
 												 	 asset_A_params 				= spot_params,
 												 	 asset_A_assert_resp_error_fn 	= self.api_client.assert_spot_resp_error,
