@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 import logging
 import sys
@@ -176,40 +177,68 @@ if __name__ == "__main__":
 			new_order_execution = False
 
 			if decision == SpotPerpExecutionDecision.TAKE_PROFIT_LONG_SPOT_SHORT_PERP:
-				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy" 
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "short",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
+				spot_params 	= {
+					"symbol" 	 		: args.spot_trading_pair, 
+					"order_type" 		: args.order_type, 
+					"price" 	 		: spot_price if args.order_type == "limit" else 1,
+					"size" 		 		: args.spot_entry_vol,
+					"target_currency" 	: "base_ccy",
+					"order_side" 		: "sell",
+				}
+
+				perpetual_params = {
+					"symbol" 	 	: args.perpetual_trading_pair,
+					"position_side" : "short",
+					"order_type" 	: args.order_type, 
+					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+					"size" 		 	: args.perpetual_entry_lot_size,
+					"order_side" 	: "buy",
+				}
+
+				spot_revert_params 						= copy.copy(spot_params)
+				spot_revert_params["order_side"] 		= "buy"
+
+				perpetual_revert_params 				= copy.copy(perpetual_params)
+				perpetual_revert_params["order_side"] 	= "sell"
+
+				new_order_execution = bot_executor.short_spot_long_perpetual(	spot_params 			= spot_params,
+																				perpetual_params 		= perpetual_params,
+																				spot_revert_params  	= spot_revert_params,
+																				perpetual_revert_params = perpetual_revert_params
 																		)
 
 				trade_strategy.change_asset_holdings(delta_spot = -1 * args.spot_entry_vol, delta_perp = args.perpetual_entry_lot_size) \
 				if new_order_execution else fail_safe_trigger.increment()
 
 			elif decision == SpotPerpExecutionDecision.GO_LONG_SPOT_SHORT_PERP:
-				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params = {
-																					"symbol" 	 		: args.spot_trading_pair, 
-																					"order_type" 		: args.order_type, 
-																					"price" 	 		: spot_price if args.order_type == "limit" else 1,
-																					"size" 		 		: args.spot_entry_vol,
-																					"target_currency" 	: "base_ccy" 
-																				},
-																				perpetual_params = {
-																					"symbol" 	 	: args.perpetual_trading_pair,
-																					"position_side" : "short",
-																					"order_type" 	: args.order_type, 
-																					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
-																					"size" 		 	: args.perpetual_entry_lot_size,
-																				}
+				spot_params 	 = {
+					"symbol" 	 		: args.spot_trading_pair, 
+					"order_type" 		: args.order_type, 
+					"price" 	 		: spot_price if args.order_type == "limit" else 1,
+					"size" 		 		: args.spot_entry_vol,
+					"target_currency" 	: "base_ccy",
+					"order_side" 		: "buy",
+				}
+
+				perpetual_params = {
+					"symbol" 	 	: args.perpetual_trading_pair,
+					"position_side" : "short",
+					"order_type" 	: args.order_type, 
+					"price" 	 	: perpetual_price if args.order_type == "limit" else 1,
+					"size" 		 	: args.perpetual_entry_lot_size,
+					"order_side" 	: "sell",
+				}
+
+				spot_revert_params 						= copy.copy(spot_params)
+				spot_revert_params["order_side"] 		= "sell"
+
+				perpetual_revert_params 				= copy.copy(perpetual_params)
+				perpetual_revert_params["order_side"] 	= "buy"
+
+				new_order_execution = bot_executor.long_spot_short_perpetual(	spot_params 			= spot_params,
+																				perpetual_params 		= perpetual_params,
+																				spot_revert_params  	= spot_revert_params,
+																				perpetual_revert_params = perpetual_revert_params
 																		)
 
 				trade_strategy.change_asset_holdings(delta_spot = args.spot_entry_vol, delta_perp = -1 * args.perpetual_entry_lot_size) \
