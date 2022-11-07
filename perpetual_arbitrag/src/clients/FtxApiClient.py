@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import ftx
 import logging
@@ -173,3 +174,28 @@ class FtxApiClient(ExchangePerpetualClients):
 	def assert_perpetual_resp_error(self, order_resp):
 		# Unimplemented as we will be using WS client for trades
 		raise Exception("Function <assert_perpetual_resp_error> should not be invoked on REST client")
+
+	async def place_perpetual_order_async(self, market: str,
+												side: str,
+												price: float,
+												size: float, 
+												order_type: str,
+										):
+		resp = self.client.place_order(	market 	= market,
+  										side	= side,
+										price 	= price,
+										size 	= size,
+ 										type    = order_type
+									)
+		return {"id" : f"{market}-{side}", "resp" : resp}
+
+	def assert_perpetual_resp_error(self, order_resp):
+		resp  			= order_resp["resp"]
+		order_resp_code = resp.status
+		if order_resp_code != "200":
+			raise Exception(f"Perpetual order failed: {resp}")
+		return
+
+	async def revert_perpetual_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting margin order")
+		return await self.place_perpetual_order_async(**revert_params)
