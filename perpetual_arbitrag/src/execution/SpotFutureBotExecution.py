@@ -12,19 +12,11 @@ class SpotFutureBotExecution(BotExecutionV2):
 
 	def long_spot_short_futures(self, spot_params,
 									  future_params,
+									  spot_revert_params,
+									  future_revert_params,
 								):
-
-		spot_revert_params 		= copy.copy(spot_params)
-		future_revert_params 	= copy.copy(future_params)
-
-		spot_params["order_side"] 			= "buy"
-		spot_revert_params["order_side"] 	= "sell"
-		future_params["order_side"] 		= "sell"
-		future_revert_params["order_side"] 	= "buy"
-
 		self.logger.info(spot_params)
 		self.logger.info(future_params)
-
 		return self.idempotent_trade_execution(	asset_A_order_fn 				= self.api_client.place_futures_order,
 												asset_A_params 					= future_params,
 												asset_A_assert_resp_error_fn 	= self.api_client.assert_futures_resp_error,
@@ -39,19 +31,11 @@ class SpotFutureBotExecution(BotExecutionV2):
 
 	def short_spot_long_futures(self, spot_params,
 									  future_params,
-								):
-
-		spot_revert_params 		= copy.copy(spot_params)
-		future_revert_params 	= copy.copy(future_params)
-
-		spot_params["order_side"] 			= "sell"
-		spot_revert_params["order_side"] 	= "buy"
-		future_params["order_side"] 		= "buy"
-		future_revert_params["order_side"] 	= "sell"
-		
+									  spot_revert_params,
+									  future_revert_params,
+								):		
 		self.logger.info(spot_params)
 		self.logger.info(future_params)
-
 		return self.idempotent_trade_execution(	asset_A_order_fn 				= self.api_client.place_spot_order,
 												asset_A_params 					= spot_params,
 												asset_A_assert_resp_error_fn 	= self.api_client.assert_spot_resp_error,
