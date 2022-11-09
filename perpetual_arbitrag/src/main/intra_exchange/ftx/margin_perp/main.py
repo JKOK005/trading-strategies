@@ -3,7 +3,7 @@ import copy
 import os
 import logging
 import sys
-from clients.FtxApiClient import FtxApiClient
+from clients.FtxApiClientWS import FtxApiClientWS
 from datetime import datetime, timedelta
 from db.MarginClients import MarginClients
 from db.PerpetualClients import PerpetualClients
@@ -16,19 +16,18 @@ from time import sleep
 """
 python3 main/intra_exchange/ftx/margin_perp/main.py \
 --client_id 123asd \
---margin_trading_pair BTC-USDT \
---perpetual_trading_pair BTC-USDT-SWAP \
+--margin_trading_pair BTC/USD \
+--perpetual_trading_pair BTC-USD-SWAP \
 --api_key xxx \
 --api_secret_key xxx \
 --order_type market \
 --margin_entry_vol 0.01 \
 --max_margin_vol 0.1 \
---margin_leverage 1 \
+--account_leverage 1 \
 --margin_tax_rate 0.001 \
 --margin_loan_period_hr 24 \
 --perpetual_entry_lot_size 10 \
 --max_perpetual_lot_size 100 \
---perpetual_leverage 1 \
 --entry_gap_frac 0.01 \
 --profit_taking_frac 0.005 \
 --poll_interval_s 60 \
@@ -52,12 +51,11 @@ if __name__ == "__main__":
 	parser.add_argument('--poll_interval_s', type=float, nargs='?', default=os.environ.get("POLL_INTERVAL_S"), help='Poll interval in seconds')
 	parser.add_argument('--margin_entry_vol', type=float, nargs='?', default=os.environ.get("MARGIN_ENTRY_VOL"), help='Volume of margin assets for each entry')
 	parser.add_argument('--max_margin_vol', type=float, nargs='?', default=os.environ.get("MAX_MARGIN_VOL"), help='Max volume of margin assets to long / short')
-	parser.add_argument('--margin_leverage', type=float, nargs='?', default=os.environ.get("MARGIN_LEVERAGE"), help='Leverage for each entry for margin')
+	parser.add_argument('--account_leverage', type=float, nargs='?', default=os.environ.get("ACCOUNT_LEVERAGE"), help='Global leverage value')
 	parser.add_argument('--margin_tax_rate', type=float, nargs='?', default=os.environ.get("MARGIN_TAX_RATE"), help='Tax rate by the exchange, needed to offset the entry / exit amount of the asset to maintain a balanced position.')
 	parser.add_argument('--margin_loan_period_hr', type=int, nargs='?', default=os.environ.get("MARGIN_LOAN_PERIOD_HR"), help='How long are we going to hold the margin position for? This will impact the funding rate for the margined asset.')
 	parser.add_argument('--perpetual_entry_lot_size', type=int, nargs='?', default=os.environ.get("PERPETUAL_ENTRY_LOT_SIZE"), help='Lot size for each entry for perpetual')
 	parser.add_argument('--max_perpetual_lot_size', type=int, nargs='?', default=os.environ.get("MAX_PERPETUAL_LOT_SIZE"), help='Max lot size to long / short perpetual')
-	parser.add_argument('--perpetual_leverage', type=int, nargs='?', default=os.environ.get("PERPETUAL_LEVERAGE"), help='Leverage for each entry for perpetual')
 	parser.add_argument('--entry_gap_frac', type=float, nargs='?', default=os.environ.get("ENTRY_GAP_FRAC"), help='Fraction of price difference which we can consider making an entry')
 	parser.add_argument('--profit_taking_frac', type=float, nargs='?', default=os.environ.get("PROFIT_TAKING_FRAC"), help='Fraction of price difference which we can consider taking profit. Recommended to set this value lower than entry_gap_frac')
 	parser.add_argument('--api_key', type=str, nargs='?', default=os.environ.get("API_KEY"), help='Exchange api key')
@@ -87,17 +85,14 @@ if __name__ == "__main__":
 										permissible_latency_s = args.feed_latency_s
 									).connect()
 
-	client 	= FtxApiClient(	api_key 				= args.api_key, 
-							api_secret_key 		= args.api_secret_key, 
-							feed_client 			= feed_client,
-							funding_rate_enable 	= args.funding_rate_disable == 0
+	client 	= FtxApiClientWS(	api_key 				= args.api_key, 
+								api_secret_key 			= args.api_secret_key, 
+								feed_client 			= feed_client,
+								funding_rate_enable 	= args.funding_rate_disable == 0
 						)
 
 	(quote_ccy, base_ccy) = args.margin_trading_pair.split("-")
-	client.make_connection()
-	client.set_margin_leverage(symbol = args.margin_trading_pair, ccy = base_ccy, leverage = args.margin_leverage)
-	client.set_perpetual_leverage(symbol = args.perpetual_trading_pair, leverage = args.perpetual_leverage)
-
+	client.set_account_leverage(leverage = args.account_leverage)
 
 	assert 	args.margin_entry_vol >= client.get_margin_min_volume(symbol = args.margin_trading_pair), "Minimum margin entry size not satisfied."
 	assert 	args.perpetual_entry_lot_size >= client.get_perpetual_min_lot_size(symbol = args.perpetual_trading_pair), "Minimum perpetual entry size not satisfied."
@@ -356,10 +351,3 @@ if __name__ == "__main__":
 		except Exception as ex:
 			logging.error(ex)
 			sleep(args.retry_timeout_s)
-
-		finally:
-			try:
-				client.maintain_connection()
-			except Exception as ex:
-				logging.error("Restoring connection to WS server")
-				client.make_connection()

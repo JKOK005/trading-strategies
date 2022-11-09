@@ -8,7 +8,7 @@ from clients.ExchangeSpotClients import ExchangeSpotClients
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 from clients.ExchangeMarginClients import ExchangeMarginClients
 
-class FtxApiClient(ExchangePerpetualClients):
+class FtxApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 	client 	= None
 	logger 	= logging.getLogger('FtxApiClient')
 
@@ -58,6 +58,11 @@ class FtxApiClient(ExchangePerpetualClients):
 			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
 		return sys.maxsize
 
+	def set_account_leverage(self, leverage: int):
+		self.logger.debug(f"Set account leverage: {leverage}")
+		self.client.set_leverage(leverage = leverage)
+		return
+
 	def get_perpetual_symbols(self):
 		"""
 		Fetches all perpetual instrument symbols
@@ -85,14 +90,14 @@ class FtxApiClient(ExchangePerpetualClients):
 		"""
 		Retrieves minimum order lot size for perpetual trading symbol
 		"""
-		resp = self.client.get_future(future_name = symbol)
+		resp = self.client.get_market(market = symbol)
 		return resp["sizeIncrement"]
 
 	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""
-		bid_ask_resp 		= client.get_orderbook(market = symbol, depth = 10)
+		bid_ask_resp 		= self.client.get_orderbook(market = symbol, depth = 10)
 		
 		bids 				= bid_ask_orders["bids"]
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
@@ -158,11 +163,6 @@ class FtxApiClient(ExchangePerpetualClients):
 								self.funding_rate_enable \
 							else 0
 
-	def set_perpetual_leverage(self, leverage: int):
-		self.logger.debug(f"Set leverage {leverage}")
-		self.client.set_leverage(leverage = leverage)
-		return
-
 	def place_perpetual_order(self, *args, **kwargs):
 		# Unimplemented as we will be using WS client for trades
 		raise Exception("Function <place_perpetual_order> should not be invoked on REST client")
@@ -172,8 +172,11 @@ class FtxApiClient(ExchangePerpetualClients):
 		raise Exception("Function <revert_perpetual_order> should not be invoked on REST client")
 
 	def assert_perpetual_resp_error(self, order_resp):
-		# Unimplemented as we will be using WS client for trades
-		raise Exception("Function <assert_perpetual_resp_error> should not be invoked on REST client")
+		resp  			= order_resp["resp"]
+		order_resp_code = resp.status
+		if order_resp_code != "200":
+			raise Exception(f"Perpetual order failed: {resp}")
+		return
 
 	async def place_perpetual_order_async(self, market: str,
 												side: str,
@@ -189,13 +192,68 @@ class FtxApiClient(ExchangePerpetualClients):
 									)
 		return {"id" : f"{market}-{side}", "resp" : resp}
 
-	def assert_perpetual_resp_error(self, order_resp):
-		resp  			= order_resp["resp"]
-		order_resp_code = resp.status
-		if order_resp_code != "200":
-			raise Exception(f"Perpetual order failed: {resp}")
-		return
-
 	async def revert_perpetual_order_async(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting margin order")
 		return await self.place_perpetual_order_async(**revert_params)
+
+	def get_margin_symbols(self):
+		resp 	= self.client.get_markets()
+		assets 	= list(map(lambda x: x["name"], resp))
+		return list(filter(lambda x: "-PERP" not in x.upper(), assets))
+
+	def get_margin_trading_account_details(self, currency: str):
+		resp 	= self.client.get_balances()
+		symbol 	= currency.split("/")[0] 	# If currency is "BTC/USDT", then we want "BTC"
+		relevant_asset_position = next(filter(lambda x: x["coin"] == symbol, resp))
+		return relevant_asset_position["spotBorrow"]
+
+	def get_margin_trading_price(self, symbol: str):
+		resp = self.client.get_market(market = symbol)
+		return resp["price"]
+
+	def get_margin_min_volume(self, symbol: str):
+		resp = self.client.get_market(market = symbol)
+		return resp["sizeIncrement"]
+
+	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
+		bid_ask_resp 		= self.client.get_orderbook(market = symbol, depth = 10)
+		
+		bids 				= bid_ask_orders["bids"]
+		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
+
+		asks 				= bid_ask_orders["asks"]
+		average_sell_price 	= self._compute_average_ask_price(asks = asks, size = size)		
+		return (average_bid_price, average_sell_price)
+
+	def get_margin_open_orders(self, symbol: str):
+		open_orders = self.client.get_open_orders(market = symbol)
+		return open_orders
+
+	def get_margin_most_recent_open_order(self, symbol: str):
+		pass
+
+	def get_margin_fulfilled_orders(self, symbol: str):
+		pass
+
+	def get_margin_most_recent_fulfilled_order(self, symbol: str):
+		pass
+
+	def get_margin_effective_funding_rate(self, symbol: str):
+		pass
+
+	def place_margin_order(self, *args, **kwargs):
+		# Unimplemented as we will be using WS client for trades
+		raise Exception("Function <place_margin_order> should not be invoked on REST client")
+
+	def revert_margin_order(self, order_resp, *args, **kwargs):
+		# Unimplemented as we will be using WS client for trades
+		raise Exception("Function <revert_margin_order> should not be invoked on REST client")
+
+	def assert_margin_resp_error(self, order_resp):
+		pass
+
+	async def place_perpetual_order_async(self, ...):
+		pass
+
+	async def revert_perpetual_order_async(self, ...):
+		pass
