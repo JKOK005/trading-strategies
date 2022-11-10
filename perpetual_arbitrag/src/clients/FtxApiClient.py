@@ -193,7 +193,7 @@ class FtxApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		return {"id" : f"{market}-{side}", "resp" : resp}
 
 	async def revert_perpetual_order_async(self, order_resp, revert_params):
-		self.logger.debug(f"Reverting margin order")
+		self.logger.debug(f"Reverting perpetual order")
 		return await self.place_perpetual_order_async(**revert_params)
 
 	def get_margin_symbols(self):
@@ -230,16 +230,32 @@ class FtxApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		return open_orders
 
 	def get_margin_most_recent_open_order(self, symbol: str):
-		pass
+		open_orders 	= self.get_margin_open_orders(symbol = symbol)
+		sorted_orders 	= sorted(open_orders, key = lambda d: d['createdAt'], reverse = True) 
+		most_recent_open_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
+		return most_recent_open_order
 
 	def get_margin_fulfilled_orders(self, symbol: str):
-		pass
+		order_history 		= self.client.get_order_history(market = symbol)
+		fulfilled_orders 	= list(filter(lambda x: x["status"] == "closed", order_history))
+		return fulfilled_orders
 
 	def get_margin_most_recent_fulfilled_order(self, symbol: str):
-		pass
+		fulfilled_orders 			= self.get_margin_fulfilled_orders(symbol = symbol)
+		sorted_orders 				= sorted(fulfilled_orders, key = lambda d: d['createdAt'], reverse = True)
+		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
+		return most_recent_fulfilled_order
 
-	def get_margin_effective_funding_rate(self, symbol: str):
-		pass
+	def _compounded_interest_rate(self, interest: float, cycles: int):
+		return (1 + interest) ** cycles - 1
+
+	def get_margin_effective_funding_rate(self, ccy: str, loan_period_hrs: int):
+		funding_rate = 0
+		if self.funding_rate_enable:
+			interest_rate_resp 			= self.client.get_borrow_rates()
+			interest_rate_for_ccy 		= next(filter(lambda x: x["coin"] == ccy, interest_rate_resp))
+			funding_rate 				= self._compounded_interest_rate(interest = float(interest_rate_for_ccy["estimate"]), cycles = loan_period_hrs)
+		return funding_rate
 
 	def place_margin_order(self, *args, **kwargs):
 		# Unimplemented as we will be using WS client for trades
@@ -250,10 +266,26 @@ class FtxApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		raise Exception("Function <revert_margin_order> should not be invoked on REST client")
 
 	def assert_margin_resp_error(self, order_resp):
-		pass
+		resp  			= order_resp["resp"]
+		order_resp_code = resp.status
+		if order_resp_code != "200":
+			raise Exception(f"Margin order failed: {resp}")
+		return
 
-	async def place_perpetual_order_async(self, ...):
-		pass
+	async def place_margin_order_async(self, market: str,
+											 side: str,
+											 price: float,
+											 size: float, 
+											 order_type: str,
+									):
+		resp = self.client.place_order(	market 	= market,
+  										side	= side,
+										price 	= price,
+										size 	= size,
+ 										type    = order_type
+									)
+		return {"id" : f"{market}-{side}", "resp" : resp}
 
-	async def revert_perpetual_order_async(self, ...):
-		pass
+	async def revert_margin_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting margin order")
+		return await self.place_margin_order_async(**revert_params)

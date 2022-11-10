@@ -128,7 +128,7 @@ if __name__ == "__main__":
 	bot_executor 	= MarginPerpetualBotExecution(api_client = client)
 
 	#TODO: @JKOK005 Implement interest rate refresh feature
-	margin_quote_funding_rate = client.get_margin_effective_funding_rate( ccy = quote_ccy, 
+	margin_quote_funding_rate = client.get_margin_effective_funding_rate(ccy = quote_ccy, 
 																		 loan_period_hrs = args.margin_loan_period_hr)
 
 	margin_base_funding_rate = client.get_margin_effective_funding_rate(ccy = base_ccy, 
