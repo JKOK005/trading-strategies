@@ -12,6 +12,13 @@ class TestOkxApiClient(TestCase):
 		self.ftx_client = FtxApiClient(api_key = None, api_secret_key = None, funding_rate_enable = True)
 
 	@patch("ftx.FtxClient")
+	def test_account_leverage_set(self, mock_ftx_client):
+		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		ftx_api_client.client 	= mock_ftx_client
+		ftx_api_client.set_account_leverage(leverage = 5)
+		mock_ftx_client.set_leverage.assert_called_with(leverage = 5)
+
+	@patch("ftx.FtxClient")
 	def test_get_perpetual_symbols_called(self, mock_ftx_client):
 		ftx_api_client = copy.deepcopy(self.ftx_client)
 		ftx_api_client.client = mock_ftx_client
@@ -62,7 +69,7 @@ class TestOkxApiClient(TestCase):
 	def test_perpetual_min_lot_size_api_call(self, mock_ftx_client):
 		ftx_api_client = copy.deepcopy(self.ftx_client)
 		ftx_api_client.client = mock_ftx_client
-		mock_ftx_client.get_future.return_value 	= {
+		mock_ftx_client.get_market.return_value 	= {
 														"ask": 4196,
 														"bid": 4114.25,
 														"change1h": 0,
@@ -86,7 +93,7 @@ class TestOkxApiClient(TestCase):
 													}
 
 		result = ftx_api_client.get_perpetual_min_lot_size(symbol = "BTC-0329")
-		mock_ftx_client.get_future.assert_called_with(future_name = "BTC-0329")
+		mock_ftx_client.get_market.assert_called_with(market = "BTC-0329")
 		assert(result == 0.0001)
 
 	def test_average_margin_purchase_price_computation_exact_order(self):
@@ -304,8 +311,39 @@ class TestOkxApiClient(TestCase):
 			assert result == -0.02
 
 	@patch("ftx.FtxClient")
-	def test_perpetual_leverage_set(self, mock_ftx_client):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.client 	= mock_ftx_client
-		ftx_api_client.set_perpetual_leverage(leverage = 5)
-		mock_ftx_client.set_leverage.assert_called_with(leverage = 5)
+	def test_get_margin_symbols_called(self, mock_ftx_client):
+		ftx_api_client = copy.deepcopy(self.ftx_client)
+		ftx_api_client.client = mock_ftx_client
+
+		mock_ftx_client.get_markets.return_value = 	[	
+														{"name": "BTC-PERP"}, 
+														{"name": "ETH-USDT"}, 
+														{"name": "SOL-PERP"}, 
+														{"name": "SOL-BTC"}
+													]
+		result = ftx_api_client.get_margin_symbols()
+		mock_ftx_client.get_markets.assert_called() 
+		assert(result == ["ETH-USDT", "SOL-BTC"])
+
+	@patch("ftx.FtxClient")
+	def test_get_margin_trading_account_details(self, mock_ftx_client):
+		ftx_api_client = copy.deepcopy(self.ftx_client)
+		ftx_api_client.client = mock_ftx_client
+
+		mock_ftx_client.get_balances.return_value = [	
+														{"coin": "BTC",  "spotBorrow": 1}, 
+														{"coin": "ETH",  "spotBorrow": 2}, 
+														{"coin": "SOL",  "spotBorrow": 3}, 
+														{"coin": "USDT", "spotBorrow": 4}
+													]
+
+		result 	= ftx_api_client.get_margin_trading_account_details(currency = "SOL")
+		mock_ftx_client.get_balances.assert_called()
+		assert(result == 3)
+
+	@patch("ftx.FtxClient")
+	def test_get_margin_trading_price(self, mock_ftx_client):
+		ftx_api_client = copy.deepcopy(self.ftx_client)
+		ftx_api_client.client = mock_ftx_client
+		ftx_api_client.get_margin_trading_price(symbol = "BTC/USDT")
+		mock_ftx_client.get_market.assert_called_with(market = "BTC/USDT")
