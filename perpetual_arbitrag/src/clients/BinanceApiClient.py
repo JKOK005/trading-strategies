@@ -4,6 +4,7 @@ import logging
 import sys
 import time
 from binance.client import Client
+from binance.um_futures import UMFutures
 from datetime import timedelta
 from clients.ExchangePerpetualClients import ExchangePerpetualClients
 from clients.ExchangeMarginClients import ExchangeMarginClients
@@ -16,7 +17,8 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 						api_secret_key: str,
 						funding_rate_enable: bool,
 				):
-		self.client 				= Client(api_key = api_key, api_secret = api_secret_key)
+		self.client 				= Client(api_key = api_key, api_secret = api_secret_key)		# For spot / margin
+		self.futures_client 		= UMFutures(key = api_key, secret = api_secret_key) 	# For perpetual
 		self.api_key 				= api_key
 		self.api_secret_key 		= api_secret_key
 		self.funding_rate_enable 	= funding_rate_enable
@@ -58,46 +60,48 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 			return self._compute_average_margin_purchase_price(price_qty_pairs_ordered = _asks, size = size)
 		return sys.maxsize
 
-	def set_futures_leverage(self, symbol: str, leverage: int):
+	def set_perpetual_leverage(self, symbol: str, leverage: int):
 		self.logger.debug(f"Set leverage of {symbol} to {leverage}")
-		self.client.futures_change_leverage(symbol = symbol, leverage = leverage, timestamp = time.time())
+		self.futures_client.change_leverage(symbol = symbol, leverage = leverage)
 		return
 
 	def get_perpetual_symbols(self):
 		"""
 		Fetches all perpetual instrument symbols
 		"""
-		resp 	= self.client.get_markets()
-		assets 	= list(map(lambda x: x["name"], resp))
-		return list(filter(lambda x: "-PERP" in x.upper(), assets))
+		resp 	= self.futures_client.exchange_info()
+		perps 	= filter(lambda x: x["contractType"] == "PERPETUAL", resp["symbols"])
+		return list(map(lambda x: x["symbol"], perps))
 
-	def get_perpetual_trading_account_details(self, currency: str):
+	def get_perpetual_trading_account_details(self, symbol: str):
 		"""
 		Retrieves perpetual trading account details
 		"""
-		resp = self.client.get_positions()
-		relevant_asset_position = next(filter(lambda x: x["future"] == currency, resp))
-		return relevant_asset_position["netSize"]
+		resp = self.futures_client.account()
+		relevant_asset_position = next(filter(lambda x: x["symbol"] == symbol, resp["positions"]))
+		return relevant_asset_position
 
 	def get_perpetual_trading_price(self, symbol: str):
 		"""
 		Retrieves current perpetual price for trading symbol
 		"""
-		resp = self.client.get_market(market = symbol)
+		resp = self.futures_client.ticker_price(symbol = symbol)
 		return resp["price"]
 
 	def get_perpetual_min_lot_size(self, symbol: str):
 		"""
 		Retrieves minimum order lot size for perpetual trading symbol
 		"""
-		resp = self.client.get_market(market = symbol)
-		return resp["sizeIncrement"]
+		resp 					= self.futures_client.exchange_info()
+		relevant_asset_position = next(filter(lambda x: x["contractType"] == "PERPETUAL" and x["symbol"] == symbol, resp["symbols"]))
+		min_qty_details 		= next(filter(lambda x: x["filterType"] == "LOT_SIZE", relevant_asset_position["filters"]))
+		return min_qty_details["minQty"]
 
 	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
 		Returns the average bid / ask price of the perpetual asset, assuming that we intend to trade at a given lot size. 
 		"""
-		bid_ask_resp 		= self.client.get_orderbook(market = symbol, depth = 10)
+		bid_ask_resp 		= self.futures_client.depth(market = symbol, limit = 50)
 		
 		bids 				= bid_ask_orders["bids"]
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
@@ -110,7 +114,7 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		"""
 		Gets information of all open perpetual orders by the user
 		"""
-		open_orders = self.client.get_open_orders(market = symbol)
+		open_orders = self.futures_client.get_orders(symbol = symbol)
 		return open_orders
 
 	def get_perpetual_most_recent_open_order(self, symbol: str):
@@ -118,7 +122,7 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		Gets the most recent open orders for perpetual
 		"""
 		open_orders 			= self.get_perpetual_open_orders(market = symbol)
-		sorted_orders 			= sorted(open_orders, key = lambda d: d['createdAt'], reverse = True)
+		sorted_orders 			= sorted(open_orders, key = lambda d: d['time'], reverse = True)
 		most_recent_open_order 	= sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_open_order
 
@@ -126,16 +130,14 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		"""
 		Gets information of all fulfilled perpetual orders by the user
 		"""
-		order_history 		= self.client.get_order_history(market = symbol)
-		fulfilled_orders 	= list(filter(lambda x: x["status"] == "closed", order_history))
-		return fulfilled_orders
+		return self.futures_client.get_all_orders(symbol = symbol)
 
 	def get_perpetual_most_recent_fulfilled_order(self, symbol: str):
 		"""
 		Gets information of the most recent perpetual trade that have been fulfilled
 		"""
 		fulfilled_orders 			= self.get_perpetual_fulfilled_orders(symbol = symbol)
-		sorted_orders 				= sorted(fulfilled_orders, key = lambda d: d['createdAt'], reverse = True)
+		sorted_orders 				= sorted(fulfilled_orders, key = lambda d: d['time'], reverse = True)
 		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order
 
@@ -195,6 +197,11 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 	async def revert_perpetual_order_async(self, order_resp, revert_params):
 		self.logger.debug(f"Reverting perpetual order")
 		return await self.place_perpetual_order_async(**revert_params)
+
+	def set_margin_leverage(self, symbol: str, leverage: int):
+		self.logger.debug(f"Set leverage of {symbol} to {leverage}")
+		self.client.futures_change_leverage(symbol = symbol, leverage = leverage, timestamp = time.time())
+		return
 
 	def get_margin_symbols(self):
 		resp 	= self.client.get_markets()
