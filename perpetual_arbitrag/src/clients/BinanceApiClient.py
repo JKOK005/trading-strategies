@@ -17,8 +17,8 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 						api_secret_key: str,
 						funding_rate_enable: bool,
 				):
-		self.client 				= Client(api_key = api_key, api_secret = api_secret_key)		# For spot / margin
-		self.futures_client 		= UMFutures(key = api_key, secret = api_secret_key) 	# For perpetual
+		self.client 				= Client(api_key = api_key, api_secret = api_secret_key)	# For spot / margin
+		self.futures_client 		= UMFutures(key = api_key, secret = api_secret_key) 		# For perpetual
 		self.api_key 				= api_key
 		self.api_secret_key 		= api_secret_key
 		self.funding_rate_enable 	= funding_rate_enable
@@ -180,43 +180,30 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 			raise Exception(f"Perpetual order failed: {resp}")
 		return
 
-	async def place_perpetual_order_async(self, market: str,
-												side: str,
-												price: float,
-												size: float, 
-												order_type: str,
-										):
-		resp = self.client.place_order(	market 	= market,
-  										side	= side,
-										price 	= price,
-										size 	= size,
- 										type    = order_type
-									)
-		return {"id" : f"{market}-{side}", "resp" : resp}
-
-	async def revert_perpetual_order_async(self, order_resp, revert_params):
-		self.logger.debug(f"Reverting perpetual order")
-		return await self.place_perpetual_order_async(**revert_params)
-
 	def set_margin_leverage(self, symbol: str, leverage: int):
 		self.logger.debug(f"Set leverage of {symbol} to {leverage}")
 		self.client.futures_change_leverage(symbol = symbol, leverage = leverage, timestamp = time.time())
 		return
 
 	def get_margin_symbols(self):
-		resp 	= self.client.get_markets()
-		assets 	= list(map(lambda x: x["name"], resp))
-		return list(filter(lambda x: "-PERP" not in x.upper(), assets))
+		resp 	= self.client.get_margin_all_pairs()
+		return list(map(lambda x: x["symbol"], resp))
 
 	def get_margin_trading_account_details(self, currency: str):
-		resp 	= self.client.get_balances()
-		symbol 	= currency.split("/")[0] 	# If currency is "BTC/USDT", then we want "BTC"
-		relevant_asset_position = next(filter(lambda x: x["coin"] == symbol, resp))
-		return relevant_asset_position["spotBorrow"]
+		resp 	= self.client.get_margin_account()
+		relevant_asset_position = next(filter(lambda x: x["asset"] == currency, resp))
+		return relevant_asset_position["netAsset"]
 
 	def get_margin_trading_price(self, symbol: str):
-		resp = self.client.get_market(market = symbol)
+		resp = self.client.get_avg_price(symbol = symbol)
 		return resp["price"]
+
+
+
+
+
+
+
 
 	def get_margin_min_volume(self, symbol: str):
 		resp = self.client.get_market(market = symbol)
