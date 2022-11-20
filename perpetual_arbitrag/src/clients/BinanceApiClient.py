@@ -198,19 +198,14 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		resp = self.client.get_avg_price(symbol = symbol)
 		return resp["price"]
 
-
-
-
-
-
-
-
-	def get_margin_min_volume(self, symbol: str):
-		resp = self.client.get_market(market = symbol)
-		return resp["sizeIncrement"]
+	def get_margin_min_volume(self, currency: str):
+		# TODO: Check if this is the correct way to get min borrow amount, because most results are 0.
+		resp = self.client.get_margin_all_assets()
+		relevant_asset = next(filter(lambda x: x["assetName"] == currency, resp))
+		return relevant_asset["userMinBorrow"]
 
 	def get_margin_average_bid_ask_price(self, symbol: str, size: float):
-		bid_ask_resp 		= self.client.get_orderbook(market = symbol, depth = 10)
+		bid_ask_resp 		= self.client.get_order_book(symbol = symbol, limit = 50)
 		
 		bids 				= bid_ask_orders["bids"]
 		average_bid_price 	= self._compute_average_bid_price(bids = bids, size = size)
@@ -220,23 +215,23 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		return (average_bid_price, average_sell_price)
 
 	def get_margin_open_orders(self, symbol: str):
-		open_orders = self.client.get_open_orders(market = symbol)
+		open_orders = self.client.get_open_margin_orders(symbol = symbol)
 		return open_orders
 
 	def get_margin_most_recent_open_order(self, symbol: str):
 		open_orders 	= self.get_margin_open_orders(symbol = symbol)
-		sorted_orders 	= sorted(open_orders, key = lambda d: d['createdAt'], reverse = True) 
+		sorted_orders 	= sorted(open_orders, key = lambda d: d['time'], reverse = True) 
 		most_recent_open_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_open_order
 
 	def get_margin_fulfilled_orders(self, symbol: str):
-		order_history 		= self.client.get_order_history(market = symbol)
-		fulfilled_orders 	= list(filter(lambda x: x["status"] == "closed", order_history))
+		order_history 		= self.client.get_all_margin_orders(market = symbol)
+		fulfilled_orders 	= list(filter(lambda x: x["status"] == "FILLED", order_history))
 		return fulfilled_orders
 
 	def get_margin_most_recent_fulfilled_order(self, symbol: str):
 		fulfilled_orders 			= self.get_margin_fulfilled_orders(symbol = symbol)
-		sorted_orders 				= sorted(fulfilled_orders, key = lambda d: d['createdAt'], reverse = True)
+		sorted_orders 				= sorted(fulfilled_orders, key = lambda d: d['time'], reverse = True)
 		most_recent_fulfilled_order = sorted_orders[0] if len(sorted_orders) > 0 else sorted_orders
 		return most_recent_fulfilled_order
 
@@ -246,9 +241,9 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 	def get_margin_effective_funding_rate(self, ccy: str, loan_period_hrs: int):
 		funding_rate = 0
 		if self.funding_rate_enable:
-			interest_rate_resp 			= self.client.get_borrow_rates()
-			interest_rate_for_ccy 		= next(filter(lambda x: x["coin"] == ccy, interest_rate_resp))
-			funding_rate 				= self._compounded_interest_rate(interest = float(interest_rate_for_ccy["estimate"]), cycles = loan_period_hrs)
+			interest_rate_resp 	= self.client.get_cross_margin_data(coin = ccy)[0]
+			hourly_interest 	= interest_rate_resp["dailyInterest"] / 24
+			funding_rate 		= self._compounded_interest_rate(interest = hourly_interest, cycles = loan_period_hrs)
 		return funding_rate
 
 	def place_margin_order(self, *args, **kwargs):
@@ -265,21 +260,3 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		if order_resp_code != "200":
 			raise Exception(f"Margin order failed: {resp}")
 		return
-
-	async def place_margin_order_async(self, market: str,
-											 side: str,
-											 price: float,
-											 size: float, 
-											 order_type: str,
-									):
-		resp = self.client.place_order(	market 	= market,
-  										side	= side,
-										price 	= price,
-										size 	= size,
- 										type    = order_type
-									)
-		return {"id" : f"{market}-{side}", "resp" : resp}
-
-	async def revert_margin_order_async(self, order_resp, revert_params):
-		self.logger.debug(f"Reverting margin order")
-		return await self.place_margin_order_async(**revert_params)
