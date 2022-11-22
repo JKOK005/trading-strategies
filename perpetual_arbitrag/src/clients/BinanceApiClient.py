@@ -86,7 +86,7 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		Retrieves current perpetual price for trading symbol
 		"""
 		resp = self.futures_client.ticker_price(symbol = symbol)
-		return resp["price"]
+		return float(resp["price"])
 
 	def get_perpetual_min_lot_size(self, symbol: str):
 		"""

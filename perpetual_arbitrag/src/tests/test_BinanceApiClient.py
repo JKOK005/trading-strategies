@@ -160,22 +160,21 @@ class TestBinanceApiClient(TestCase):
 		mock_futures_client.account.assert_called()
 		assert(result == expected_resp["positions"][-1])
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	def test_perpetual_trading_price_api_call(self, mock_ftx_client):
-		ftx_api_client = copy.deepcopy(self.ftx_client)
-		ftx_api_client.client = mock_ftx_client
-		mock_ftx_client.get_market.return_value 	= {	
-														"name": "BTC-PERP", 
-														"type": "future", 
-														"ask": 3949.25,
-												      	"bid": 3949,
-												      	"last": 10579.52,
-												      	"postOnly": False,
-												      	"price": 10579.52,
-											      	}
-		result = ftx_api_client.get_perpetual_trading_price(symbol = "BTC-PERP")
-		mock_ftx_client.get_market.assert_called_with(market = "BTC-PERP")
-		assert(result == 10579.52)
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_perpetual_trading_price_api_call(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
+		mock_futures_client.ticker_price.return_value = {
+														  "symbol": "BTCUSDT",
+														  "price": "6000.01",
+														  "time": 1589437530011
+														}
+														
+		result = binance_api_client.get_perpetual_trading_price(symbol = "BTCUSDT")
+		mock_futures_client.ticker_price.assert_called_with(symbol = "BTCUSDT")
+		assert(result == 6000.01)
 
 	@pytest.mark.skip(reason="Currently not implemented")
 	def test_perpetual_min_lot_size_api_call(self, mock_ftx_client):
