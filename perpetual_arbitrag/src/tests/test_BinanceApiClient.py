@@ -171,41 +171,116 @@ class TestBinanceApiClient(TestCase):
 														  "price": "6000.01",
 														  "time": 1589437530011
 														}
-														
+
 		result = binance_api_client.get_perpetual_trading_price(symbol = "BTCUSDT")
 		mock_futures_client.ticker_price.assert_called_with(symbol = "BTCUSDT")
 		assert(result == 6000.01)
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	def test_perpetual_min_lot_size_api_call(self, mock_ftx_client):
-		ftx_api_client = copy.deepcopy(self.ftx_client)
-		ftx_api_client.client = mock_ftx_client
-		mock_ftx_client.get_market.return_value 	= {
-														"ask": 4196,
-														"bid": 4114.25,
-														"change1h": 0,
-														"change24h": 0,
-														"description": "Bitcoin March 2019 Futures",
-														"enabled": True,
-														"expired": False,
-														"expiry": "2019-03-29T03:00:00+00:00",
-														"index": 3919.58841011,
-														"last": 4196,
-														"lowerBound": 3663.75,
-														"mark": 3854.75,
-														"name": "BTC-0329",
-														"perpetual": False,
-														"postOnly": False,
-														"priceIncrement": 0.25,
-														"sizeIncrement": 0.0001,
-														"underlying": "BTC",
-														"upperBound": 4112.2,
-														"type": "future"
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_perpetual_min_lot_size_api_call(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
+		mock_futures_client.exchange_info.return_value 	= {
+													    "exchangeFilters": [],
+													    "rateLimits": [
+													        {
+													            "interval": "MINUTE",
+													            "intervalNum": 1,
+													            "limit": 2400,
+													            "rateLimitType": "REQUEST_WEIGHT" 
+													        },
+													    ],
+													    "serverTime": 1565613908500,
+													    "assets": [ 
+													        {
+													            "asset": "BUSD",
+													            "marginAvailable": True,
+													            "autoAssetExchange" : 0
+													        },
+													    ],
+													    "symbols": [
+													        {
+													            "symbol": "BLZUSDT",
+													            "pair": "BLZUSDT",
+													            "contractType": "PERPETUAL",
+													            "deliveryDate": 4133404800000,
+													            "onboardDate": 1598252400000,
+													            "status": "TRADING",
+													            "maintMarginPercent": "2.5000",  
+													            "requiredMarginPercent": "5.0000",  
+													            "baseAsset": "BLZ", 
+													            "quoteAsset": "USDT",
+													            "marginAsset": "USDT",
+													            "pricePrecision": 5,    
+													            "quantityPrecision": 0, 
+													            "baseAssetPrecision": 8,
+													            "quotePrecision": 8, 
+													            "underlyingType": "COIN",
+													            "underlyingSubType": ["STORAGE"],
+													            "settlePlan": 0,
+													            "triggerProtect": "0.15",
+													            "filters": [{
+												                    "filterType": "PRICE_FILTER",
+												                    "maxPrice": "300",
+												                    "minPrice": "0.0001", 
+												                    "tickSize": "0.0001"
+												                },
+												                {
+												                    "filterType": "LOT_SIZE", 
+												                    "maxQty": "10000000",
+												                    "minQty": "1010",
+												                    "stepSize": "1"
+												                },
+												                {
+												                    "filterType": "MARKET_LOT_SIZE",
+												                    "maxQty": "590119",
+												                    "minQty": "1",
+												                    "stepSize": "1"
+												                },
+												                {
+												                    "filterType": "MAX_NUM_ORDERS",
+												                    "limit": 200
+												                },
+												                {
+												                    "filterType": "MAX_NUM_ALGO_ORDERS",
+												                    "limit": 100
+												                },
+												                {
+												                    "filterType": "MIN_NOTIONAL",
+												                    "notional": "1", 
+												                },
+												                {
+												                    "filterType": "PERCENT_PRICE",
+												                    "multiplierUp": "1.1500",
+												                    "multiplierDown": "0.8500",
+												                    "multiplierDecimal": 4
+												                }],
+													            "OrderType": [
+													                "LIMIT",
+													                "MARKET",
+													                "STOP",
+													                "STOP_MARKET",
+													                "TAKE_PROFIT",
+													                "TAKE_PROFIT_MARKET",
+													                "TRAILING_STOP_MARKET" 
+													            ],
+													            "timeInForce": [
+													                "GTC", 
+													                "IOC", 
+													                "FOK", 
+													                "GTX" 
+													            ],
+													            "liquidationFee": "0.010000",  
+													            "marketTakeBound": "0.30",
+													        }
+													    ],
+													    "timezone": "UTC" 
 													}
 
-		result = ftx_api_client.get_perpetual_min_lot_size(symbol = "BTC-0329")
-		mock_ftx_client.get_market.assert_called_with(market = "BTC-0329")
-		assert(result == 0.0001)
+		result = binance_api_client.get_perpetual_min_lot_size(symbol = "BLZUSDT")
+		assert(result == 1010)
 
 	@pytest.mark.skip(reason="Currently not implemented")
 	def test_average_margin_purchase_price_computation_exact_order(self):

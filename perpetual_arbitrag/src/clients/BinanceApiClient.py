@@ -95,7 +95,7 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		resp 					= self.futures_client.exchange_info()
 		relevant_asset_position = next(filter(lambda x: x["contractType"] == "PERPETUAL" and x["symbol"] == symbol, resp["symbols"]))
 		min_qty_details 		= next(filter(lambda x: x["filterType"] == "LOT_SIZE", relevant_asset_position["filters"]))
-		return min_qty_details["minQty"]
+		return int(min_qty_details["minQty"])
 
 	def get_perpetual_average_bid_ask_price(self, symbol: str, size: float):
 		"""
