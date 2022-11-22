@@ -183,222 +183,216 @@ class TestBinanceApiClient(TestCase):
 		binance_api_client.client 			= mock_client
 		binance_api_client.futures_client	= mock_futures_client
 		mock_futures_client.exchange_info.return_value 	= {
-													    "exchangeFilters": [],
-													    "rateLimits": [
-													        {
-													            "interval": "MINUTE",
-													            "intervalNum": 1,
-													            "limit": 2400,
-													            "rateLimitType": "REQUEST_WEIGHT" 
-													        },
-													    ],
-													    "serverTime": 1565613908500,
-													    "assets": [ 
-													        {
-													            "asset": "BUSD",
-													            "marginAvailable": True,
-													            "autoAssetExchange" : 0
-													        },
-													    ],
-													    "symbols": [
-													        {
-													            "symbol": "BLZUSDT",
-													            "pair": "BLZUSDT",
-													            "contractType": "PERPETUAL",
-													            "deliveryDate": 4133404800000,
-													            "onboardDate": 1598252400000,
-													            "status": "TRADING",
-													            "maintMarginPercent": "2.5000",  
-													            "requiredMarginPercent": "5.0000",  
-													            "baseAsset": "BLZ", 
-													            "quoteAsset": "USDT",
-													            "marginAsset": "USDT",
-													            "pricePrecision": 5,    
-													            "quantityPrecision": 0, 
-													            "baseAssetPrecision": 8,
-													            "quotePrecision": 8, 
-													            "underlyingType": "COIN",
-													            "underlyingSubType": ["STORAGE"],
-													            "settlePlan": 0,
-													            "triggerProtect": "0.15",
-													            "filters": [{
-												                    "filterType": "PRICE_FILTER",
-												                    "maxPrice": "300",
-												                    "minPrice": "0.0001", 
-												                    "tickSize": "0.0001"
-												                },
-												                {
-												                    "filterType": "LOT_SIZE", 
-												                    "maxQty": "10000000",
-												                    "minQty": "1010",
-												                    "stepSize": "1"
-												                },
-												                {
-												                    "filterType": "MARKET_LOT_SIZE",
-												                    "maxQty": "590119",
-												                    "minQty": "1",
-												                    "stepSize": "1"
-												                },
-												                {
-												                    "filterType": "MAX_NUM_ORDERS",
-												                    "limit": 200
-												                },
-												                {
-												                    "filterType": "MAX_NUM_ALGO_ORDERS",
-												                    "limit": 100
-												                },
-												                {
-												                    "filterType": "MIN_NOTIONAL",
-												                    "notional": "1", 
-												                },
-												                {
-												                    "filterType": "PERCENT_PRICE",
-												                    "multiplierUp": "1.1500",
-												                    "multiplierDown": "0.8500",
-												                    "multiplierDecimal": 4
-												                }],
-													            "OrderType": [
-													                "LIMIT",
-													                "MARKET",
-													                "STOP",
-													                "STOP_MARKET",
-													                "TAKE_PROFIT",
-													                "TAKE_PROFIT_MARKET",
-													                "TRAILING_STOP_MARKET" 
-													            ],
-													            "timeInForce": [
-													                "GTC", 
-													                "IOC", 
-													                "FOK", 
-													                "GTX" 
-													            ],
-													            "liquidationFee": "0.010000",  
-													            "marketTakeBound": "0.30",
-													        }
-													    ],
-													    "timezone": "UTC" 
-													}
+														    "exchangeFilters": [],
+														    "rateLimits": [
+														        {
+														            "interval": "MINUTE",
+														            "intervalNum": 1,
+														            "limit": 2400,
+														            "rateLimitType": "REQUEST_WEIGHT" 
+														        },
+														    ],
+														    "serverTime": 1565613908500,
+														    "assets": [ 
+														        {
+														            "asset": "BUSD",
+														            "marginAvailable": True,
+														            "autoAssetExchange" : 0
+														        },
+														    ],
+														    "symbols": [
+														        {
+														            "symbol": "BLZUSDT",
+														            "pair": "BLZUSDT",
+														            "contractType": "PERPETUAL",
+														            "deliveryDate": 4133404800000,
+														            "onboardDate": 1598252400000,
+														            "status": "TRADING",
+														            "maintMarginPercent": "2.5000",  
+														            "requiredMarginPercent": "5.0000",  
+														            "baseAsset": "BLZ", 
+														            "quoteAsset": "USDT",
+														            "marginAsset": "USDT",
+														            "pricePrecision": 5,    
+														            "quantityPrecision": 0, 
+														            "baseAssetPrecision": 8,
+														            "quotePrecision": 8, 
+														            "underlyingType": "COIN",
+														            "underlyingSubType": ["STORAGE"],
+														            "settlePlan": 0,
+														            "triggerProtect": "0.15",
+														            "filters": [{
+													                    "filterType": "PRICE_FILTER",
+													                    "maxPrice": "300",
+													                    "minPrice": "0.0001", 
+													                    "tickSize": "0.0001"
+													                },
+													                {
+													                    "filterType": "LOT_SIZE", 
+													                    "maxQty": "10000000",
+													                    "minQty": "1010",
+													                    "stepSize": "1"
+													                },
+													                {
+													                    "filterType": "MARKET_LOT_SIZE",
+													                    "maxQty": "590119",
+													                    "minQty": "1",
+													                    "stepSize": "1"
+													                },
+													                {
+													                    "filterType": "MAX_NUM_ORDERS",
+													                    "limit": 200
+													                },
+													                {
+													                    "filterType": "MAX_NUM_ALGO_ORDERS",
+													                    "limit": 100
+													                },
+													                {
+													                    "filterType": "MIN_NOTIONAL",
+													                    "notional": "1", 
+													                },
+													                {
+													                    "filterType": "PERCENT_PRICE",
+													                    "multiplierUp": "1.1500",
+													                    "multiplierDown": "0.8500",
+													                    "multiplierDecimal": 4
+													                }],
+														            "OrderType": [
+														                "LIMIT",
+														                "MARKET",
+														                "STOP",
+														                "STOP_MARKET",
+														                "TAKE_PROFIT",
+														                "TAKE_PROFIT_MARKET",
+														                "TRAILING_STOP_MARKET" 
+														            ],
+														            "timeInForce": [
+														                "GTC", 
+														                "IOC", 
+														                "FOK", 
+														                "GTX" 
+														            ],
+														            "liquidationFee": "0.010000",  
+														            "marketTakeBound": "0.30",
+														        }
+														    ],
+														    "timezone": "UTC" 
+														}
 
 		result = binance_api_client.get_perpetual_min_lot_size(symbol = "BLZUSDT")
 		assert(result == 1010)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_average_margin_purchase_price_computation_exact_order(self):
 		price_qty_pairs_ordered = [[100, 100], [200, 100], [300, 50]]
 		size = 250
-		assert(self.ftx_client._compute_average_margin_purchase_price(price_qty_pairs_ordered = price_qty_pairs_ordered, size = size) == 180)
+		assert(self.binance_client._compute_average_margin_purchase_price(price_qty_pairs_ordered = price_qty_pairs_ordered, size = size) == 180)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_bid_price_default_for_no_bids(self):
 		bids 	= []
 		size 	= 100
-		assert(self.ftx_client._compute_average_bid_price(bids = bids, size = size) == 0)
+		assert(self.binance_client._compute_average_bid_price(bids = bids, size = size) == 0)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_prioritization_of_single_highest_bids(self):
 		bids 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
 		size 	= 50
-		assert(self.ftx_client._compute_average_bid_price(bids = bids, size = size) == 500)
+		assert(self.binance_client._compute_average_bid_price(bids = bids, size = size) == 500)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_prioritization_of_two_most_highest_bids(self):
 		bids 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
 		size 	= 100
-		assert(self.ftx_client._compute_average_bid_price(bids = bids, size = size) == 400)
+		assert(self.binance_client._compute_average_bid_price(bids = bids, size = size) == 400)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_ask_price_default_for_no_asks(self):
 		asks 	= []
 		size 	= 100
-		assert(self.ftx_client._compute_average_ask_price(asks = asks, size = size) == sys.maxsize)
+		assert(self.binance_client._compute_average_ask_price(asks = asks, size = size) == sys.maxsize)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_prioritization_of_single_lowest_asks(self):
 		asks 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
 		size 	= 50
-		assert(self.ftx_client._compute_average_ask_price(asks = asks, size = size) == 100)
+		assert(self.binance_client._compute_average_ask_price(asks = asks, size = size) == 100)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_prioritization_of_two_most_lowest_asks(self):
 		asks 	= [[300, 100], [200, 50], [100, 150], [500, 50]]
 		size 	= 200
-		assert(self.ftx_client._compute_average_ask_price(asks = asks, size = size) == 125)
+		assert(self.binance_client._compute_average_ask_price(asks = asks, size = size) == 125)
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	def test_open_perpetual_orders_api_call(self, mock_ftx_client):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.client 	= mock_ftx_client
-		expected_response 		= 	[
-										{
-											"createdAt": "2019-03-05T09:56:55.728933+00:00",
-											"filledSize": 10,
-											"future": "XRP-PERP",
-											"price": 0.306525,
-											"avgFillPrice": 0.306526,
-											"remainingSize": 31421,
-											"side": "sell",
-										},
-										{
-											"createdAt": "2019-03-06T09:56:55.728933+00:00",
-											"filledSize": 10,
-											"future": "XRP-PERP",
-											"price": 0.306525,
-											"avgFillPrice": 0.306526,
-											"remainingSize": 31421,
-											"side": "sell",
-										}
-									]
-		mock_ftx_client.get_open_orders.return_value = expected_response
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_open_perpetual_orders_api_call(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
 
-		result = ftx_api_client.get_perpetual_open_orders(symbol = "XRP-PERP")
-		mock_ftx_client.get_open_orders.assert_called_with(market = "XRP-PERP")
-		assert(result == expected_response)
+		binance_api_client.get_perpetual_open_orders(symbol = "XRPPERP")
+		mock_futures_client.get_orders.assert_called_with(symbol = "XRPPERP")
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_most_recent_open_perpetual_order_retrieved(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		binance_api_client 		= copy.deepcopy(self.binance_client)
+		expected_resp 			= 	[
+									  {
+									    "avgPrice": "0.00000",
+									    "clientOrderId": "abc",
+									    "cumQuote": "0",
+									    "executedQty": "0",
+									    "orderId": 1917641,
+									    "origQty": "0.40",
+									    "origType": "TRAILING_STOP_MARKET",
+									    "price": "0",
+									    "reduceOnly": False,
+									    "side": "BUY",
+									    "positionSide": "SHORT",
+									    "status": "NEW",
+									    "stopPrice": "9300",                
+									    "closePosition": False,   
+									    "symbol": "BTCUSDT",
+									    "time": 1579276756075,              
+									    "timeInForce": "GTC",
+									    "type": "TRAILING_STOP_MARKET",
+									    "activatePrice": "9020",            
+									    "priceRate": "0.3",                 
+									    "updateTime": 1579276756075,        
+									    "workingType": "CONTRACT_PRICE",
+									    "priceProtect": False            
+									  },
+									  {
+									    "avgPrice": "0.00000",
+									    "clientOrderId": "abc",
+									    "cumQuote": "0",
+									    "executedQty": "0",
+									    "orderId": 1917641,
+									    "origQty": "0.40",
+									    "origType": "TRAILING_STOP_MARKET",
+									    "price": "0",
+									    "reduceOnly": False,
+									    "side": "BUY",
+									    "positionSide": "SHORT",
+									    "status": "NEW",
+									    "stopPrice": "9300",                
+									    "closePosition": False,   
+									    "symbol": "BTCUSDT",
+									    "time": 2579276756075,              
+									    "timeInForce": "GTC",
+									    "type": "TRAILING_STOP_MARKET",
+									    "activatePrice": "9020",            
+									    "priceRate": "0.3",                 
+									    "updateTime": 1579276756075,        
+									    "workingType": "CONTRACT_PRICE",
+									    "priceProtect": False            
+									  }
+									]
 
-		with patch.object(ftx_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
-			mock_get_perpetual_open_orders.return_value = [
-															{
-																"createdAt": "2019-03-05T09:56:55.728933+00:00",
-																"filledSize": 1,
-																"future": "XRP-PERP",
-																"price": 1,
-																"avgFillPrice": 1,
-																"remainingSize": 1,
-																"side": "sell",
-															},
-															{
-																"createdAt": "2019-03-06T09:56:55.728933+00:00",
-																"filledSize": 2,
-																"future": "XRP-PERP",
-																"price": 2,
-																"avgFillPrice": 2,
-																"remainingSize": 2,
-																"side": "sell",
-															},
-															{
-																"createdAt": "2019-03-04T09:56:55.728933+00:00",
-																"filledSize": 3,
-																"future": "XRP-PERP",
-																"price": 3,
-																"avgFillPrice": 3,
-																"remainingSize": 3,
-																"side": "sell",
-															}
-														]
-
-			result	= ftx_api_client.get_perpetual_most_recent_open_order(symbol = "XRP-PERP")
-			assert(result["createdAt"] == "2019-03-06T09:56:55.728933+00:00")
+		with patch.object(binance_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
+			mock_get_perpetual_open_orders.return_value = expected_resp
+			result	= binance_api_client.get_perpetual_most_recent_open_order(symbol = "BTCUSDT")
+			assert(result == expected_resp[-1])
 	
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_no_open_perpetual_orders(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		binance_api_client 		= copy.deepcopy(self.binance_client)
 
-		with patch.object(ftx_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
+		with patch.object(binance_api_client, "get_perpetual_open_orders") as mock_get_perpetual_open_orders:
 			mock_get_perpetual_open_orders.return_value = []
-			result	= ftx_api_client.get_perpetual_most_recent_open_order(symbol = "XRP-PERP")
+			result	= binance_api_client.get_perpetual_most_recent_open_order(symbol = "XRPPERP")
 			assert(result == [])
 
 	@pytest.mark.skip(reason="Currently not implemented")
