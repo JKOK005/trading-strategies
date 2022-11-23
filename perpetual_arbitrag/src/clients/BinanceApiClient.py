@@ -145,8 +145,8 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		"""
 		Gets the immediate and predicted funding rate for futures contract
 		"""
-		funding_rate_resp = self.client.get_future_stats(future_name = symbol)
-		return float(funding_rate_resp["nextFundingRate"]), funding_rate_resp["nextFundingTime"]
+		funding_rate_resp = self.futures_client.mark_price(symbol = symbol)
+		return float(funding_rate_resp["lastFundingRate"]), funding_rate_resp["nextFundingTime"]
 
 	def get_perpetual_effective_funding_rate(self, symbol: str, seconds_before_current: int):
 		"""
@@ -160,7 +160,7 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		"""
 		current_time 					= datetime.datetime.utcnow()
 		funding_rate, next_funding_time = self.get_perpetual_funding_rate(symbol = symbol)
-		next_funding_time 				= datetime.datetime.strptime(next_funding_time.split("+")[0], "%Y-%m-%dT%H:%M:%S")
+		next_funding_time 				= datetime.datetime.utcfromtimestamp(next_funding_time / 1000)
 		return funding_rate if (next_funding_time - timedelta(seconds = seconds_before_current) <= current_time) and \
 								self.funding_rate_enable \
 							else 0
@@ -191,12 +191,12 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 
 	def get_margin_trading_account_details(self, currency: str):
 		resp 	= self.client.get_margin_account()
-		relevant_asset_position = next(filter(lambda x: x["asset"] == currency, resp))
-		return relevant_asset_position["netAsset"]
+		relevant_asset_position = next(filter(lambda x: x["asset"] == currency, resp["userAssets"]))
+		return float(relevant_asset_position["netAsset"])
 
 	def get_margin_trading_price(self, symbol: str):
 		resp = self.client.get_avg_price(symbol = symbol)
-		return resp["price"]
+		return float(resp["price"])
 
 	def get_margin_min_volume(self, currency: str):
 		# TODO: Check if this is the correct way to get min borrow amount, because most results are 0.

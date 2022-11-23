@@ -1,5 +1,6 @@
 import binance
 import copy
+import datetime
 import sys
 import pytest
 from clients.BinanceApiClient import BinanceApiClient
@@ -395,152 +396,233 @@ class TestBinanceApiClient(TestCase):
 			result	= binance_api_client.get_perpetual_most_recent_open_order(symbol = "XRPPERP")
 			assert(result == [])
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	def test_fulfilled_perpetual_orders_api_call(self, mock_ftx_client):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.client 	= mock_ftx_client
-		ftx_api_client.get_perpetual_fulfilled_orders(symbol = "XRP-PERP")
-		mock_ftx_client.get_order_history.assert_called()
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_fulfilled_perpetual_orders_api_call(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
 
-	@pytest.mark.skip(reason="Currently not implemented")
+		binance_api_client.get_perpetual_fulfilled_orders(symbol = "XRP-PERP")
+		mock_futures_client.get_all_orders.assert_called()
+
 	def test_fulfilled_perpetual_order_retrieved(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
+		binance_api_client 	= copy.deepcopy(self.binance_client)
+		mock_orders 		= [
+							  	{
+								    "avgPrice": "0.00000",
+								    "clientOrderId": "abc",
+								    "cumQuote": "0",
+								    "executedQty": "0",
+								    "orderId": 1917641,
+								    "origQty": "0.40",
+								    "origType": "TRAILING_STOP_MARKET",
+								    "price": "0",
+								    "reduceOnly": False,
+								    "side": "BUY",
+								    "positionSide": "SHORT",
+								    "status": "NEW",
+								    "stopPrice": "9300",               
+								    "closePosition": False,  
+								    "symbol": "BTCUSDT",
+								    "time": 1579276756075,             
+								    "timeInForce": "GTC",
+								    "type": "TRAILING_STOP_MARKET",
+								    "activatePrice": "9020",           
+								    "priceRate": "0.3",                
+								    "updateTime": 1579276756075,       
+								    "workingType": "CONTRACT_PRICE",
+								    "priceProtect": False           
+							  	},
+							  	{
+								    "avgPrice": "0.00000",
+								    "clientOrderId": "abc",
+								    "cumQuote": "0",
+								    "executedQty": "0",
+								    "orderId": 1917641,
+								    "origQty": "0.40",
+								    "origType": "TRAILING_STOP_MARKET",
+								    "price": "0",
+								    "reduceOnly": False,
+								    "side": "BUY",
+								    "positionSide": "SHORT",
+								    "status": "NEW",
+								    "stopPrice": "9300",               
+								    "closePosition": False,  
+								    "symbol": "BTCUSDT",
+								    "time": 1679276756075,             
+								    "timeInForce": "GTC",
+								    "type": "TRAILING_STOP_MARKET",
+								    "activatePrice": "9020",           
+								    "priceRate": "0.3",                
+								    "updateTime": 1579276756075,       
+								    "workingType": "CONTRACT_PRICE",
+								    "priceProtect": False           
+							  	},
+							]
 
-		with patch.object(ftx_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
-			mock_get_perpetual_fulfilled_orders.return_value = [	
-																{
-																	"id": 100,
-																	"createdAt": "2019-03-04T09:56:55.728933+00:00",
-																	"filledSize": 3,
-																	"future": "XRP-PERP",
-																	"price": 3,
-																	"avgFillPrice": 3,
-																	"remainingSize": 3,
-																	"side": "sell",
-																	"status": "closed",
-																},
-																{	
-																	"id": 200,
-																	"createdAt": "2019-03-04T09:56:55.728933+00:00",
-																	"filledSize": 3,
-																	"future": "XRP-PERP",
-																	"price": 3,
-																	"avgFillPrice": 3,
-																	"remainingSize": 3,
-																	"side": "sell",
-																	"status": "open",
-																},
-																{
-																	"id": 300,
-																	"createdAt": "2019-03-04T09:56:55.728933+00:00",
-																	"filledSize": 3,
-																	"future": "XRP-PERP",
-																	"price": 3,
-																	"avgFillPrice": 3,
-																	"remainingSize": 3,
-																	"side": "sell",
-																	"status": "new",
-																}
-															]
-			
-			result = ftx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "XRP-USDT")
-			assert(result["id"] == 100)
+		with patch.object(binance_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
+			mock_get_perpetual_fulfilled_orders.return_value = mock_orders
+			result = binance_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "XRP-USDT")
+			assert(result["time"] == 1679276756075)
 
-	@pytest.mark.skip(reason="Currently not implemented")
 	def test_no_fulfilled_perpetual_orders(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-
-		with patch.object(ftx_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
+		binance_api_client 	= copy.deepcopy(self.binance_client)
+		with patch.object(binance_api_client, "get_perpetual_fulfilled_orders") as mock_get_perpetual_fulfilled_orders:
 			mock_get_perpetual_fulfilled_orders.return_value = []
-			result = ftx_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "XRP-USDT")
+			result = binance_api_client.get_perpetual_most_recent_fulfilled_order(symbol = "XRP-USDT")
 			assert(result == [])
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	def test_get_perpetual_funding_rates(self, mock_ftx_client):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.client 	= mock_ftx_client
-		mock_ftx_client.get_future_stats.return_value = {
-														    "volume": 1000.23,
-														    "nextFundingRate": 0.00025,
-														    "nextFundingTime": "2019-03-29T03:00:00+00:00",
-														    "expirationPrice": 3992.1,
-														    "predictedExpirationPrice": 3993.6,
-														    "strikePrice": 8182.35,
-														    "openInterest": 21124.583
-														}
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_get_perpetual_funding_rates(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
 
-		(funding_rate, funding_time) = ftx_api_client.get_perpetual_funding_rate(symbol = "XRP-PERP")
-		assert((funding_rate == 0.00025) & (funding_time == "2019-03-29T03:00:00+00:00"))
+		mock_futures_client.mark_price.return_value = {
+													    "symbol": "BTCUSDT",
+													    "markPrice": "11793.63104562",  
+													    "indexPrice": "11781.80495970", 
+													    "estimatedSettlePrice": "11781.16138815", 
+													    "lastFundingRate": "0.00038246",  
+													    "nextFundingTime": 1597392000000,
+													    "interestRate": "0.00010000",
+													    "time": 1597370495002
+													}
 
-	@pytest.mark.skip(reason="Currently not implemented")
+		(funding_rate, funding_time) = binance_api_client.get_perpetual_funding_rate(symbol = "BTCUSDT")
+		assert((funding_rate == 0.00038246) & (funding_time == 1597392000000))
+
 	def test_effective_funding_rate_is_zero_when_flag_is_disabled(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.funding_rate_enable = False
+		binance_api_client 	= copy.deepcopy(self.binance_client)
+		binance_api_client.funding_rate_enable = False
 
-		with patch.object(ftx_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
-			mock_get_perpetual_funding_rate.return_value 	= (-0.02, "2019-03-29T10:00:00+00:00")
-			result 	= ftx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 300)
+		with patch.object(binance_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
+			mock_get_perpetual_funding_rate.return_value 	= (-0.02, 1597392000000)
+			result 	= binance_api_client.get_perpetual_effective_funding_rate(symbol = "BTCUSDT", seconds_before_current = 300)
 			assert result == 0
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	@freeze_time("2019-03-29T09:00:00+00:00")
+	@freeze_time(datetime.datetime(2020, 8, 14, 7, 50, 0))
 	def test_effective_funding_rate_is_zero_when_invalid_interval(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.funding_rate_enable = True
+		binance_api_client 	= copy.deepcopy(self.binance_client)
+		binance_api_client.funding_rate_enable = True
 
-		with patch.object(ftx_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
-			mock_get_perpetual_funding_rate.return_value 	= (-0.02, "2019-03-29T10:00:00+00:00")
-			result 	= ftx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 300)
+		with patch.object(binance_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
+			mock_get_perpetual_funding_rate.return_value 	= (-0.02, 1597392000000)
+			result 	= binance_api_client.get_perpetual_effective_funding_rate(symbol = "BTCUSDT", seconds_before_current = 300)
 			assert result == 0
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	@freeze_time("2019-03-29T09:00:00+00:00")
+	@freeze_time(datetime.datetime(2020, 8, 14, 7, 50, 0))
 	def test_effective_funding_rate_is_non_zero(self):
-		ftx_api_client 			= copy.deepcopy(self.ftx_client)
-		ftx_api_client.funding_rate_enable = True
+		binance_api_client 	= copy.deepcopy(self.binance_client)
+		binance_api_client.funding_rate_enable = True
 
-		with patch.object(ftx_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
-			mock_get_perpetual_funding_rate.return_value 	= (-0.02, "2019-03-29T10:00:00+00:00")
-			result 	= ftx_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 7200)
+		with patch.object(binance_api_client, "get_perpetual_funding_rate") as mock_get_perpetual_funding_rate:
+			mock_get_perpetual_funding_rate.return_value 	= (-0.02, 1597392000000)
+			result 	= binance_api_client.get_perpetual_effective_funding_rate(symbol = "ETH-PERP", seconds_before_current = 7200)
 			assert result == -0.02
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	@patch("ftx.FtxClient")
-	def test_get_margin_symbols_called(self, mock_ftx_client):
-		ftx_api_client = copy.deepcopy(self.ftx_client)
-		ftx_api_client.client = mock_ftx_client
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_get_margin_symbols_called(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
 
-		mock_ftx_client.get_markets.return_value = 	[	
-														{"name": "BTC-PERP"}, 
-														{"name": "ETH-USDT"}, 
-														{"name": "SOL-PERP"}, 
-														{"name": "SOL-BTC"}
-													]
-		result = ftx_api_client.get_margin_symbols()
-		mock_ftx_client.get_markets.assert_called() 
-		assert(result == ["ETH-USDT", "SOL-BTC"])
+		mock_client.get_margin_all_pairs.return_value =	[
+														    {
+														        "base": "BNB",
+														        "id": 351637150141315861,
+														        "isBuyAllowed": True,
+														        "isMarginTrade": True,
+														        "isSellAllowed": True,
+														        "quote": "BTC",
+														        "symbol": "BNBBTC"
+														    },
+														    {
+														        "base": "TRX",
+														        "id": 351637923235429141,
+														        "isBuyAllowed": True,
+														        "isMarginTrade": True,
+														        "isSellAllowed": True,
+														        "quote": "BTC",
+														        "symbol": "TRXBTC"
+														    },
+														    {
+														        "base": "XRP",
+														        "id": 351638112213990165,
+														        "isBuyAllowed": True,
+														        "isMarginTrade": True,
+														        "isSellAllowed": True,
+														        "quote": "BTC",
+														        "symbol": "XRPBTC"
+														    },
+														]
+		result = binance_api_client.get_margin_symbols()
+		mock_client.get_margin_all_pairs.assert_called() 
+		assert(result == ["BNBBTC", "TRXBTC", "XRPBTC"])
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	@patch("ftx.FtxClient")
-	def test_get_margin_trading_account_details(self, mock_ftx_client):
-		ftx_api_client = copy.deepcopy(self.ftx_client)
-		ftx_api_client.client = mock_ftx_client
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_get_margin_trading_account_details(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
 
-		mock_ftx_client.get_balances.return_value = [	
-														{"coin": "BTC",  "spotBorrow": 1}, 
-														{"coin": "ETH",  "spotBorrow": 2}, 
-														{"coin": "SOL",  "spotBorrow": 3}, 
-														{"coin": "USDT", "spotBorrow": 4}
-													]
+		mock_client.get_margin_account.return_value = 	{
+													      "borrowEnabled": True,
+													      "marginLevel": "11.64405625",
+													      "totalAssetOfBtc": "6.82728457",
+													      "totalLiabilityOfBtc": "0.58633215",
+													      "totalNetAssetOfBtc": "6.24095242",
+													      "tradeEnabled": True,
+													      "transferEnabled": True,
+													      "userAssets": [
+													          {
+													              "asset": "BTC",
+													              "borrowed": "0.00000000",
+													              "free": "0.00499500",
+													              "interest": "0.00000000",
+													              "locked": "0.00000000",
+													              "netAsset": "0.00499500"
+													          },
+													          {
+													              "asset": "BNB",
+													              "borrowed": "201.66666672",
+													              "free": "2346.50000000",
+													              "interest": "0.00000000",
+													              "locked": "0.00000000",
+													              "netAsset": "2144.83333328"
+													          },
+													          {
+													              "asset": "ETH",
+													              "borrowed": "0.00000000",
+													              "free": "0.00000000",
+													              "interest": "0.00000000",
+													              "locked": "0.00000000",
+													              "netAsset": "0.00000000"
+													          },
+													          {
+													              "asset": "USDT",
+													              "borrowed": "0.00000000",
+													              "free": "0.00000000",
+													              "interest": "0.00000000",
+													              "locked": "0.00000000",
+													              "netAsset": "0.00000000"
+													          }
+													      	]
+														}
 
-		result 	= ftx_api_client.get_margin_trading_account_details(currency = "SOL")
-		mock_ftx_client.get_balances.assert_called()
-		assert(result == 3)
+		result 	= binance_api_client.get_margin_trading_account_details(currency = "BNB")
+		mock_client.get_margin_account.assert_called()
+		assert(result == 2144.83333328)
 
-	@pytest.mark.skip(reason="Currently not implemented")
-	@patch("ftx.FtxClient")
-	def test_get_margin_trading_price(self, mock_ftx_client):
-		ftx_api_client = copy.deepcopy(self.ftx_client)
-		ftx_api_client.client = mock_ftx_client
-		ftx_api_client.get_margin_trading_price(symbol = "BTC/USDT")
-		mock_ftx_client.get_market.assert_called_with(market = "BTC/USDT")
+	@patch("binance.client")
+	@patch("binance.um_futures")
+	def test_get_margin_trading_price(self, mock_client, mock_futures_client):
+		binance_api_client 					= copy.deepcopy(self.binance_client)
+		binance_api_client.client 			= mock_client
+		binance_api_client.futures_client	= mock_futures_client
+		binance_api_client.get_margin_trading_price(symbol = "BTCUSDT")
+		mock_client.get_avg_price.assert_called_with(symbol = "BTCUSDT")
