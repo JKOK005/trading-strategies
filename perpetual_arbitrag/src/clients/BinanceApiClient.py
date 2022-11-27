@@ -180,6 +180,25 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 			raise Exception(f"Perpetual order failed: {resp}")
 		return
 
+	async def place_perpetual_order_async(self, symbol: str, 
+												side: str, 
+												position_side: str, 
+												order_type: str, 
+												quantity: float
+											):
+		resp = self.futures_client.place_order(	symbol 			 = symbol,
+		  										side			 = side,
+		  										positionSide 	 = position_side,
+		  										type 			 = order_type,
+		  										quantity 		 = quantity,
+		  										newOrderRespType = "RESULT"
+											)
+		return {"id" : f"{symbol}-{side}", "resp" : resp}
+
+	async def revert_perpetual_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting perpetual order")
+		return await self.place_perpetual_order_async(**revert_params)
+
 	def set_margin_leverage(self, symbol: str, leverage: int):
 		self.logger.debug(f"Set leverage of {symbol} to {leverage}")
 		self.client.futures_change_leverage(symbol = symbol, leverage = leverage, timestamp = time.time())
@@ -260,3 +279,20 @@ class BinanceApiClient(ExchangeMarginClients, ExchangePerpetualClients):
 		if order_resp_code != "200":
 			raise Exception(f"Margin order failed: {resp}")
 		return
+
+	async def place_margin_order_async(self, symbol: str,
+											 side: str,
+											 order_type: str,
+											 quantity: float,
+									):
+		resp = self.client.create_order(symbol 	 = symbol,
+  										side	 = side,
+										type 	 = order_type,
+										quantity = quantity,
+										newOrderRespType = "RESULT",
+									)
+		return {"id" : f"{symbol}-{side}", "resp" : resp}
+
+	async def revert_margin_order_async(self, order_resp, revert_params):
+		self.logger.debug(f"Reverting margin order")
+		return await self.place_margin_order_async(**revert_params)
